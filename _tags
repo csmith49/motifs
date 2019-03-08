@@ -1,0 +1,4 @@
+"src": include
+"src/core": include
+
+true: annot, bin_annot
