@@ -2,7 +2,9 @@ type t = [
     | `Int of int
     | `String of string
     | `Bool of bool
+    | `Null
 ]
+type value = t
 
 (* conversions from ocaml literals *)
 let of_int : int -> t = fun i -> `Int i
@@ -25,6 +27,12 @@ let to_string : t -> string = function
     | `Int i -> string_of_int i
     | `String s -> s
     | `Bool b -> string_of_bool b
+    | `Null -> "NULL"
+
+(* picking out particular constructors *)
+let is_null : t -> bool = function
+    | `Null -> true
+    | _ -> false
 
 (* comparisons don't really mean much with such a heterogeneous type *)
 let compare = Pervasives.compare
@@ -34,4 +42,38 @@ let of_json : Yojson.Basic.t -> t option = function
     | `Int i -> Some (`Int i)
     | `String s -> Some (`String s)
     | `Bool b -> Some (`Bool b)
+    | `Null -> Some (`Null)
     | _ -> None
+
+(* indexing values by strings *)
+module Map = struct
+    (* we're always going to index by strings here *)
+    module StringMap = CCMap.Make(CCString)
+    
+    (* concretize the type more *)
+    type t = value StringMap.t
+
+    (* expose some simple functions *)
+    let empty : t = StringMap.empty
+    let get : CCString.t -> t -> value option = StringMap.get
+    let add : CCString.t -> value -> t -> t = StringMap.add
+    let to_list : t -> (CCString.t * value) list = StringMap.bindings
+
+    (* the getter from json *)
+    let of_json : Yojson.Basic.t -> t option = function
+        | `Assoc attrs ->
+            let binding_of_json (k, v) = match of_json v with
+                | Some v -> Some (k, v)
+                | _ -> None
+            in CCList.map binding_of_json attrs
+                |> CCOpt.sequence_l
+                |> CCOpt.map StringMap.of_list
+        | _ -> None
+
+    (* string conversion *)
+    let to_string : t -> string = fun map ->
+        let map = map |> to_list
+            |> CCList.map (fun (k, v) -> k ^ " : " ^ (to_string v))
+            |> CCString.concat ", "
+        in "[" ^ map ^ "]"
+end

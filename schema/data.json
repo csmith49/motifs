@@ -1,0 +1,40 @@
+{
+    "definitions" : {
+
+        "identifier" : {"type" : "integer"},
+        
+        "label" : {"type" : "string"},
+        
+        "edge" : {"type" : "object", "properties" : {
+                "source" : {"$ref" : "#/definitions/identifier"},
+                "destination" : {"$ref" : "#/definitions/identifier"},
+                "label" : {"$ref" : "#/definitions/label"}
+            },
+            "required" : ["source", "destination"]
+        },
+        
+        "node" : {"type" : "object", "properties" : {
+                "identifier" : {"$ref" : "#/definitions/identifier"},
+                "attributes" : {"type" : "object"}
+            },
+            "required" : ["identifier"]
+        }
+    },
+
+    "type" : "object",
+    
+    "properties" : {
+        "metadata" : {"type" : "object"},
+        
+        "edges" : {"type" : "array", "items" : [
+                {"$ref" : "#/definitions/edge"}
+            ]
+        },
+        
+        "nodes" : {"type" : "array", "items" : [
+                {"$ref" : "#/definitions/node"}
+            ]
+        }
+    },
+    "required" : ["edges", "nodes"]
+}

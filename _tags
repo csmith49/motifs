@@ -1,4 +1,6 @@
 "src": include
 "src/core": include
+"src/rule": include
+"src/data": include
 
 true: annot, bin_annot
