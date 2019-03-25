@@ -6,5 +6,5 @@ let of_json : Yojson.Basic.t -> t = function
 
 let from_file : string -> string -> t = fun filename -> fun key -> filename
     |> Yojson.Basic.from_file
-    |> Yojson.Basic.Util.member key
+    |> Yojson.Basic.Util.member (Filename.basename key)
     |> of_json

@@ -2,5 +2,6 @@ S src/**
 B _build/**
 
 PKG containers
+PKG containers.data
 PKG yojson
 PKG ocamlgraph

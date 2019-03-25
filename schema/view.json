@@ -1,0 +1,9 @@
+{
+    "type" : "object",
+    "properties" : {
+        "metadata" : {"type" : "object"},
+        "name" : {"type" : "string"},
+        "labels" : {"type" : "array", "items" : [ {"type" : "string"} ]},
+        "predicates" : {"type" : "array", "items" : [ {"type" : "object"} ]}
+    }
+}

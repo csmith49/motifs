@@ -36,6 +36,7 @@ let is_null : t -> bool = function
 
 (* comparisons don't really mean much with such a heterogeneous type *)
 let compare = Pervasives.compare
+let equal = (=)
 
 (* converting from json representations *)
 let of_json : Yojson.Basic.t -> t option = function

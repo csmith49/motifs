@@ -1,3 +1,5 @@
+open Rule
+
 (* references for inputs *)
 let doc_filename = ref ""
 let ex_filename = ref ""
@@ -24,6 +26,7 @@ let _ = print_string ("Loading examples from " ^ !ex_filename ^ "...")
 let examples = Example.from_file !ex_filename !doc_filename
 let _ = print_endline ("done.")
 
-let attributes = Document.NodeMap.get_or ~default:Value.Map.empty !positive document.Document.attributes
-let _ = print_endline (Value.Map.to_string attributes)
-
+(* get attributes for each example and print out *)
+let _ = CCList.iter (fun ex ->
+    print_endline (Document.get_attributes document ex |> Value.Map.to_string)
+) examples

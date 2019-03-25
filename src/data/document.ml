@@ -13,13 +13,13 @@ end
 module DNode = Identifier
 
 module DEdge = struct
-    type t = Value.t option
+    type t = Value.t
 
     (* TODO - fix these implementations for efficiency *)
     let hash : t -> int = CCHash.poly
     let compare = Pervasives.compare
     let equal = Pervasives.(=)
-    let default = None
+    let default = `Null
 end
 
 module DocGraph = Graph.Persistent.Digraph.ConcreteBidirectionalLabeled(DNode)(DEdge)
@@ -49,7 +49,9 @@ let edge_of_json : Yojson.Basic.t -> DocGraph.E.t option = fun json ->
     let source = json |> Util.member "source" >>= Identifier.of_json in
     let label = json |> Util.member "label" >>= Value.of_json in
     let destination = json |> Util.member "destination" >>= Identifier.of_json in
-    CCOpt.map2 (fun s -> fun d -> DocGraph.E.create s label d) source destination
+    match source, label, destination with
+        | Some s, Some l, Some d -> Some (DocGraph.E.create s l d)
+        | _ -> None
 
 (* pull nodes out of json rep - adds attribute sets *)
 let node_of_json : Yojson.Basic.t -> (DocGraph.V.t * Value.Map.t) option = fun json ->
@@ -79,3 +81,11 @@ let of_json : Yojson.Basic.t -> t = fun json ->
 let from_file : string -> t = fun filename -> filename
     |> Yojson.Basic.from_file
     |> of_json
+
+(* accessors and manipulators and whatnot *)
+let get_attributes : t -> Identifier.t -> Value.Map.t = fun doc -> fun id ->
+    NodeMap.get_or ~default:Value.Map.empty id doc.attributes
+
+(* get all edges between two identifiers *)
+let get_edges : t -> Identifier.t -> Identifier.t -> DocGraph.E.t list = fun doc -> fun src -> fun dest ->
+    DocGraph.find_all_edges doc.structure src dest
