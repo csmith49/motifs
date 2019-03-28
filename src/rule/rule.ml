@@ -55,3 +55,34 @@ let is_sufficient (rule : t) (m : Morphism.t) : bool =
     CCList.is_empty (unbound_vertices rule m)
 
 type rule = t
+
+module NodeConstraintSet = struct
+    module IdentifierMap = CCMap.Make(Identifier)
+    module IdentifierSet = CCSet.Make(Identifier)
+
+    type t = IdentifierSet.t IdentifierMap.t
+
+    let constrained_nodes : t -> Identifier.t list = fun dis ->
+        dis |> IdentifierMap.to_list |> CCList.map fst
+    
+    let constraints : t -> Identifier.t -> Identifier.t list = fun dis -> fun id ->
+        let c = IdentifierMap.get_or ~default:IdentifierSet.empty id dis in
+            IdentifierSet.to_list c
+    
+    let add_constraint : t -> Identifier.t -> Identifier.t -> t = fun dis -> fun dom -> fun codom ->
+        let image = IdentifierMap.get_or ~default:IdentifierSet.empty dom dis in
+        let constrained_image = IdentifierSet.add codom image in
+            IdentifierMap.add dom constrained_image dis
+
+    let candidate_bindings : t -> (Morphism.binding list * t) = fun dis ->
+        match IdentifierMap.choose_opt dis with
+            | Some (id, image) ->
+                let dis = IdentifierMap.remove id dis in
+                let bindings : Morphism.binding list = IdentifierSet.to_list image
+                    |> CCList.map (fun im -> (id, im)) in
+                (bindings, dis)
+            | _ -> [], dis
+end
+
+type partial_morphism = Morphism.t * NodeConstraintSet.t
+

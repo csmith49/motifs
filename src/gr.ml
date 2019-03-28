@@ -1,4 +1,5 @@
 open Rule
+open LabelGraph
 
 (* references for inputs *)
 let doc_filename = ref ""

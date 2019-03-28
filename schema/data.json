@@ -24,7 +24,10 @@
     "type" : "object",
     
     "properties" : {
-        "metadata" : {"type" : "object"},
+        "metadata" : {"type" : "object", "properties" : {
+                "views" : {"type" : "array", "items" : [{"type" : "string"}]}
+            }
+        },
         
         "edges" : {"type" : "array", "items" : [
                 {"$ref" : "#/definitions/edge"}
