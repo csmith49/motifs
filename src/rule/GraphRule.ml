@@ -54,7 +54,7 @@ let add_vertex rule id = {
 }
 
 let add_predicate rule id pred = {
-    rule with graph = RuleGraph.add_label rule.graph id pred
+    rule with graph = RuleGraph.add_label rule.graph id [pred]
 }
 
 let add_edge rule src dest = 
