@@ -57,6 +57,11 @@ module Make (V : Sig.Vertex) (VL : Sig.VertexLabel) (EL : Sig.EdgeLabel) : Sig.S
     let add_labeled_vertex graph vertex label =
         let context = {label = Some label; in_edges = []; out_edges = []} in
         VertexMap.add vertex context graph
+    let add_label graph vertex label =
+        let context = match VertexMap.find_opt vertex graph with
+            | Some context -> {context with label = Some label}
+            | None -> {label = Some label; in_edges = []; out_edges = []} in
+        VertexMap.add vertex context graph
     
     let add_edge graph edge =
         let src_context = match VertexMap.find_opt (Edge.source edge) graph with
@@ -78,4 +83,7 @@ module Make (V : Sig.Vertex) (VL : Sig.VertexLabel) (EL : Sig.EdgeLabel) : Sig.S
     let edges graph = graph
         |> vertices
         |> CCList.flat_map (out_edges graph)
+
+    let degree graph vertex =
+        CCList.length ( (in_edges graph vertex) @ (out_edges graph vertex) )
 end

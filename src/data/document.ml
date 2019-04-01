@@ -62,3 +62,21 @@ let get_attributes : t -> Identifier.t -> Value.Map.t = fun doc -> fun id ->
     match DocGraph.label doc id with
         | Some attrs -> attrs
         | None -> Value.Map.empty
+
+(* mine information *)
+module Mine = struct
+    (* pull structure from the document *)
+    let edge_values doc = DocGraph.edges doc |> CCList.filter_map DocGraph.Edge.label
+    let attributes doc = DocGraph.vertices doc 
+        |> CCList.filter_map (DocGraph.label doc)
+        |> CCList.flat_map Value.Map.keys
+    let attribute_values doc = DocGraph.vertices doc
+        |> CCList.filter_map (DocGraph.label doc)
+        |> CCList.flat_map Value.Map.values
+
+    (* get surrounding context *)
+    let context doc id =
+        let ins = DocGraph.in_edges doc id |> CCList.map DocGraph.Edge.source in
+        let outs = DocGraph.out_edges doc id |> CCList.map DocGraph.Edge.destination in
+        ins @ outs
+end

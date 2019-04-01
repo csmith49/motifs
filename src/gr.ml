@@ -1,4 +1,4 @@
-open Rule
+open GraphRule
 
 (* references for inputs *)
 let doc_filename = ref ""
@@ -30,3 +30,12 @@ let _ = print_endline ("done.")
 let _ = CCList.iter (fun ex ->
     print_endline (Document.get_attributes document ex |> Value.Map.to_string)
 ) examples
+
+(* make a default graph rule - does nothing! *)
+let rule = GraphRule.singleton 0
+
+(* apply the rule *)
+let selected = GraphRule.apply rule document
+
+(* how many? *)
+let _ = print_endline ("Default graph rule selects " ^ (string_of_int (CCList.length selected)) ^ " nodes")

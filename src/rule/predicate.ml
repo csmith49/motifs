@@ -5,6 +5,11 @@ type t = {
     filter : Filter.t;
 }
 
+let mk string filt = {
+    attribute = string;
+    filter = filt;
+}
+
 let to_string : t -> string = fun pred ->
     (Filter.to_string pred.filter) ^ " @ " ^ pred.attribute
 

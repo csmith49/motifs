@@ -56,12 +56,15 @@ module type SemanticGraph = sig
 
     val add_vertex : t -> vertex -> t
     val add_labeled_vertex : t -> vertex -> vertex_label -> t
+    val add_label : t -> vertex -> vertex_label -> t
 
     val add_edge : t -> edge -> t
 
     val vertices : t -> vertex list
 
     val edges : t -> edge list
+
+    val degree : t -> vertex -> int
 end
 
 module type Isomorphism = sig

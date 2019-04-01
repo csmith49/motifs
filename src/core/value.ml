@@ -60,6 +60,9 @@ module Map = struct
     let add : CCString.t -> value -> t -> t = StringMap.add
     let to_list : t -> (CCString.t * value) list = StringMap.bindings
 
+    let keys : t -> string list = fun m -> StringMap.to_list m |> CCList.map fst
+    let values : t -> value list = fun m -> StringMap.to_list m |> CCList.map snd
+
     (* the getter from json *)
     let of_json : Yojson.Basic.t -> t option = function
         | `Assoc attrs ->
