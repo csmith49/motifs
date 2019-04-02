@@ -1,4 +1,5 @@
 open GraphRule
+open Enumeration
 
 (* references for inputs *)
 let doc_filename = ref ""

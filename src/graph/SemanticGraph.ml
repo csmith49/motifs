@@ -62,6 +62,19 @@ module Make (V : Sig.Vertex) (VL : Sig.VertexLabel) (EL : Sig.EdgeLabel) : Sig.S
             | Some context -> {context with label = Some label}
             | None -> {label = Some label; in_edges = []; out_edges = []} in
         VertexMap.add vertex context graph
+    let remove_label graph vertex =
+        match VertexMap.find_opt vertex graph with
+            | Some context -> VertexMap.add vertex {context with label = None} graph
+            | _ -> graph
+            
+    let remove_vertex graph vertex =
+        let graph = VertexMap.remove vertex graph in
+        VertexMap.to_list graph
+            |> CCList.map (fun (v, c) -> (v, {c with 
+                in_edges = CCList.filter (fun e -> Edge.source e != vertex) c.in_edges;
+                out_edges = CCList.filter (fun e -> Edge.destination e != vertex) c.out_edges;
+            }))
+            |> VertexMap.of_list
     
     let add_edge graph edge =
         let src_context = match VertexMap.find_opt (Edge.source edge) graph with
@@ -75,6 +88,20 @@ module Make (V : Sig.Vertex) (VL : Sig.VertexLabel) (EL : Sig.EdgeLabel) : Sig.S
         graph 
             |> VertexMap.add (Edge.source edge) src_context
             |> VertexMap.add (Edge.destination edge) dest_context
+    let remove_edge eq graph edge =
+        let src = Edge.source edge in
+        let dest = Edge.destination edge in
+        let src_gone = match VertexMap.find_opt src graph with
+            | Some c -> 
+                VertexMap.add src {c with out_edges = CCList.filter (fun e -> not (eq edge e)) c.out_edges} graph
+            | _ -> graph in
+        match VertexMap.find_opt dest src_gone with
+            | Some c -> 
+                VertexMap.add dest {c with in_edges = CCList.filter (fun e -> not (eq edge e)) c.in_edges} src_gone
+            | _ -> src_gone
+    let remove_edge_label eq graph edge =
+        let edge' = Edge.make (Edge.source edge) (Edge.destination edge) in
+        add_edge (remove_edge eq graph edge) edge'
 
     let vertices graph = graph
         |> VertexMap.to_list

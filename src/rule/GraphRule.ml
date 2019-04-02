@@ -41,6 +41,11 @@ module Matching = Algorithms.SubgraphMatching(AppEmbedding)
 let apply rule doc = Matching.find rule.graph doc
     |> CCList.filter_map (fun m -> entities rule m)
 
+let map f rule = {
+    rule with graph = f rule.graph
+}
+let (>>) rule f = map f rule
+
 (* satisfying interface *)
 let vertices rule = RuleGraph.vertices rule.graph
 

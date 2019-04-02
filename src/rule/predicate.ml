@@ -30,4 +30,6 @@ module Conjunction = struct
 
     let apply : t -> Value.Map.t -> bool = fun conj -> fun attrs -> conj
         |> CCList.for_all (fun pred -> apply pred attrs)
+    
+    let select : t -> int -> t option = fun c -> fun i -> CCList.nth_opt c i |> CCOpt.map CCList.return
 end

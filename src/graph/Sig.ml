@@ -57,8 +57,12 @@ module type SemanticGraph = sig
     val add_vertex : t -> vertex -> t
     val add_labeled_vertex : t -> vertex -> vertex_label -> t
     val add_label : t -> vertex -> vertex_label -> t
+    val remove_label : t -> vertex -> t
+    val remove_vertex : t -> vertex -> t
 
     val add_edge : t -> edge -> t
+    val remove_edge : (edge -> edge -> bool) -> t -> edge -> t
+    val remove_edge_label : (edge -> edge -> bool) -> t -> edge -> t
 
     val vertices : t -> vertex list
 
@@ -90,4 +94,32 @@ module type Embedding = sig
 
     val check_vertex : Domain.vertex_label option -> Codomain.vertex_label option -> bool
     val check_edge : Domain.edge_label option -> Codomain.edge_label option -> bool
+end
+
+module type Neighborhood = sig
+    type t
+    type vertex
+    type edge
+    type graph
+
+    val mem : t -> vertex -> bool
+    val to_list : t -> vertex list
+
+    val starts_in : t -> edge -> bool
+    val ends_in : t -> edge -> bool
+    val mem_edge : t -> edge -> bool
+
+    val one_hop : vertex -> graph -> t
+    val n_hop : int -> vertex -> graph -> t
+
+    val n_hop_subgraph : int -> vertex -> graph -> graph
+end
+
+module type Functor = sig
+    module Domain : SemanticGraph
+    module Codomain : SemanticGraph
+
+    val map_vertex : Domain.vertex -> Codomain.vertex
+    val map_vertex_label : Domain.vertex_label option -> Codomain.vertex_label option
+    val map_edge_label : Domain.edge_label option -> Codomain.edge_label option
 end

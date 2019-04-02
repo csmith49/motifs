@@ -1,13 +1,38 @@
-(* for enumerating graphs *)
+module DocNeighborhood = Neighborhood.Make(Document.DocGraph)
 
-(* stopping point - how big is a graph? we'll count nodes for now *)
-let size : GraphRule.t -> int = fun gr -> GraphRule.vertices gr |> CCList.length
+let doc_subgraph n vertex doc = DocNeighborhood.n_hop_subgraph n vertex doc
 
-(* given a bunch of values, make filters *)
-let mk_filters : Value.t list -> Filter.t list = fun vals ->
-    vals |> CCList.map Filter.Make.of_value
+module DocToRuleMapping : Sig.Functor with 
+    module Domain = Document.DocGraph and
+    module Codomain = GraphRule.RuleGraph
+= struct
+    module Domain = Document.DocGraph
+    module Codomain = GraphRule.RuleGraph
 
-(* given a bunch of keys and values, make predicates *)
-let mk_preds : string list -> Value.t list -> Predicate.t list = fun keys -> fun vals ->
-    let filters = mk_filters vals in
-        keys |> CCList.flat_map (fun k -> CCList.map (Predicate.mk k) filters)
+    let map_vertex id = id
+    let map_vertex_label lbl = match lbl with
+        | Some vm -> Some (Value.Map.to_list vm
+            |> CCList.map (fun (k, v) -> Predicate.mk k (Filter.Make.of_value v))
+        )
+        | None -> None
+    let map_edge_label lbl = match lbl with
+        | Some value -> Some (Filter.Make.of_value value)
+        | None -> None
+end
+
+module DocToRule = Functor.Make(DocToRuleMapping)
+
+let subgraph (n : int) (vertex : Identifier.t) (doc : Document.t) : GraphRule.t = {
+    GraphRule.graph = doc_subgraph n vertex doc |> DocToRule.apply;
+    selected = [vertex];
+}
+
+(* module Simplification = struct
+    type node_simpl =
+        | Drop
+        | RemoveLabel
+        | Simplify of int
+    type edge_simpl =
+        | Drop
+        | Simplify
+end *)
