@@ -61,8 +61,8 @@ module type SemanticGraph = sig
     val remove_vertex : t -> vertex -> t
 
     val add_edge : t -> edge -> t
-    val remove_edge : (edge -> edge -> bool) -> t -> edge -> t
-    val remove_edge_label : (edge -> edge -> bool) -> t -> edge -> t
+    val remove_edge : (edge_label -> edge_label -> bool) -> t -> edge -> t
+    val remove_edge_label : (edge_label -> edge_label -> bool) -> t -> edge -> t
 
     val vertices : t -> vertex list
 

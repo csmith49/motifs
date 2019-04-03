@@ -88,7 +88,15 @@ module Make (V : Sig.Vertex) (VL : Sig.VertexLabel) (EL : Sig.EdgeLabel) : Sig.S
         graph 
             |> VertexMap.add (Edge.source edge) src_context
             |> VertexMap.add (Edge.destination edge) dest_context
+
+    let lift_eq eq left right =
+        let eq' = CCOpt.equal eq in
+        (Edge.source left = Edge.source right) &&
+        (Edge.destination left = Edge.destination right) &&
+        (eq' (Edge.label left) (Edge.label right))
+
     let remove_edge eq graph edge =
+        let eq = lift_eq eq in
         let src = Edge.source edge in
         let dest = Edge.destination edge in
         let src_gone = match VertexMap.find_opt src graph with
