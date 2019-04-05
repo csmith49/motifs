@@ -1,0 +1,1 @@
+type t = GraphRule.t list

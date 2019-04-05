@@ -121,4 +121,28 @@ module Make (V : Sig.Vertex) (VL : Sig.VertexLabel) (EL : Sig.EdgeLabel) : Sig.S
 
     let degree graph vertex =
         CCList.length ( (in_edges graph vertex) @ (out_edges graph vertex) )
+
+    (* TODO - THIS IS MESSY *)
+    let to_string graph =
+        let vertices = vertices graph in
+        CCList.map (fun v -> 
+            let v' = Vertex.to_string v in
+            let lbl' = match label graph v with
+                | Some lbl -> " - " ^ (VertexLabel.to_string lbl)
+                | None -> "" in
+            let edges' = CCList.map (fun e ->
+                let dest' = Edge.destination e |> Vertex.to_string in
+                match Edge.label e with
+                    | Some lbl ->
+                        let lbl' = EdgeLabel.to_string lbl in
+                        "+-{" ^ lbl' ^ "}-> " ^ dest'
+                    | None -> "+-> " ^ dest'
+            ) (out_edges graph v) in
+            if CCList.is_empty edges' then
+                v' ^ lbl'
+            else
+                v' ^ lbl' ^ "\n    " ^ (CCString.concat "\n    " edges')
+            ) vertices
+        |> CCString.concat "\n"
+
 end

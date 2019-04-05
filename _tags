@@ -3,5 +3,6 @@
 "src/rule": include
 "src/data": include
 "src/graph": include
+"src/output": include
 
 true: annot, bin_annot

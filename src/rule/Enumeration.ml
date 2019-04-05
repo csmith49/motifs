@@ -1,6 +1,4 @@
-module DocNeighborhood = Neighborhood.Make(Document.DocGraph)
-
-let doc_subgraph n vertex doc = DocNeighborhood.n_hop_subgraph n vertex doc
+let doc_subgraph n vertex doc = Document.DocNeighborhood.n_hop_subgraph n vertex doc
 
 module DocToRuleMapping : Sig.Functor with 
     module Domain = Document.DocGraph and
@@ -22,7 +20,8 @@ end
 
 module DocToRule = Functor.Make(DocToRuleMapping)
 
-let subgraph (n : int) (vertex : Identifier.t) (doc : Document.t) : GraphRule.t = {
+let subgraph (n : int) (vertex : Identifier.t) (doc : Document.t) : GraphRule.t = 
+{
     GraphRule.graph = doc_subgraph n vertex doc |> DocToRule.apply;
     selected = [vertex];
 }
@@ -46,11 +45,13 @@ module VertexSimplification = struct
         let conj = match GraphRule.RuleGraph.label rule.GraphRule.graph id with
             | Some lbl -> lbl
             | None -> [] in
-        match conj with
-            | [] -> [Relax ; Drop]
+        let preds = match conj with
+            | [] -> [Relax]
             | _ ->
                 let indices = CCList.range' 0 (CCList.length conj) in
-                [Relax ; Drop] @ (CCList.map (fun i -> Project i) indices)
+                Relax :: (CCList.map (fun i -> Project i) indices) in
+        if CCList.mem ~eq:(=) id rule.GraphRule.selected then preds
+        else Drop :: preds
 
     let simplify_at_vertex : GraphRule.t -> Identifier.t -> GraphRule.t list = fun rule -> fun id ->
         let simpls = generate rule id in
@@ -82,8 +83,9 @@ module EdgeSimplification = struct
     (* slash is that even important? just filter by disconnects at the end *)
     let generate : GraphRule.t -> GraphRule.RuleGraph.edge -> t list = fun rule -> fun e ->
         match GraphRule.RuleGraph.Edge.label e with
-            | Some _ -> [Keep ; Relax ; Drop]
+            | Some _ -> [Keep ; Drop]
             | None -> [Keep ; Drop]
+    (* note - removed RELAX as an option *)
 
     let simplify_at_edge : GraphRule.t -> GraphRule.RuleGraph.edge -> GraphRule.t list = fun rule -> fun e ->
         let simpls = generate rule e in
@@ -97,9 +99,20 @@ module EdgeSimplification = struct
 end
 
 (* the goal *)
-let candidates_from_example (id : Identifier.t) (doc : Document.t) : GraphRule.t list =
-    let subgraph = subgraph 2 id doc in
+let candidates_from_example ?(max_size=0) (id : Identifier.t) (doc : Document.t) : GraphRule.t list =
+    let subgraph = subgraph max_size id doc in
     let vertex_simplified = VertexSimplification.simplify subgraph in
     let edge_simplified = CCList.flat_map EdgeSimplification.simplify vertex_simplified in
-        edge_simplified
+    edge_simplified
+        |> CCList.filter (GraphRule.connected ~hops:max_size)
+        |> CCList.filter (fun r -> CCList.length (GraphRule.RuleGraph.vertices r.GraphRule.graph) <= 4)
+        |> CCList.filter (fun r -> (GraphRule.max_degree r) <= 2)
         (* todo - filter here based on other goals *)
+
+let check_consistency ?(max_size=0) (id : Identifier.t) (rule : GraphRule.t) (doc : Document.t) : bool =
+    let neg_ids = Document.generate_negative id doc in
+    let neg_docs = CCList.map (fun n -> Document.DocNeighborhood.n_hop_subgraph max_size n doc) neg_ids in
+    let images = CCList.flat_map (fun nd ->
+        GraphRule.apply rule nd |> CCList.flatten
+    ) neg_docs in
+        CCList.for_all (fun n -> not (CCList.mem ~eq:(=) n images)) neg_ids

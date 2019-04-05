@@ -63,20 +63,9 @@ let get_attributes : t -> Identifier.t -> Value.Map.t = fun doc -> fun id ->
         | Some attrs -> attrs
         | None -> Value.Map.empty
 
-(* mine information *)
-module Mine = struct
-    (* pull structure from the document *)
-    let edge_values doc = DocGraph.edges doc |> CCList.filter_map DocGraph.Edge.label
-    let attributes doc = DocGraph.vertices doc 
-        |> CCList.filter_map (DocGraph.label doc)
-        |> CCList.flat_map Value.Map.keys
-    let attribute_values doc = DocGraph.vertices doc
-        |> CCList.filter_map (DocGraph.label doc)
-        |> CCList.flat_map Value.Map.values
+module DocNeighborhood = Neighborhood.Make(DocGraph)
 
-    (* get surrounding context *)
-    let context doc id =
-        let ins = DocGraph.in_edges doc id |> CCList.map DocGraph.Edge.source in
-        let outs = DocGraph.out_edges doc id |> CCList.map DocGraph.Edge.destination in
-        ins @ outs
-end
+(* given positive example, generate negative examples *)
+let generate_negative : Identifier.t -> t -> Identifier.t list = fun id -> fun graph ->
+    let ring = DocNeighborhood.n_ring 2 id graph in
+        ring |> DocNeighborhood.to_list

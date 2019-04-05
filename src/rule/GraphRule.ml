@@ -46,28 +46,37 @@ let map f rule = {
 }
 let (>>) rule f = map f rule
 
-(* satisfying interface *)
-let vertices rule = RuleGraph.vertices rule.graph
+(* for printing *)
+let vertex_to_string rule vertex = 
+    let v = Identifier.to_string vertex in
+    let conj = match RuleGraph.label rule.graph vertex with
+        | Some c -> Predicate.Conjunction.to_string c
+        | None -> "TOP" in
+    let selected = if CCList.mem ~eq:(=) vertex rule.selected then "!" else "" in
+    selected ^ v ^ " - " ^ conj
+let edge_to_string edge =
+    let lbl = match RuleGraph.Edge.label edge with
+        | Some lbl -> "+-{" ^ (Filter.to_string lbl) ^ "}->"
+        | None -> "+->" in
+    let dest = RuleGraph.Edge.destination edge |> Identifier.to_string in
+        lbl ^ " " ^ dest
+let print : t -> unit = fun rule ->
+    let vertices = RuleGraph.vertices rule.graph in
+    CCList.iter (fun v -> 
+        let _ = print_endline (vertex_to_string rule v) in
+        CCList.iter (fun e ->
+            print_endline ("    " ^ (edge_to_string e))
+        ) (RuleGraph.out_edges rule.graph v)
+    ) vertices
 
-let singleton id = {
-    graph = RuleGraph.add_vertex RuleGraph.empty id;
-    selected = [id];
-}
+(* specialized tests *)
+module RuleNeighborhood = Neighborhood.Make(RuleGraph)
 
-let add_vertex rule id = {
-    rule with graph = RuleGraph.add_vertex rule.graph id
-}
+let connected ?(hops=2): t -> bool = fun rule ->
+    let start = CCList.hd rule.selected in
+    let neighborhood = RuleNeighborhood.n_hop hops start rule.graph in
+    (RuleNeighborhood.size neighborhood) = (CCList.length (RuleGraph.vertices rule.graph))
 
-let add_predicate rule id pred = {
-    rule with graph = RuleGraph.add_label rule.graph id [pred]
-}
-
-let add_edge rule src dest = 
-    let edge = RuleGraph.Edge.make src dest in {
-        rule with graph = RuleGraph.add_edge rule.graph edge
-    }
-
-let add_filtered_edge rule src lbl dest =
-    let edge = RuleGraph.Edge.make_labeled src lbl dest in {
-        rule with graph = RuleGraph.add_edge rule.graph edge
-    }
+let max_degree : t -> int = fun rule ->
+    let degrees = RuleGraph.vertices rule.graph |> CCList.map (RuleGraph.degree rule.graph) in
+    CCList.fold_left max 0 degrees

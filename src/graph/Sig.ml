@@ -1,16 +1,19 @@
 (* vertices need to be able to be stored and manipulated easily *)
 module type Vertex = sig
     type t
+    val to_string : t -> string
     include CCBijection.OrderedType with type t := t
 end
 
 (* labels only have the requirement that they exist *)
 module type VertexLabel = sig
     type t
+    val to_string : t -> string
 end
 
 module type EdgeLabel = sig
     type t
+    val to_string : t -> string
 end
 
 (* edges optionally carry labels *)
@@ -69,6 +72,8 @@ module type SemanticGraph = sig
     val edges : t -> edge list
 
     val degree : t -> vertex -> int
+
+    val to_string : t -> string
 end
 
 module type Isomorphism = sig
@@ -104,6 +109,7 @@ module type Neighborhood = sig
 
     val mem : t -> vertex -> bool
     val to_list : t -> vertex list
+    val size : t -> int
 
     val starts_in : t -> edge -> bool
     val ends_in : t -> edge -> bool
@@ -113,6 +119,8 @@ module type Neighborhood = sig
     val n_hop : int -> vertex -> graph -> t
 
     val n_hop_subgraph : int -> vertex -> graph -> graph
+
+    val n_ring : int -> vertex -> graph -> t
 end
 
 module type Functor = sig
