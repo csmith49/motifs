@@ -80,3 +80,20 @@ let connected ?(hops=2): t -> bool = fun rule ->
 let max_degree : t -> int = fun rule ->
     let degrees = RuleGraph.vertices rule.graph |> CCList.map (RuleGraph.degree rule.graph) in
     CCList.fold_left max 0 degrees
+
+(* construction *)
+module Make = struct
+    let singleton id = {
+        graph = RuleGraph.add_vertex RuleGraph.empty id;
+        selected = [id];
+    }
+
+    let add_vertex id g = {
+        g with graph = RuleGraph.add_vertex g.graph id;
+    }
+
+    let add_edge src lbl dest g = 
+        let edge = RuleGraph.Edge.make_labeled src lbl dest in {
+            g with graph = RuleGraph.add_edge g.graph edge;
+        }
+end

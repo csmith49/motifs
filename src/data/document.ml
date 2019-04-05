@@ -66,6 +66,6 @@ let get_attributes : t -> Identifier.t -> Value.Map.t = fun doc -> fun id ->
 module DocNeighborhood = Neighborhood.Make(DocGraph)
 
 (* given positive example, generate negative examples *)
-let generate_negative : Identifier.t -> t -> Identifier.t list = fun id -> fun graph ->
-    let ring = DocNeighborhood.n_ring 2 id graph in
+let generate_negative : int -> Identifier.t -> t -> Identifier.t list = fun n -> fun id -> fun graph ->
+    let ring = DocNeighborhood.n_ring n id graph in
         ring |> DocNeighborhood.to_list

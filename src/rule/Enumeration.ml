@@ -108,11 +108,3 @@ let candidates_from_example ?(max_size=0) (id : Identifier.t) (doc : Document.t)
         |> CCList.filter (fun r -> CCList.length (GraphRule.RuleGraph.vertices r.GraphRule.graph) <= 4)
         |> CCList.filter (fun r -> (GraphRule.max_degree r) <= 2)
         (* todo - filter here based on other goals *)
-
-let check_consistency ?(max_size=0) (id : Identifier.t) (rule : GraphRule.t) (doc : Document.t) : bool =
-    let neg_ids = Document.generate_negative id doc in
-    let neg_docs = CCList.map (fun n -> Document.DocNeighborhood.n_hop_subgraph max_size n doc) neg_ids in
-    let images = CCList.flat_map (fun nd ->
-        GraphRule.apply rule nd |> CCList.flatten
-    ) neg_docs in
-        CCList.for_all (fun n -> not (CCList.mem ~eq:(=) n images)) neg_ids

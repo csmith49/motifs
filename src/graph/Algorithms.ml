@@ -39,49 +39,91 @@ end = struct
         |> CCList.for_all (fun v -> check_view morphism v pattern data)
 
     (* utilities for find *)
-    let bound_vertices morphism pattern = 
-        let bound = E.Isomorphism.domain morphism in pattern
-            |> E.Domain.vertices
-            |> CCList.filter (fun v -> CCList.mem ~eq:(=) v bound)
-    let unbound_vertices morphism pattern =
+    let bound_vertices morphism = E.Isomorphism.domain morphism
+    (* let unbound_vertices morphism pattern =
         let bound = E.Isomorphism.domain morphism in pattern
             |> E.Domain.vertices
             |> CCList.filter (fun v -> not (CCList.mem ~eq:(=) v bound))
-    
+     *)
     (* check if a morphism covers a pattern *)
-    let covers morphism pattern = CCList.is_empty (unbound_vertices morphism pattern)
+    let covers morphism pattern = 
+    (* CCList.is_empty (unbound_vertices morphism pattern) *)
+        let dom = E.Isomorphism.domain morphism in
+        let vertices = E.Domain.vertices pattern in
+        CCList.for_all (fun v -> CCList.mem ~eq:(=) v dom) vertices
 
     (* edges from out of the image of the morphism *)
-    let partial_edges morphism pattern = 
-        let bound = bound_vertices morphism pattern in
-        let unbound = unbound_vertices morphism pattern in E.Domain.edges pattern
-            |> CCList.filter (fun e -> CCList.mem ~eq:(=) (E.Domain.Edge.source e) bound)
-            |> CCList.filter (fun e -> CCList.mem ~eq:(=) (E.Domain.Edge.destination e) unbound)
+    let partial_out_edges morphism pattern =
+        let bound = bound_vertices morphism in
+        CCList.flat_map (E.Domain.out_edges pattern) bound
+            |> CCList.filter (fun e ->
+                not (CCList.mem ~eq:(=) (E.Domain.Edge.destination e) bound)
+            )
+    let partial_in_edges morphism pattern =
+        let bound = bound_vertices morphism in
+        CCList.flat_map (E.Domain.in_edges pattern) bound
+            |> CCList.filter (fun e ->
+                not (CCList.mem ~eq:(=) (E.Domain.Edge.source e) bound)
+            )
 
-    (* given a partial edge, where can we embed it? *)
-    let partial_edge_embeddings morphism edge data =
+    let partial_out_edge_embeddings morphism edge data =
         match E.Isomorphism.image morphism (E.Domain.Edge.source edge) with
             | Some src ->
                 let candidates = E.Codomain.out_edges data src in
-                (* remove candidates that have a bound destination *)
-                let bound = E.Isomorphism.codomain morphism in
-                CCList.filter (fun e -> 
+                let co_bound = E.Isomorphism.codomain morphism in
+                CCList.filter (fun e ->
                     let dest = E.Codomain.Edge.destination e in
-                    not (CCList.mem ~eq:(=) dest bound)
+                    not (CCList.mem ~eq:(=) dest co_bound)
+                ) candidates
+            | None -> []
+    let partial_in_edge_embeddings morphism edge data =
+        match E.Isomorphism.image morphism (E.Domain.Edge.destination edge) with
+            | Some dest ->
+                let candidates = E.Codomain.in_edges data dest in
+                let co_bound = E.Isomorphism.codomain morphism in
+                CCList.filter (fun e ->
+                    let src = E.Codomain.Edge.source e in
+                    not (CCList.mem ~eq:(=) src co_bound)
                 ) candidates
             | None -> []
 
     (* given a partial edge, extend the morphism as much as possible *)
-    let extend_by_partial_edge morphism edge data =
-        let embedded = partial_edge_embeddings morphism edge data in
+    let extend_by_partial_out_edge morphism edge data =
+        let embedded = partial_out_edge_embeddings morphism edge data in
+        let dom = E.Domain.Edge.destination edge in
         let bindings = embedded
-            |> CCList.map (fun e -> (E.Domain.Edge.source edge, E.Codomain.Edge.destination e)) in
-        CCList.map (fun (l, r) -> E.Isomorphism.add morphism l r) bindings 
+            |> CCList.map (fun e -> 
+                let codom = E.Codomain.Edge.destination e in
+                    (dom, codom)
+                ) in
+        CCList.map (fun (l, r) -> E.Isomorphism.add morphism l r) bindings
+    let extend_by_partial_in_edge morphism edge data =
+        let embedded = partial_in_edge_embeddings morphism edge data in
+        let dom = E.Domain.Edge.source edge in
+        let bindings = embedded
+            |> CCList.map (fun e -> 
+                let codom = E.Codomain.Edge.source e in
+                    (dom, codom)
+                ) in
+        CCList.map (fun (l, r) -> E.Isomorphism.add morphism l r) bindings
 
     (* extend a morphism, if possible *)
     let extend morphism pattern data =
-        let edges = partial_edges morphism pattern in
-        CCList.flat_map (fun e -> extend_by_partial_edge morphism e data) edges
+        let out_edges = partial_out_edges morphism pattern in
+        let out_extended = CCList.flat_map (fun e -> extend_by_partial_out_edge morphism e data) out_edges in
+        let in_edges = partial_in_edges morphism pattern in
+        let in_extended = CCList.flat_map (fun e -> extend_by_partial_in_edge morphism e data) in_edges in
+            out_extended @ in_extended
+
+    let rec struct_at pattern vertex data =
+        let initial = E.Isomorphism.add E.Isomorphism.empty (E.Domain.vertices pattern |> CCList.hd) vertex in
+        struct_at_aux [initial] pattern data
+    and struct_at_aux wl pattern data = match wl with
+        | m :: rest ->
+            if covers m pattern then m :: (struct_at_aux rest pattern data) else
+                let extensions = extend m pattern data in
+                struct_at_aux (rest @ extensions) pattern data
+        | [] -> []
 
     (* candidate generation operates very heuristically, and only on structural information *)
     let rec structural_candidates pattern data =
@@ -89,9 +131,13 @@ end = struct
         let initial = E.Codomain.vertices data
             |> CCList.map (fun c -> E.Isomorphism.add E.Isomorphism.empty root c) in
         structural_candidates_aux initial pattern data
-    and structural_candidates_aux worklist pattern data = match worklist with
-        | m :: rest -> if covers m pattern then m :: (structural_candidates_aux rest pattern data)
-            else structural_candidates_aux rest pattern data @ extend m pattern data
+    and structural_candidates_aux worklist pattern data = 
+    (* let _ = print_endline ("WL SIZE: " ^ (string_of_int (CCList.length worklist))) in *)
+    match worklist with
+        | m :: rest -> 
+            if covers m pattern then m :: (structural_candidates_aux rest pattern data) else 
+                let extensions = extend m pattern data in
+                structural_candidates_aux (rest @ extensions) pattern data
         | [] -> []
 
     (* finding matches that will return "true" when checked *)
