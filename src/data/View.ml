@@ -7,6 +7,13 @@ type t = {
     attributes : attribute list;
 }
 
+type combo = t list
+let combine : t list -> combo = fun x -> x
+let labels : combo -> label list = fun c -> c
+    |> CCList.flat_map (fun v -> v.labels)
+let attributes : combo -> attribute list = fun c -> c
+    |> CCList.flat_map (fun v -> v.attributes)
+
 let label_of_json : Yojson.Basic.t -> label option = function
     | `String s -> Some s
     | _ -> None

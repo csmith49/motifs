@@ -23,6 +23,19 @@ let _ = print_string ("Loading document " ^ !doc_filename ^ "...")
 let data = SQLite.of_filename !doc_filename
 let _ = print_endline ("done.")
 
+(* get views *)
+let _ = print_string ("Loading views...")
+let view = [
+    "./views/linguistic.json";
+    "./views/stylistic.json";
+    "./views/syntactic.json";
+    "./views/visual.json";
+] 
+    |> CCList.map View.from_file
+    |> View.combine
+let _ = print_endline "done."
+
+
 
 (* test rule *)
 let filter = Filter.Make.of_string "PARENT_OF"
