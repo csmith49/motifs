@@ -20,16 +20,30 @@ let _ = Arg.parse spec_list print_endline usage_msg
 
 (* load the data *)
 let _ = print_string ("Loading document " ^ !doc_filename ^ "...")
-let document = Document.from_file !doc_filename
+let data = SQLite.of_filename !doc_filename
 let _ = print_endline ("done.")
 
+
+(* test rule *)
+let filter = Filter.Make.of_string "PARENT_OF"
+let rule = GraphRule.Make.singleton 1
+    |> GraphRule.Make.add_vertex 2
+    |> GraphRule.Make.add_vertex 3
+    |> GraphRule.Make.add_edge 1 filter 2
+    |> GraphRule.Make.add_edge 1 filter 3
+let query = GraphRule.Query.of_rule rule
+let _ = print_endline (GraphRule.Query.to_string query)
+
+let data = SQLite.apply_query data query
+let _ = print_endline (string_of_int (CCList.length data))
+
 (* loading examples *)
-let _ = print_string ("Loading examples from " ^ !ex_filename ^ "...")
+(* let _ = print_string ("Loading examples from " ^ !ex_filename ^ "...")
 let examples = Example.from_file !ex_filename !doc_filename
-let _ = print_endline ("done.\n")
+let _ = print_endline ("done.\n") *)
 
 (* get an example *)
-let process_example example = begin
+(* let process_example example = begin
     let _ = print_endline ("Found example: " ^ (Identifier.to_string example)) in
     let _ = print_endline ("Example neighborhood: ") in
     let ex_neighborhood = Document.DocNeighborhood.n_hop_subgraph 2 example document in
@@ -104,4 +118,4 @@ let process_example example = begin
 end
 
 (* process the examples *)
-let _ = CCList.iter process_example examples
+let _ = CCList.iter process_example examples *)

@@ -5,6 +5,9 @@ type t = {
     filter : Filter.t;
 }
 
+let attribute p = p.attribute
+let value p = Filter.to_string p.filter
+
 let mk string filt = {
     attribute = string;
     filter = filt;

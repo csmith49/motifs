@@ -5,6 +5,8 @@ type t = {
     selected : Identifier.t list;
 }
 
+type rule = t
+
 module Isomorphism = Morphism.Iso(RuleGraph)(Document.DocGraph)
 
 module AppEmbedding : Sig.Embedding with 
@@ -95,5 +97,87 @@ module Make = struct
     let add_edge src lbl dest g = 
         let edge = RuleGraph.Edge.make_labeled src lbl dest in {
             g with graph = RuleGraph.add_edge g.graph edge;
+        }
+end
+
+module Query = struct
+    module IdentifierSet = CCSet.Make(Identifier)
+
+    type t = {
+        query : string;
+        selected : Identifier.t list;
+    }
+    (* the intermediate reps *)
+    type partial = {
+        p_query : string;
+        bound : IdentifierSet.t
+    }
+
+    (* extracting fields *)
+    let query q = q.query
+    let selected q = q.selected
+
+    (* selecting the query, effectively *)
+    let to_string : t -> string = fun q -> q.query
+
+    (* convert an edge to a query via remapping names *)
+    let of_edge : RuleGraph.edge -> partial = fun e ->
+        let src = RuleGraph.Edge.source e in
+        let dest = RuleGraph.Edge.destination e in
+        let label = RuleGraph.Edge.label e |> CCOpt.get_exn in
+        let query = Printf.sprintf
+            "SELECT source AS '%s', target AS '%s' FROM %s"
+            (Identifier.to_string src)
+            (Identifier.to_string dest)
+            (Filter.to_string label) in
+        {
+            p_query = query;
+            bound = IdentifierSet.of_list [src ; dest];
+        }
+    
+    let of_vertex : RuleGraph.vertex -> RuleGraph.vertex_label option -> partial = fun id -> fun attr ->
+        let query = match attr with
+            (* TODO - make this assumption not really an assumption *)
+            | Some (hd :: _) ->
+                let value = Predicate.value hd in
+                let attribute = Predicate.attribute hd in
+                Printf.sprintf 
+                    "SELECT id AS '%s' FROM %s WHERE 'value' = '%s'"
+                    (Identifier.to_string id)
+                    attribute
+                    value
+            | _ -> Printf.sprintf "SELECT identifier AS '%s' FROM vertex" (Identifier.to_string id) in
+        {
+            p_query = query;
+            bound = IdentifierSet.singleton id;
+        }
+
+    let merge_partial : partial -> partial -> partial = fun l -> fun r ->
+        let query = Printf.sprintf
+            "SELECT * FROM (%s) NATURAL JOIN (%s)"
+            l.p_query
+            r.p_query in
+        {
+            p_query = query;
+            bound = IdentifierSet.union l.bound r.bound;
+        }
+
+    let of_view : RuleGraph.t -> RuleGraph.vertex -> partial = fun g -> fun id ->
+        let attr = RuleGraph.label g id in
+        let v_partial = of_vertex id attr in
+        let edge_partials = RuleGraph.out_edges g id
+            |> CCList.map of_edge in
+        CCList.fold_left merge_partial v_partial edge_partials
+
+    let of_rule : rule -> t = fun rule ->
+        let partials = RuleGraph.vertices rule.graph
+            |> CCList.map (of_view rule.graph) in
+        let partial = match partials with
+            | hd :: tl ->
+                CCList.fold_left merge_partial hd tl
+            | [] -> raise Exit in
+        {
+            query = partial.p_query;
+            selected = rule.selected;
         }
 end

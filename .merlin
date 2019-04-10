@@ -5,3 +5,4 @@ PKG containers
 PKG containers.data
 PKG yojson
 PKG ocamlgraph
+PKG sqlite3
