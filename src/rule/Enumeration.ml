@@ -108,3 +108,16 @@ let candidates_from_example ?(max_size=0) (id : Identifier.t) (doc : Document.t)
         |> CCList.filter (fun r -> CCList.length (GraphRule.RuleGraph.vertices r.GraphRule.graph) <= 4)
         |> CCList.filter (fun r -> (GraphRule.max_degree r) <= 2)
         (* todo - filter here based on other goals *)
+
+let candidates_from_db_example ?(max_size=0) (db : SQLite.t) (view : View.combo) (id : Identifier.t) : GraphRule.t list =
+    let doc = SQLite.get_context db max_size id view in
+    let rule = {
+        GraphRule.graph = DocToRule.apply doc;
+        selected = [id];
+    } in
+    let vertex_simplified = VertexSimplification.simplify rule in
+    let edge_simplified = CCList.flat_map EdgeSimplification.simplify vertex_simplified in
+    edge_simplified
+        |> CCList.filter (GraphRule.connected ~hops:max_size)
+        |> CCList.filter (fun r -> CCList.length (GraphRule.RuleGraph.vertices r.GraphRule.graph) <= 4)
+        |> CCList.filter (fun r -> (GraphRule.max_degree r) <= 2)

@@ -11,6 +11,13 @@ let of_int : int -> t = fun i -> `Int i
 let of_string : string -> t = fun s -> `String s
 let of_bool : bool -> t = fun b -> `Bool b
 
+let of_string : string -> t = fun s ->
+    match int_of_string_opt s with
+        | Some i -> `Int i
+        | None -> match bool_of_string_opt s with
+            | Some b -> `Bool b
+            | None -> `String s
+
 (* and to ocaml literals *)
 let to_int_opt : t -> int option = function
     | `Int i -> Some i
@@ -25,8 +32,8 @@ let to_bool_opt : t -> bool option = function
 (* for printing *)
 let to_string : t -> string = function
     | `Int i -> string_of_int i
-    | `String s -> s
-    | `Bool b -> string_of_bool b
+    | `String s -> "'" ^ s ^ "'"
+    | `Bool b -> (string_of_bool b)
     | `Null -> "NULL"
 
 (* picking out particular constructors *)
@@ -59,6 +66,8 @@ module Map = struct
     let get : CCString.t -> t -> value option = StringMap.get
     let add : CCString.t -> value -> t -> t = StringMap.add
     let to_list : t -> (CCString.t * value) list = StringMap.bindings
+
+    let is_empty : t -> bool = StringMap.is_empty
 
     let keys : t -> string list = fun m -> StringMap.to_list m |> CCList.map fst
     let values : t -> value list = fun m -> StringMap.to_list m |> CCList.map snd

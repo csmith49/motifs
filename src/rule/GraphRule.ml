@@ -120,6 +120,36 @@ module Query = struct
     (* selecting the query, effectively *)
     let to_string : t -> string = fun q -> q.query
 
+    type query = string
+
+    let query_of_edge : RuleGraph.edge -> query = fun e -> Printf.sprintf
+        "SELECT source AS '%s', target AS '%s' FROM %s"
+            (e |> RuleGraph.Edge.source |> Identifier.to_string)
+            (e |> RuleGraph.Edge.destination |> Identifier.to_string)
+            (e |> RuleGraph.Edge.label |> CCOpt.get_exn |> Filter.to_string)
+    let opt_query_of_vertex : RuleGraph.t -> RuleGraph.vertex -> query option = fun g -> fun v ->
+        match RuleGraph.label g v with
+            (* TODO - fix this assumption *)
+            | Some (hd :: _) -> Some (Printf.sprintf
+                "SELECT id AS '%s' FROM %s WHERE value = %s"
+                (Identifier.to_string v)
+                (hd |> Predicate.attribute)
+                (hd |> Predicate.value)
+            )
+            | _ -> None
+    let query_of_rule : rule -> query = fun r ->
+        let edge_queries = r.graph
+            |> RuleGraph.edges
+            |> CCList.map query_of_edge in
+        let vertex_queries = r.graph
+            |> RuleGraph.vertices
+            |> CCList.filter_map (opt_query_of_vertex r.graph) in
+        let wrapped_queries = edge_queries @ vertex_queries
+            |> CCList.map (fun q -> "(" ^ q ^ ")") in
+        Printf.sprintf "SELECT * FROM %s"
+            (CCString.concat " NATURAL JOIN " wrapped_queries)
+
+
     (* convert an edge to a query via remapping names *)
     let of_edge : RuleGraph.edge -> partial = fun e ->
         let src = RuleGraph.Edge.source e in
@@ -142,7 +172,7 @@ module Query = struct
                 let value = Predicate.value hd in
                 let attribute = Predicate.attribute hd in
                 Printf.sprintf 
-                    "SELECT id AS '%s' FROM %s WHERE 'value' = '%s'"
+                    "SELECT id AS '%s' FROM %s WHERE value = %s"
                     (Identifier.to_string id)
                     attribute
                     value
@@ -170,14 +200,8 @@ module Query = struct
         CCList.fold_left merge_partial v_partial edge_partials
 
     let of_rule : rule -> t = fun rule ->
-        let partials = RuleGraph.vertices rule.graph
-            |> CCList.map (of_view rule.graph) in
-        let partial = match partials with
-            | hd :: tl ->
-                CCList.fold_left merge_partial hd tl
-            | [] -> raise Exit in
         {
-            query = partial.p_query;
+            query = query_of_rule rule;
             selected = rule.selected;
         }
 end

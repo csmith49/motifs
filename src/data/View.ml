@@ -11,8 +11,10 @@ type combo = t list
 let combine : t list -> combo = fun x -> x
 let labels : combo -> label list = fun c -> c
     |> CCList.flat_map (fun v -> v.labels)
+    |> CCList.uniq ~eq:(=)
 let attributes : combo -> attribute list = fun c -> c
     |> CCList.flat_map (fun v -> v.attributes)
+    |> CCList.uniq ~eq:(=)
 
 let label_of_json : Yojson.Basic.t -> label option = function
     | `String s -> Some s
