@@ -1,4 +1,4 @@
-open Sig
+open GraphSig
 
 module SubgraphMatching (E : Embedding) : sig
     val check : E.Isomorphism.t -> E.Domain.t -> E.Codomain.t -> bool

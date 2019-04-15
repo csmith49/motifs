@@ -1,4 +1,6 @@
-module Make (V : Sig.Vertex) (VL : Sig.VertexLabel) (EL : Sig.EdgeLabel) : Sig.SemanticGraph 
+open GraphSig
+
+module Make (V : Vertex) (VL : VertexLabel) (EL : EdgeLabel) : SemanticGraph 
     with type vertex = V.t
     and type edge_label = EL.t
     and type vertex_label = VL.t

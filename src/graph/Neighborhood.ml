@@ -1,4 +1,4 @@
-open Sig
+open GraphSig
 
 module Make (G : SemanticGraph) : Neighborhood with
     type vertex = G.vertex and

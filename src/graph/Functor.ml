@@ -1,4 +1,4 @@
-open Sig
+open GraphSig
 
 module Make (F : Functor) : sig
     type domain

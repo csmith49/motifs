@@ -1,4 +1,4 @@
-open Sig
+open GraphSig
 
 module Iso (D : SemanticGraph) (C : SemanticGraph) : Isomorphism 
     with type domain = D.vertex and type codomain = C.vertex

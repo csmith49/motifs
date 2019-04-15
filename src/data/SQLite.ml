@@ -119,19 +119,3 @@ let negative db n id view =
     let id_set = IdentifierSet.singleton id in
     let nearby = get_nearby_vertices db n id_set view in
         IdentifierSet.remove id nearby |> IdentifierSet.to_list
-(* WITH B (identifier) as (SELECT identifier as 'identifier' FROM vertex where identifier in ('2560898')),
-O (identifier) as (
-	SELECT target as 'identifier' from B as b JOIn PARENT_OF as p on b.identifier = p.source
-  	UNION
-  	SELECT source AS 'identifier' from B as b JOIN PARENT_OF as p on b.identifier = p.target
-),
-Iter2 (identifier) as (
-  	SELECT target as 'identifier' from O as b JOIn PARENT_OF as p on b.identifier = p.source
-  	UNION
-  	SELECT source AS 'identifier' from O as b JOIN PARENT_OF as p on b.identifier = p.target
-)
-SELECT * from B
-UNION
-SELECT * FROM O
-UNION
-SELECT * FROM Iter2 *)
