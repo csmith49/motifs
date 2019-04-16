@@ -2,14 +2,14 @@ module RuleGraph = SemanticGraph.Make(Identifier)(Predicate.Conjunction)(Filter)
 
 type t = {
     graph : RuleGraph.t;
-    selected : Identifier.t list;
+    selected : Identifier.t;
 }
 
 type rule = t
 
 module Isomorphism = Morphism.Iso(RuleGraph)(Document.DocGraph)
 
-module AppEmbedding : Sig.Embedding with 
+module AppEmbedding : GraphSig.Embedding with 
     module Domain = RuleGraph and 
     module Codomain = Document.DocGraph and
     module Isomorphism = Isomorphism
@@ -34,14 +34,13 @@ module AppEmbedding : Sig.Embedding with
         | None -> true
 end
 
-let entities rule morphism = rule.selected
-    |> CCList.map (fun v -> Isomorphism.image morphism v)
-    |> CCOpt.sequence_l
+let entity rule morphism = rule.selected
+    |> Isomorphism.image morphism
 
 module Matching = Algorithms.SubgraphMatching(AppEmbedding)
 
 let apply rule doc = Matching.find rule.graph doc
-    |> CCList.filter_map (fun m -> entities rule m)
+    |> CCList.filter_map (fun m -> entity rule m)
 
 let map f rule = {
     rule with graph = f rule.graph
@@ -54,7 +53,7 @@ let vertex_to_string rule vertex =
     let conj = match RuleGraph.label rule.graph vertex with
         | Some c -> Predicate.Conjunction.to_string c
         | None -> "TOP" in
-    let selected = if CCList.mem ~eq:(=) vertex rule.selected then "!" else "" in
+    let selected = if vertex = rule.selected then "!" else "" in
     selected ^ v ^ " - " ^ conj
 let edge_to_string edge =
     let lbl = match RuleGraph.Edge.label edge with
@@ -75,7 +74,7 @@ let print : t -> unit = fun rule ->
 module RuleNeighborhood = Neighborhood.Make(RuleGraph)
 
 let connected ?(hops=2): t -> bool = fun rule ->
-    let start = CCList.hd rule.selected in
+    let start = rule.selected in
     let neighborhood = RuleNeighborhood.n_hop hops start rule.graph in
     (RuleNeighborhood.size neighborhood) = (CCList.length (RuleGraph.vertices rule.graph))
 
@@ -87,7 +86,7 @@ let max_degree : t -> int = fun rule ->
 module Make = struct
     let singleton id = {
         graph = RuleGraph.add_vertex RuleGraph.empty id;
-        selected = [id];
+        selected = id;
     }
 
     let add_vertex id g = {
@@ -105,7 +104,7 @@ module Query = struct
 
     type t = {
         query : string;
-        selected : Identifier.t list;
+        selected : Identifier.t;
     }
     (* the intermediate reps *)
     type partial = {
@@ -148,56 +147,6 @@ module Query = struct
             |> CCList.map (fun q -> "(" ^ q ^ ")") in
         Printf.sprintf "SELECT * FROM %s"
             (CCString.concat " NATURAL JOIN " wrapped_queries)
-
-
-    (* convert an edge to a query via remapping names *)
-    let of_edge : RuleGraph.edge -> partial = fun e ->
-        let src = RuleGraph.Edge.source e in
-        let dest = RuleGraph.Edge.destination e in
-        let label = RuleGraph.Edge.label e |> CCOpt.get_exn in
-        let query = Printf.sprintf
-            "SELECT source AS '%s', target AS '%s' FROM %s"
-            (Identifier.to_string src)
-            (Identifier.to_string dest)
-            (Filter.to_string label) in
-        {
-            p_query = query;
-            bound = IdentifierSet.of_list [src ; dest];
-        }
-    
-    let of_vertex : RuleGraph.vertex -> RuleGraph.vertex_label option -> partial = fun id -> fun attr ->
-        let query = match attr with
-            (* TODO - make this assumption not really an assumption *)
-            | Some (hd :: _) ->
-                let value = Predicate.value hd in
-                let attribute = Predicate.attribute hd in
-                Printf.sprintf 
-                    "SELECT id AS '%s' FROM %s WHERE value = %s"
-                    (Identifier.to_string id)
-                    attribute
-                    value
-            | _ -> Printf.sprintf "SELECT identifier AS '%s' FROM vertex" (Identifier.to_string id) in
-        {
-            p_query = query;
-            bound = IdentifierSet.singleton id;
-        }
-
-    let merge_partial : partial -> partial -> partial = fun l -> fun r ->
-        let query = Printf.sprintf
-            "SELECT * FROM (%s) NATURAL JOIN (%s)"
-            l.p_query
-            r.p_query in
-        {
-            p_query = query;
-            bound = IdentifierSet.union l.bound r.bound;
-        }
-
-    let of_view : RuleGraph.t -> RuleGraph.vertex -> partial = fun g -> fun id ->
-        let attr = RuleGraph.label g id in
-        let v_partial = of_vertex id attr in
-        let edge_partials = RuleGraph.out_edges g id
-            |> CCList.map of_edge in
-        CCList.fold_left merge_partial v_partial edge_partials
 
     let of_rule : rule -> t = fun rule ->
         {

@@ -1,6 +1,6 @@
 let doc_subgraph n vertex doc = Document.DocNeighborhood.n_hop_subgraph n vertex doc
 
-module DocToRuleMapping : Sig.Functor with 
+module DocToRuleMapping : GraphSig.Functor with 
     module Domain = Document.DocGraph and
     module Codomain = GraphRule.RuleGraph
 = struct
@@ -23,7 +23,7 @@ module DocToRule = Functor.Make(DocToRuleMapping)
 let subgraph (n : int) (vertex : Identifier.t) (doc : Document.t) : GraphRule.t = 
 {
     GraphRule.graph = doc_subgraph n vertex doc |> DocToRule.apply;
-    selected = [vertex];
+    selected = vertex;
 }
 
 module VertexSimplification = struct
@@ -50,7 +50,7 @@ module VertexSimplification = struct
             | _ ->
                 let indices = CCList.range' 0 (CCList.length conj) in
                 Relax :: (CCList.map (fun i -> Project i) indices) in
-        if CCList.mem ~eq:(=) id rule.GraphRule.selected then preds
+        if id = rule.GraphRule.selected then preds
         else Drop :: preds
 
     let simplify_at_vertex : GraphRule.t -> Identifier.t -> GraphRule.t list = fun rule -> fun id ->
@@ -113,7 +113,7 @@ let candidates_from_db_example ?(max_size=0) (db : SQLite.t) (view : View.combo)
     let doc = SQLite.get_context db max_size id view in
     let rule = {
         GraphRule.graph = DocToRule.apply doc;
-        selected = [id];
+        selected = id;
     } in
     let vertex_simplified = VertexSimplification.simplify rule in
     let edge_simplified = CCList.flat_map EdgeSimplification.simplify vertex_simplified in

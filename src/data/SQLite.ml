@@ -22,15 +22,21 @@ end
 let of_filename : string -> t = fun filename ->
     Sqlite3.db_open filename
 
-let apply_query : t -> GraphRule.Query.t -> Identifier.t list list = fun db -> fun q ->
+let apply_query : t -> GraphRule.Query.t -> Identifier.t list = fun db -> fun q ->
     let query = GraphRule.Query.query q in
     let output = ref [] in
     let callback row header =
-        let indices = Utility.get_indices (GraphRule.Query.selected q) header in
-        let result = row |> Utility.extract indices |> Utility.to_identifiers in
-            output := result :: !output in
-    let _ = Sqlite3.exec db ~cb:callback query in
-        !output |> CCList.filter_map CCOpt.sequence_l
+        let index =
+            let id = q |> GraphRule.Query.selected |> Identifier.to_string in
+            header |> CCArray.find_idx (fun h -> h = id) |> CCOpt.map fst in
+        let result = match index with
+            | Some idx -> CCArray.get row idx 
+                |> CCOpt.flat_map Identifier.of_string
+            | None -> None in
+        match result with
+            | Some result -> output := result :: !output
+            | None -> () in
+    let _ = Sqlite3.exec db ~cb:callback query in !output
 
 let get_attributes : t -> Identifier.t -> View.attribute list -> Value.Map.t = fun db -> fun id -> fun attrs ->
     let check attr =

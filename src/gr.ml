@@ -1,3 +1,5 @@
+type test = Interface.SQLite.t
+
 (* references for inputs *)
 let doc_filename = ref ""
 let ex_filename = ref ""
@@ -67,7 +69,7 @@ let process example view k = begin
         let _ = GraphRule.print rule in
         let query = GraphRule.Query.of_rule rule in
         let _ = print_endline ("QEURY: " ^ (GraphRule.Query.to_string query)) in
-        let image = SQLite.apply_query data query |> CCList.flatten in
+        let image = SQLite.apply_query data query in
         if CCList.exists (fun n -> CCList.mem ~eq:(=) n negative) image then
             let _ = print_endline "Rule is inconsistent." in
             None
