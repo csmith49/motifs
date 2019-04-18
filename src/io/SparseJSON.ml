@@ -6,7 +6,7 @@ module SQLMake (I : DataSig.SQLData) = struct
         let selected = I.apply db query in
         `Assoc [
             ("sign", `Bool true);
-            ("iamge", `List (selected |> CCList.map Identifier.to_json))
+            ("image", `List (selected |> CCList.map Identifier.to_json))
         ]
 
     let ensemble_image (db : I.t) (rules : GraphRule.t list) : t =
