@@ -1,23 +1,17 @@
 open GraphSig
 
-module type Data = sig
+module type SQLData = sig
     (* representing a view of the data *)
     type t
-    type vertex
-    type graph
-    type query
-
+ 
     val of_string : string -> t
 
-    module DataGraph : SemanticGraph with
-        type vertex = vertex
+    val context : t -> int -> Identifier.t -> View.t -> Document.t
 
-    val context : t -> int -> vertex -> DataGraph.t
+    val negative_instances : t -> int -> Identifier.t -> View.t -> Identifier.t list
 
-    val negative_instances : t -> int -> vertex -> vertex list
+    val count : t -> SQLQuery.t -> int
+    val apply : t -> SQLQuery.t -> Identifier.t list
 
-    val count : t -> query -> int
-    val apply : t -> query -> vertex list
-
-    val apply_on : t -> query -> vertex list -> vertex list
+    val apply_on : t -> SQLQuery.t -> Identifier.t list -> Identifier.t list
 end

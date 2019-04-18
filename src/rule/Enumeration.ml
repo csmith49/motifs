@@ -98,26 +98,22 @@ module EdgeSimplification = struct
         ) [rule] edges
 end
 
-(* the goal *)
-let candidates_from_example ?(max_size=0) (id : Identifier.t) (doc : Document.t) : GraphRule.t list =
-    let subgraph = subgraph max_size id doc in
-    let vertex_simplified = VertexSimplification.simplify subgraph in
-    let edge_simplified = CCList.flat_map EdgeSimplification.simplify vertex_simplified in
-    edge_simplified
-        |> CCList.filter (GraphRule.connected ~hops:max_size)
-        |> CCList.filter (fun r -> CCList.length (GraphRule.RuleGraph.vertices r.GraphRule.graph) <= 4)
-        |> CCList.filter (fun r -> (GraphRule.max_degree r) <= 2)
-        (* todo - filter here based on other goals *)
+module SQLMake (I : DataSig.SQLData) = struct
+    let candidates ?(max_size=1) (db : I.t) (view : View.t) (id : Identifier.t) : GraphRule.t list =
+        let document = I.context db max_size id view in
+        let rule = {
+            GraphRule.graph = DocToRule.apply document;
+            selected = id;
+        } in
+        CCList.flat_map EdgeSimplification.simplify (VertexSimplification.simplify rule)
 
-let candidates_from_db_example ?(max_size=0) (db : SQLite.t) (view : View.combo) (id : Identifier.t) : GraphRule.t list =
-    let doc = SQLite.get_context db max_size id view in
-    let rule = {
-        GraphRule.graph = DocToRule.apply doc;
-        selected = id;
-    } in
-    let vertex_simplified = VertexSimplification.simplify rule in
-    let edge_simplified = CCList.flat_map EdgeSimplification.simplify vertex_simplified in
-    edge_simplified
-        |> CCList.filter (GraphRule.connected ~hops:max_size)
-        |> CCList.filter (fun r -> CCList.length (GraphRule.RuleGraph.vertices r.GraphRule.graph) <= 4)
-        |> CCList.filter (fun r -> (GraphRule.max_degree r) <= 2)
+    let connected hops = GraphRule.connected ~hops:hops
+    let vertex_bounded size rule = CCList.length (GraphRule.RuleGraph.vertices rule.GraphRule.graph) <= size
+    let edge_bounded degree rule = (GraphRule.max_degree rule) <= degree
+
+    let filtered_candidates ?(max_size=1) ?(vertices=4) ?(degree=2) db view id =
+        candidates ~max_size:max_size db view id
+            |> CCList.filter (connected max_size)
+            |> CCList.filter (vertex_bounded vertices)
+            |> CCList.filter (edge_bounded degree)
+end

@@ -7,14 +7,19 @@ type t = {
     attributes : attribute list;
 }
 
-type combo = t list
-let combine : t list -> combo = fun x -> x
-let labels : combo -> label list = fun c -> c
-    |> CCList.flat_map (fun v -> v.labels)
-    |> CCList.uniq ~eq:(=)
-let attributes : combo -> attribute list = fun c -> c
-    |> CCList.flat_map (fun v -> v.attributes)
-    |> CCList.uniq ~eq:(=)
+let combine : t list -> t = fun vs ->
+    let labels = vs
+        |> CCList.flat_map (fun v -> v.labels) 
+        |> CCList.uniq ~eq:(=) in
+    let attrs = vs
+        |> CCList.flat_map (fun v -> v.attributes)
+        |> CCList.uniq ~eq:(=) in
+    {
+        labels = labels;
+        attributes = attrs;
+    }
+let labels : t -> label list = fun c -> c.labels
+let attributes : t -> attribute list = fun c -> c.attributes
 
 let label_of_json : Yojson.Basic.t -> label option = function
     | `String s -> Some s

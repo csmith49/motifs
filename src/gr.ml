@@ -22,9 +22,13 @@ let spec_list = [
 let usage_msg = "I'll set this later"
 let _ = Arg.parse spec_list print_endline usage_msg
 
+(* setup interface *)
+module Data = Interface.SQLite
+module Synthesis = Enumeration.SQLMake(Data)
+
 (* load the data *)
 let _ = print_string ("Loading document " ^ !doc_filename ^ "...")
-let data = SQLite.of_filename !doc_filename
+let data = Data.of_string !doc_filename
 let _ = print_endline ("done.")
 
 (* get views *)
@@ -55,21 +59,20 @@ let process example view k = begin
 
     (* synthesize collectors *)
     let _ = print_string "Synthesizing rules..." in
-    let rules = Enumeration.candidates_from_db_example ~max_size:!size data view example in
+    let rules = Synthesis.filtered_candidates ~max_size:!size data view example in
     let _ = print_endline "done." in
 
     (* let's examine the rules *)
     let _ = print_endline ("Found " ^ (string_of_int (CCList.length rules)) ^ " rules from example.") in
     let _ = print_string "Checking rules for consistency..." in
-    let negative = SQLite.negative data !negative_width example view in
+    let negative = Data.negative_instances data !negative_width example view in
     let _ = print_endline ("found " ^ (string_of_int (CCList.length negative)) ^ " negative examples.") in
 
     let images = CCList.filter_map (fun rule ->
         let _ = print_endline "Checking rule:" in
         let _ = GraphRule.print rule in
-        let query = GraphRule.Query.of_rule rule in
-        let _ = print_endline ("QEURY: " ^ (GraphRule.Query.to_string query)) in
-        let image = SQLite.apply_query data query in
+        let query = SQLQuery.of_rule rule in
+        let image = Data.apply data query in
         if CCList.exists (fun n -> CCList.mem ~eq:(=) n negative) image then
             let _ = print_endline "Rule is inconsistent." in
             None
