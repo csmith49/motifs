@@ -1,5 +1,3 @@
-type test = Interface.SQLite.t
-
 (* references for inputs *)
 let doc_filename = ref ""
 let ex_filename = ref ""
@@ -25,6 +23,7 @@ let _ = Arg.parse spec_list print_endline usage_msg
 (* setup interface *)
 module Data = Interface.SQLite
 module Synthesis = Enumeration.SQLMake(Data)
+module Output = SparseJSON.SQLMake(Data)
 
 (* load the data *)
 let _ = print_string ("Loading document " ^ !doc_filename ^ "...")
@@ -68,23 +67,18 @@ let process example view k = begin
     let negative = Data.negative_instances data !negative_width example view in
     let _ = print_endline ("found " ^ (string_of_int (CCList.length negative)) ^ " negative examples.") in
 
-    let images = CCList.filter_map (fun rule ->
+    let rules = CCList.filter (fun rule ->
         let _ = print_endline "Checking rule:" in
         let _ = GraphRule.print rule in
         let query = SQLQuery.of_rule rule in
-        let image = Data.apply data query in
-        if CCList.exists (fun n -> CCList.mem ~eq:(=) n negative) image then
-            let _ = print_endline "Rule is inconsistent." in
-            None
-        else
-            let _ = print_endline ("Consistent with image size " ^ (string_of_int (CCList.length image))) in
-            Some (rule, image)
+        let image = Data.apply_on data query negative in
+            CCList.is_empty image
     ) rules in
 
     let _ = print_endline ("\nFound " ^ (string_of_int (CCList.length rules)) ^ " consistent rules.") in
 
-    let top_k = images
-        |> CCList.map (fun (k, v) -> (k, CCList.length v))
+    let top_k = rules
+        |> CCList.map (fun r -> (r, Data.count data (SQLQuery.of_rule r)))
         |> CCList.sort (fun l -> fun r -> CCInt.compare (snd l) (snd r))
         |> CCList.rev
         |> CCList.take k in

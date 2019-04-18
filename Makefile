@@ -1,4 +1,4 @@
-ocb_flags = -r -use-ocamlfind -pkgs 'yojson, containers, containers.data, ocamlgraph, sqlite3'
+ocb_flags = -r -use-ocamlfind -pkgs 'yojson, containers, containers.data, sqlite3'
 ocb = ocamlbuild $(ocb_flags)
 
 .phony: all

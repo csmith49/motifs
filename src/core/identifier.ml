@@ -5,6 +5,7 @@ type t = int
 let of_json : Yojson.Basic.t -> t option = function
     | `Int i -> Some i
     | _ -> None
+let to_json : t -> Yojson.Basic.t = fun id -> `Int id
 
 let of_string : string -> t option = int_of_string_opt
 
