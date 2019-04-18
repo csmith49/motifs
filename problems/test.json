@@ -1,0 +1,22 @@
+{
+    "files" : [
+        "./infobox/Bill_Clinton.db",
+        "./infobox/Franklin_Pearce.db",
+        "./infobox/Henry_Wilson.db"
+    ],
+
+    "examples" : [
+        {
+            "file" : "./infobox/Bill_Clinton.db",
+            "example" : 32921
+        },
+        {
+            "file" : "./infobox/Franklin_Pearce.db",
+            "example" : 34544
+        },
+        {
+            "file" : "./infobox/Henry_Wilson.db",
+            "example" : 37009
+        }
+    ]
+}
