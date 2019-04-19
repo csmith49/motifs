@@ -42,10 +42,11 @@ let of_rule : GraphRule.t -> t = fun rule -> {
 
 let filter_by : t -> Identifier.t list -> t = fun q -> fun ids ->
     let filter_table = Printf.sprintf
-        "SELECT identifier AS '%s' WHERE identifier IN (%s)"
+        "SELECT identifier AS '%s' FROM vertex WHERE identifier IN (%s)"
         (q.selected |> Identifier.to_string)
         (ids
             |> CCList.map Identifier.to_string
+            |> CCList.map (fun s -> "'" ^ s ^ "'")
             |> CCString.concat ", "
         ) in { q with tables = filter_table :: q.tables }
 

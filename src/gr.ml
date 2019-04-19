@@ -2,7 +2,7 @@
 let problem_filename = ref ""
 let output_directory = ref ""
 let quiet = ref false
-let negative_width = ref 1
+let negative_width = ref 2
 let size = ref 2
 
 let spec_list = [
@@ -98,6 +98,13 @@ let _ = print_endline "Processing examples:\n"
 let _ = CCList.iter process (Problem.examples problem)
 let _ = print_endline "Examples processed."
 
+(* print out top 5 rules *)
+let _ = print_endline "Top 5 rules:\n"
+let _ = CCList.iter (fun r -> 
+    GraphRule.print r; print_endline "\n"
+)
+(CCList.take 5 !output_rules)
+
 (* now write out the rules *)
 let write_output filename = begin
     let doc = Data.of_string filename in
@@ -111,5 +118,6 @@ let write_output filename = begin
 end
 
 let _ = print_string "Writing output..."
-let _ = CCList.iter write_output (Problem.files problem)
+let _ = if !quiet then () else
+    CCList.iter write_output (Problem.files problem)
 let _ = print_endline "done."
