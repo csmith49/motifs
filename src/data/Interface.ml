@@ -113,7 +113,5 @@ module SQLite : SQLData = struct
         let _ = Sqlite3.exec db ~cb:callback query in !output
 
     let apply_on db ids q =
-        let q' = q |> SQLQuery.filter_by ids in
-        let _ = print_endline (SQLQuery.to_sql q') in
-         apply db q'
+        let q' = q |> SQLQuery.filter_by ids in apply db q'
 end
