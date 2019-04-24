@@ -8,6 +8,7 @@ let of_json : JSON.t -> t option = function
 let to_json : t -> JSON.t = fun id -> `Int id
 
 let of_string : string -> t option = int_of_string_opt
+let of_int : int -> t = fun x -> x
 
 let to_string : t -> string = string_of_int
 

@@ -8,6 +8,13 @@ gr: $(shell find src -type f)
 	$(ocb) gr.native
 	mv gr.native gr
 
+scripts:
+	mkdir -p scripts
+
+scripts/dot_of_example: $(shell find src -type f) scripts
+	$(ocb) dot_of_example.native
+	mv dot_of_example.native scripts/dot_of_example
+
 .phony: clean
 clean:
 	rm -rf _build gr

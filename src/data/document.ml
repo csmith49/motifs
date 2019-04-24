@@ -4,7 +4,7 @@ module DocGraph = SemanticGraph.Make(Identifier)(Value.Map)(Value)
 
 type t = DocGraph.t
 
-module DocJSON = Algorithms.JSONRepresentation(DocGraph)
+module DocJSON = Representation.JSONRepresentation(DocGraph)
 
 (* loading from file *)
 let from_file : string -> t = fun filename -> filename
