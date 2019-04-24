@@ -1,5 +1,5 @@
 module SQLMake (I : DataSig.SQLData) = struct
-    type t = Yojson.Basic.t
+    type t = JSON.t
 
     let rule_image (db : I.t) (rule : GraphRule.t) : t =
         let query = SQLQuery.of_rule rule in
@@ -15,5 +15,5 @@ module SQLMake (I : DataSig.SQLData) = struct
         ) rules in
         `Assoc images
 
-    let to_file (filename : string) (img : t) : unit = Yojson.Basic.to_file filename img
+    let to_file (filename : string) (img : t) : unit = JSON.to_file filename img
 end

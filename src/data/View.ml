@@ -21,22 +21,22 @@ let combine : t list -> t = fun vs ->
 let labels : t -> label list = fun c -> c.labels
 let attributes : t -> attribute list = fun c -> c.attributes
 
-let label_of_json : Yojson.Basic.t -> label option = function
+let label_of_json : JSON.t -> label option = function
     | `String s -> Some s
     | _ -> None
-let attribute_of_json : Yojson.Basic.t -> attribute option = function
+let attribute_of_json : JSON.t -> attribute option = function
     | `String s -> Some s
     | _ -> None
 
-let of_json : Yojson.Basic.t -> t = fun json ->
+let of_json : JSON.t -> t = fun json ->
     let labels = json
-        |> Document.Util.member "labels"
-        |> CCOpt.map Document.Util.to_list
+        |> JSON.assoc "labels"
+        |> CCOpt.map JSON.flatten_list
         |> CCOpt.get_or ~default:[]
         |> CCList.filter_map label_of_json in
     let attributes = json
-        |> Document.Util.member "attributes"
-        |> CCOpt.map Document.Util.to_list
+        |> JSON.assoc "attributes"
+        |> CCOpt.map JSON.flatten_list
         |> CCOpt.get_or ~default:[]
         |> CCList.filter_map label_of_json in
     {
@@ -46,5 +46,5 @@ let of_json : Yojson.Basic.t -> t = fun json ->
 
 (* loading from file *)
 let from_file : string -> t = fun filename -> filename
-    |> Yojson.Basic.from_file
+    |> JSON.from_file
     |> of_json

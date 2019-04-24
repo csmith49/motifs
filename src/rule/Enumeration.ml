@@ -70,8 +70,7 @@ module EdgeSimplification = struct
         | Relax
         | Drop
     
-    let eq left right =
-        left.Filter.name = right.Filter.name
+    let eq = Filter.equal
 
     let apply : t -> GraphRule.RuleGraph.edge -> GraphRule.t -> GraphRule.t = fun simpl -> fun e -> fun rule ->
         match simpl with

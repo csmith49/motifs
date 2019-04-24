@@ -2,10 +2,10 @@
 type t = int
 
 (* utilities for converting to and from datatypes *)
-let of_json : Yojson.Basic.t -> t option = function
+let of_json : JSON.t -> t option = function
     | `Int i -> Some i
     | _ -> None
-let to_json : t -> Yojson.Basic.t = fun id -> `Int id
+let to_json : t -> JSON.t = fun id -> `Int id
 
 let of_string : string -> t option = int_of_string_opt
 

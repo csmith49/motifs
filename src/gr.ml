@@ -55,7 +55,7 @@ let process (ex : Problem.example) = begin
         example
         (Problem.file ex)) in
 
-    let context = Data.context doc 1 example view in
+    let context = Data.context doc 2 example view in
     let _ = print_endline (Document.DocGraph.to_string context) in
 
     (* get negative examples *)
@@ -103,7 +103,14 @@ let _ = print_endline "Top 5 rules:\n"
 let _ = CCList.iter (fun r -> 
     GraphRule.print r; print_endline "\n"
 )
-(CCList.take 5 !output_rules)
+(CCList.take 5 (!output_rules))
+
+(* print out bottom 5 rules *)
+let _ = print_endline "Bottom 5 rules:\n"
+let _ = CCList.iter (fun r -> 
+    GraphRule.print r; print_endline "\n"
+)
+(CCList.take 5 (!output_rules |> CCList.rev))
 
 (* now write out the rules *)
 let write_output filename = begin

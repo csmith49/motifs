@@ -1,48 +1,38 @@
 open CCOpt.Infix
 
-(* utility functions for construction of documents *)
-module Util = struct
-    let member : string -> Yojson.Basic.t -> Yojson.Basic.t option = fun s -> function
-        | `Assoc ls -> ls |> CCList.assoc_opt ~eq:CCString.equal s
-        | _ -> None
-    let to_list : Yojson.Basic.t -> Yojson.Basic.t list = function
-        | `List ls -> ls
-        | _ -> []
-end
-
 module DocGraph = SemanticGraph.Make(Identifier)(Value.Map)(Value)
 
 type t = DocGraph.t
 
-let edge_of_json : Yojson.Basic.t -> DocGraph.Edge.t option = fun json ->
-    let source = json |> Util.member "source" >>= Identifier.of_json in
-    let dest = json |> Util.member "destination" >>= Identifier.of_json in
+let edge_of_json : JSON.t -> DocGraph.Edge.t option = fun json ->
+    let source = json |> JSON.assoc "source" >>= Identifier.of_json in
+    let dest = json |> JSON.assoc "destination" >>= Identifier.of_json in
     match source, dest with
-        | Some src, Some dest -> begin match json |> Util.member "label" >>= Value.of_json with
+        | Some src, Some dest -> begin match json |> JSON.assoc "label" >>= Value.of_json with
             | Some lbl -> Some (DocGraph.Edge.make_labeled src lbl dest)
             | None -> Some (DocGraph.Edge.make src dest)
         end
         | _ -> None
     
-let node_of_json : Yojson.Basic.t -> (Identifier.t * Value.Map.t) option = fun json ->
-    let id = json |> Util.member "identifier" >>= Identifier.of_json in
+let node_of_json : JSON.t -> (Identifier.t * Value.Map.t) option = fun json ->
+    let id = json |> JSON.assoc "identifier" >>= Identifier.of_json in
     let attributes = json
-        |> Util.member "attributes"
+        |> JSON.assoc "attributes"
         >>= Value.Map.of_json
         |> CCOpt.get_or ~default:Value.Map.empty in
     match id with
         | Some id -> Some (id, attributes)
         | None -> None
 
-let of_json : Yojson.Basic.t -> t = fun json ->
+let of_json : JSON.t -> t = fun json ->
     let nodes = json
-        |> Util.member "nodes"
-        |> CCOpt.map Util.to_list
+        |> JSON.assoc "nodes"
+        |> CCOpt.map JSON.flatten_list
         |> CCOpt.get_or ~default:[]
         |> CCList.filter_map node_of_json in
     let edges = json
-        |> Util.member "edges"
-        |> CCOpt.map Util.to_list
+        |> JSON.assoc "edges"
+        |> CCOpt.map JSON.flatten_list
         |> CCOpt.get_or ~default:[]
         |> CCList.filter_map edge_of_json in
     let doc = CCList.fold_left (fun g -> fun (v, attr) -> 
@@ -54,7 +44,7 @@ let of_json : Yojson.Basic.t -> t = fun json ->
 
 (* loading from file *)
 let from_file : string -> t = fun filename -> filename
-    |> Yojson.Basic.from_file
+    |> JSON.from_file
     |> of_json
 
 (* accessors and manipulators and whatnot *)
