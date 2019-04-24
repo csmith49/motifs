@@ -2,7 +2,7 @@ ocb_flags = -r -use-ocamlfind -pkgs 'yojson, containers, containers.data, sqlite
 ocb = ocamlbuild $(ocb_flags)
 
 .phony: all
-all: gr
+all: gr scripts/dot_of_example
 
 gr: $(shell find src -type f)
 	$(ocb) gr.native
@@ -17,4 +17,4 @@ scripts/dot_of_example: $(shell find src -type f) scripts
 
 .phony: clean
 clean:
-	rm -rf _build gr
+	rm -rf _build gr scripts
