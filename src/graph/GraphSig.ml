@@ -1,19 +1,28 @@
+module type JSONable = sig
+    type t
+    val to_json : t -> JSON.t
+    val of_json : JSON.t -> t option
+end
+
 (* vertices need to be able to be stored and manipulated easily *)
 module type Vertex = sig
     type t
     val to_string : t -> string
     include CCBijection.OrderedType with type t := t
+    include JSONable with type t := t
 end
 
-(* labels only have the requirement that they exist *)
+(* labels only have the requirement that they exist and have representations *)
 module type VertexLabel = sig
     type t
     val to_string : t -> string
+    include JSONable with type t := t
 end
 
 module type EdgeLabel = sig
     type t
     val to_string : t -> string
+    include JSONable with type t := t
 end
 
 (* edges optionally carry labels *)

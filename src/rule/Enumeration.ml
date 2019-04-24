@@ -10,7 +10,7 @@ module DocToRuleMapping : GraphSig.Functor with
     let map_vertex id = id
     let map_vertex_label lbl = match lbl with
         | Some vm -> Some (Value.Map.to_list vm
-            |> CCList.map (fun (k, v) -> Predicate.mk k (Filter.Make.of_value v))
+            |> CCList.map (fun (k, v) -> Predicate.Clause.clause k (Filter.Make.of_value v))
         )
         | None -> None
     let map_edge_label lbl = match lbl with
@@ -36,7 +36,7 @@ module VertexSimplification = struct
         match simpl with
             | Project i -> 
                 let label = GraphRule.RuleGraph.label rule.GraphRule.graph id |> CCOpt.get_exn in
-                let proj = Predicate.Conjunction.select label i |> CCOpt.get_exn in
+                let proj = Predicate.select_clause label i |> CCOpt.get_exn in
                 GraphRule.map (fun g -> GraphRule.RuleGraph.add_label g id proj) rule
             | Relax -> GraphRule.map (fun g -> GraphRule.RuleGraph.remove_label g id) rule
             | Drop -> GraphRule.map (fun g -> GraphRule.RuleGraph.remove_vertex g id) rule

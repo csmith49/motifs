@@ -1,4 +1,4 @@
-module RuleGraph = SemanticGraph.Make(Identifier)(Predicate.Conjunction)(Filter)
+module RuleGraph = SemanticGraph.Make(Identifier)(Predicate)(Filter)
 
 type t = {
     graph : RuleGraph.t;
@@ -21,7 +21,7 @@ module AppEmbedding : GraphSig.Embedding with
 
     let check_vertex pred_opt attr_opt = match pred_opt with
         | Some pred -> begin match attr_opt with
-            | Some attr -> Predicate.Conjunction.apply pred attr
+            | Some attr -> Predicate.apply pred attr
             | None -> false
         end
         | None -> true
@@ -51,7 +51,7 @@ let (>>) rule f = map f rule
 let vertex_to_string rule vertex = 
     let v = Identifier.to_string vertex in
     let conj = match RuleGraph.label rule.graph vertex with
-        | Some c -> Predicate.Conjunction.to_string c
+        | Some c -> Predicate.to_string c
         | None -> "TOP" in
     let selected = if vertex = rule.selected then "!" else "" in
     selected ^ v ^ " - " ^ conj

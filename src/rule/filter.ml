@@ -4,6 +4,9 @@ type t = [
     | `Equality of Value.t
 ]
 
+let value = function
+    | `Equality v -> v
+
 (* to avoid unpacking *)
 let apply : t -> (Value.t -> bool) = function
     | `Equality tv -> fun v -> Value.equal tv v

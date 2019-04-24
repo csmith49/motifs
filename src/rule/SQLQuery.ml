@@ -21,8 +21,8 @@ let table_of_vertex_opt : GraphRule.RuleGraph.t -> Identifier.t -> table option 
         | Some (hd :: _) -> Some (Printf.sprintf
             "SELECT id AS '%s' FROM %s WHERE value = %s"
                 (Identifier.to_string v)
-                (hd |> Predicate.attribute)
-                (hd |> Predicate.value)
+                (hd |> Predicate.Clause.attribute)
+                (hd |> Predicate.Clause.filter |> Filter.value |> Value.to_string)
         )
         | _ -> None
 

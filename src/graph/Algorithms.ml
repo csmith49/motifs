@@ -145,3 +145,81 @@ end = struct
         let candidates = structural_candidates pattern data in
         CCList.filter (fun m -> check m pattern data) candidates
 end
+
+module JSONRepresentation (G : SemanticGraph) : (sig
+    val to_json : G.t -> JSON.t
+    val of_json : JSON.t -> G.t option
+end) = struct
+    open CCOpt.Infix
+
+    (* convert vertices to and from *)
+    let vertex_of_json json =
+        let id = json |> JSON.assoc "identifier" >>= G.Vertex.of_json in
+        match id with
+            | Some id -> 
+                let vlabel = json |> JSON.assoc "label" >>= G.VertexLabel.of_json in 
+                Some (id, vlabel)
+            | None -> None
+    let vertex_to_json graph vertex =
+        let v_json = G.Vertex.to_json vertex in
+        let lbl_json = match G.label graph vertex with
+            | Some lbl -> G.VertexLabel.to_json lbl
+            | None -> `Null in
+        JSON.of_assoc [
+            ("identifier", v_json);
+            ("label", lbl_json);
+        ]
+    
+    (* convert edges to and from *)
+    let edge_of_json json =
+        let src = json |> JSON.assoc "source" >>= G.Vertex.of_json in
+        let dest = json |> JSON.assoc "destination" >>= G.Vertex.of_json in
+        match src, dest with
+            | Some src, Some dest -> begin match json |> JSON.assoc "label" >>= G.EdgeLabel.of_json with
+                | Some lbl -> Some (G.Edge.make_labeled src lbl dest)
+                | None -> Some (G.Edge.make src dest)
+            end
+            | _ -> None
+    let edge_to_json edge =
+        let src_json = edge |> G.Edge.source |> G.Vertex.to_json in
+        let dest_json = edge |> G.Edge.destination |> G.Vertex.to_json in
+        let lbl_json = match edge |> G.Edge.label with
+            | Some lbl -> G.EdgeLabel.to_json lbl
+            | _ -> `Null in
+        JSON.of_assoc [
+            ("source", src_json);
+            ("destination", dest_json);
+            ("label", lbl_json);
+        ]
+    
+    (* wholesale graph conversion *)
+    let to_json graph =
+        let vertex_json = graph
+            |> G.vertices
+            |> CCList.map (fun v -> vertex_to_json graph v) 
+            |> JSON.of_list in
+        let edge_json = graph
+            |> G.edges
+            |> CCList.map edge_to_json 
+            |> JSON.of_list in
+        JSON.of_assoc [
+            ("vertices", vertex_json);
+            ("edges", edge_json);
+        ]
+    let of_json json =
+        let vertices = json
+            |> JSON.assoc "vertices"
+            |> CCOpt.map JSON.flatten_list
+            >>= (fun vs -> vs |> CCList.map vertex_of_json |> CCOpt.sequence_l) in
+        let edges = json
+            |> JSON.assoc "edges"
+            |> CCOpt.map JSON.flatten_list
+            >>= (fun es -> es |> CCList.map edge_of_json |> CCOpt.sequence_l) in
+        match vertices, edges with
+            | Some vertices, Some edges ->
+                let graph = CCList.fold_left (fun g -> fun (v, attr) -> match attr with
+                    | Some attr -> G.add_labeled_vertex g v attr
+                    | None -> G.add_vertex g v) G.empty vertices in
+                Some (CCList.fold_left G.add_edge graph edges)
+            | _ -> None
+end

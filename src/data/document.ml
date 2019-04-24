@@ -4,48 +4,13 @@ module DocGraph = SemanticGraph.Make(Identifier)(Value.Map)(Value)
 
 type t = DocGraph.t
 
-let edge_of_json : JSON.t -> DocGraph.Edge.t option = fun json ->
-    let source = json |> JSON.assoc "source" >>= Identifier.of_json in
-    let dest = json |> JSON.assoc "destination" >>= Identifier.of_json in
-    match source, dest with
-        | Some src, Some dest -> begin match json |> JSON.assoc "label" >>= Value.of_json with
-            | Some lbl -> Some (DocGraph.Edge.make_labeled src lbl dest)
-            | None -> Some (DocGraph.Edge.make src dest)
-        end
-        | _ -> None
-    
-let node_of_json : JSON.t -> (Identifier.t * Value.Map.t) option = fun json ->
-    let id = json |> JSON.assoc "identifier" >>= Identifier.of_json in
-    let attributes = json
-        |> JSON.assoc "attributes"
-        >>= Value.Map.of_json
-        |> CCOpt.get_or ~default:Value.Map.empty in
-    match id with
-        | Some id -> Some (id, attributes)
-        | None -> None
-
-let of_json : JSON.t -> t = fun json ->
-    let nodes = json
-        |> JSON.assoc "nodes"
-        |> CCOpt.map JSON.flatten_list
-        |> CCOpt.get_or ~default:[]
-        |> CCList.filter_map node_of_json in
-    let edges = json
-        |> JSON.assoc "edges"
-        |> CCOpt.map JSON.flatten_list
-        |> CCOpt.get_or ~default:[]
-        |> CCList.filter_map edge_of_json in
-    let doc = CCList.fold_left (fun g -> fun (v, attr) -> 
-            DocGraph.add_labeled_vertex g v attr
-        ) DocGraph.empty nodes in
-    CCList.fold_left (fun g -> fun e ->
-            DocGraph.add_edge g e
-        ) doc edges
+module DocJSON = Algorithms.JSONRepresentation(DocGraph)
 
 (* loading from file *)
 let from_file : string -> t = fun filename -> filename
     |> JSON.from_file
-    |> of_json
+    |> DocJSON.of_json
+    |> CCOpt.get_exn
 
 (* accessors and manipulators and whatnot *)
 let get_attributes : t -> Identifier.t -> Value.Map.t = fun doc -> fun id ->

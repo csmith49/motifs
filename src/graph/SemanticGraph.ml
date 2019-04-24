@@ -146,5 +146,4 @@ module Make (V : Vertex) (VL : VertexLabel) (EL : EdgeLabel) : SemanticGraph
                 v' ^ lbl' ^ "\n    " ^ (CCString.concat "\n    " edges')
             ) vertices
         |> CCString.concat "\n"
-
 end
