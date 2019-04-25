@@ -9,4 +9,5 @@ depends: [
     "yojson"
     "containers"
     "sqlite3"
+    "dune"
 ]
