@@ -1,20 +1,21 @@
-ocb_flags = -r -use-ocamlfind -pkgs 'yojson, containers, containers.data, sqlite3'
-ocb = ocamlbuild $(ocb_flags)
+src=bin
+build=_build/default/bin
 
 .phony: all
 all: gr scripts/dot_of_example
 
-gr: $(shell find src -type f)
-	$(ocb) gr.native
-	mv gr.native gr
+gr: lib
+	dune build $(src)/gr.exe
+	mv $(build)/gr.exe gr
 
 scripts:
 	mkdir -p scripts
 
-scripts/dot_of_example: $(shell find src -type f) scripts
-	$(ocb) dot_of_example.native
-	mv dot_of_example.native scripts/dot_of_example
+scripts/dot_of_example: lib scripts
+	dune build $(src)/dot_of_example.exe
+	mv $(build)/dot_of_example.exe scripts/dot_of_example
 
 .phony: clean
 clean:
+	dune clean
 	rm -rf _build gr scripts
