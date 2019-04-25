@@ -1,0 +1,4 @@
+(library
+    (name rule)
+    (libraries core graph domain)
+)

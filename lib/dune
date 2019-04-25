@@ -1,0 +1,4 @@
+(library
+    (name hera)
+    (libraries core graph data rule domain synthesis)
+)

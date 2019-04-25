@@ -1,0 +1,4 @@
+(executables
+    (names gr dot_of_example)
+    (libraries hera)
+)

@@ -1,0 +1,4 @@
+(library
+    (name domain)
+    (libraries core graph sqlite3)
+)
