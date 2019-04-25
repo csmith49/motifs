@@ -7,9 +7,9 @@ type t = [
 type value = t
 
 (* conversions from ocaml literals *)
-let of_int : int -> t = fun i -> `Int i
-let of_string : string -> t = fun s -> `String s
-let of_bool : bool -> t = fun b -> `Bool b
+let of_int_lit : int -> t = fun i -> `Int i
+let of_string_lit : string -> t = fun s -> `String s
+let of_bool_lit : bool -> t = fun b -> `Bool b
 
 let of_string : string -> t = fun s ->
     match int_of_string_opt s with

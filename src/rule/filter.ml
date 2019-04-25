@@ -26,9 +26,9 @@ module Make = struct
     let of_value : Value.t -> t = fun v -> `Equality v
 
     (* lift ocaml literals to values first *)
-    let of_int : int -> t = fun i -> of_value (Value.of_int i)
-    let of_string : string -> t = fun s -> of_value (Value.of_string s)
-    let of_bool : bool -> t = fun b -> of_value (Value.of_bool b)
+    let of_int : int -> t = fun i -> of_value (Value.of_int_lit i)
+    let of_string : string -> t = fun s -> of_value (Value.of_string_lit s)
+    let of_bool : bool -> t = fun b -> of_value (Value.of_bool_lit b)
 end
 
 (* converting to and from json *)

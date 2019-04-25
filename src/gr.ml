@@ -51,8 +51,8 @@ let process (ex : Problem.example) = begin
     let example = Problem.vertex ex in
     let _ = print_endline "done." in
     let _ = print_endline (Printf.sprintf 
-        "Checking vertex %i in %s:" 
-        example
+        "Checking vertex %s in %s:" 
+        (Identifier.to_string example)
         (Problem.file ex)) in
 
     let context = Data.context doc 2 example view in
