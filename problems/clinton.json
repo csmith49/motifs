@@ -7,10 +7,6 @@
         {
             "file" : "./tables/Bill_Clinton.db",
             "example" : 4925
-        },
-        {
-            "file": "./tables/John_Adams.json",
-            "example": 8051
         }
     ]
 }

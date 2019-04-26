@@ -76,15 +76,13 @@ let process (ex : Domain.Problem.example) = begin
 
     (* evaluate rules on doc and sort *)
     let _ = print_string "Evaluating rules..." in
-    let rules_w_img_size = CCList.map (fun r ->
-        let q = Data.SQLQuery.of_rule r in
-        (r, D.count doc q)
+    let rules_w_score = CCList.map (fun r ->
+        (r, Synthesis.Heuristic.score r)
     ) consistent_rules in
     let _ = print_string "sorting by performance..." in
     let compare l r = CCInt.compare (snd l) (snd r) in
-    let top_rules = rules_w_img_size
+    let top_rules = rules_w_score
         |> CCList.sort compare
-        |> CCList.rev
         |> CCList.map fst
         |> CCList.take rules_per_example in
     let _ = print_endline "done.\n" in
