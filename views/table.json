@@ -1,0 +1,20 @@
+{
+    "metadata": {},
+    "labels" : [
+        "DOWN_OF",
+        "IN_COLUMN",
+        "IN_ROW",
+        "LEFT_OF",
+        "RIGHT_OF",
+        "UP_OF"
+    ],
+    "attributes": [
+        "col_end",
+        "col_start",
+        "position",
+        "row_end",
+        "row_start",
+        "shape",
+        "text"
+    ]
+}
