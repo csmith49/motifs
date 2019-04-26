@@ -15,6 +15,10 @@ scripts/dot_of_example: lib scripts
 	dune build $(src)/dot_of_example.exe
 	mv $(build)/dot_of_example.exe scripts/dot_of_example
 
+.phony: live
+live: lib
+	dune utop lib
+
 .phony: clean
 clean:
 	dune clean

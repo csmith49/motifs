@@ -1,8 +1,0 @@
-"src": include
-"src/core": include
-"src/rule": include
-"src/data": include
-"src/graph": include
-"src/io": include
-
-true: annot, bin_annot

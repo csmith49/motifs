@@ -5,12 +5,16 @@ let quiet = ref false
 let negative_width = ref 2
 let size = ref 2
 
+(* for the REST argument *)
+let views = ref ""
+
 let spec_list = [
     ("-p", Arg.Set_string problem_filename, "Input problem declaration file");
     ("-o", Arg.Set_string output_directory, "Output directory");
     ("-q", Arg.Set quiet, "Sets quiet mode");
     ("-n", Arg.Set_int negative_width, "Sets window for negative examples");
     ("-s", Arg.Set_int size, "Sets max size of synthesized rules");
+    ("-v", Arg.Set_string views, "Sets view to be used");
 ]
 
 let usage_msg = "Rule Synthesis for Hera"
@@ -23,12 +27,8 @@ module O = Data.SparseJSON.SQLMake(D)
 
 (* get views - hardcoded for now *)
 let _ = print_string ("Loading views...")
-let raw_views = [
-    "./views/linguistic.json";
-    "./views/stylistic.json";
-    "./views/syntactic.json";
-    "./views/visual.json";
-] 
+let raw_views = 
+    CCString.split ~by:"\n" !views
     |> CCList.map Domain.View.from_file
 let view = Domain.View.combine raw_views
 let _ = print_endline "done."
