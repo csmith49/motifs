@@ -1,6 +1,10 @@
 {
+    "metadata" : {
+        "views" : ["simple_table"],
+        "size" : 1
+    },
     "files" : [
-        "./infobox/Bill_Clinton.db"
+        "./tables/Bill_Clinton.db"
     ],
 
     "examples" : [

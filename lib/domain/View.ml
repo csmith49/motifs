@@ -1,5 +1,7 @@
 open Core
 
+exception ViewException
+
 (* the types *)
 type label = string
 type attribute = string
@@ -50,3 +52,7 @@ let of_json : JSON.t -> t = fun json ->
 let from_file : string -> t = fun filename -> filename
     |> JSON.from_file
     |> of_json
+
+(* makes assumptions about where views are stored *)
+let of_string : string -> t = fun view_name ->
+    Printf.sprintf "./views/%s.json" view_name |> from_file

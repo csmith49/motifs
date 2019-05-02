@@ -6,7 +6,7 @@ let negative_width = ref 2
 let size = ref 2
 
 (* for the REST argument *)
-let views = ref ""
+let view_filename = ref ""
 
 let spec_list = [
     ("-p", Arg.Set_string problem_filename, "Input problem declaration file");
@@ -14,7 +14,7 @@ let spec_list = [
     ("-q", Arg.Set quiet, "Sets quiet mode");
     ("-n", Arg.Set_int negative_width, "Sets window for negative examples");
     ("-s", Arg.Set_int size, "Sets max size of synthesized rules");
-    ("-v", Arg.Set_string views, "Sets view to be used");
+    ("-v", Arg.Set_string view_filename, "Sets view to be used");
 ]
 
 let usage_msg = "Rule Synthesis for Hera"
@@ -25,17 +25,18 @@ module D = Data.Interface.SQLite
 module S = Synthesis.Enumeration.SQLMake(D)
 module O = Data.SparseJSON.SQLMake(D)
 
-(* get views - hardcoded for now *)
-let _ = print_string ("Loading views...")
-let raw_views = 
-    CCString.split ~by:"\n" !views
-    |> CCList.map Domain.View.from_file
-let view = Domain.View.combine raw_views
-let _ = print_endline "done."
-
 (* load problem declaration *)
 let _ = print_string ("Loading problem...")
 let problem = Domain.Problem.of_file !problem_filename
+let _ = print_endline "done."
+
+(* load views - use cmd line, or default to problem view, or throw exception *)
+let _ = print_string ("Loading views...")
+let view = if CCString.is_empty !view_filename then
+    match Domain.Problem.views problem with
+        | Some views -> Domain.View.combine views
+        | None -> raise Domain.View.ViewException
+    else Domain.View.from_file !view_filename
 let _ = print_endline "done."
 
 (* the common variables accessed across all examples *)
