@@ -13,4 +13,4 @@ ADD https://api.github.com/repos/csmith49/graph-rules/git/refs/heads/master vers
 RUN eval $(opam env) && make
 
 RUN sudo chmod +x ./synthesis_entrypoint.sh
-ENTRYPOINT ["./synthesis_entrypoint.sh"]
+ENTRYPOINT ["sudo", "./synthesis_entrypoint.sh"]

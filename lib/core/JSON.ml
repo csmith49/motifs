@@ -3,12 +3,12 @@
 (* base type, so we don't have to write two periods every time *)
 type t = Yojson.Basic.t
 
-exception JSONFileError
+exception JSONFileError of string
 
 (* file-based io *)
 let from_file : string -> t = fun filename ->
     try Yojson.Basic.from_file filename
-    with _ -> raise JSONFileError
+    with _ -> raise (JSONFileError (Printf.sprintf "JSON file %s not found" filename))
 let to_file : string -> t -> unit = Yojson.Basic.to_file
 
 (* utility functions *)
