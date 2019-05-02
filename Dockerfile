@@ -9,6 +9,8 @@ RUN sudo chown -R opam /hera && git clone https://github.com/csmith49/graph-rule
 WORKDIR /hera/graph-rules
 
 RUN eval $(opam env) && opam depext && opam pin .
+ADD https://api.github.com/repos/csmith49/graph-rules/git/refs/heads/master version.json
 RUN eval $(opam env) && make
 
-ENTRYPOINT ["/hera/graph-rules/synthesis_entrypoint.sh"]
+RUN sudo chmod +x ./synthesis_entrypoint.sh
+ENTRYPOINT ["./synthesis_entrypoint.sh"]

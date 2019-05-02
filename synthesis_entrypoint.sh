@@ -1,1 +1,4 @@
-./gr -p /data/problem.json -s 1 -o /output
+#!/bin/bash
+
+echo "test"
+hera/graph-rules/gr -p /data/problem.json -s 1 -o /output
