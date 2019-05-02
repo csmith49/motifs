@@ -10,3 +10,5 @@ WORKDIR /hera/graph-rules
 
 RUN eval $(opam env) && opam depext && opam pin .
 RUN eval $(opam env) && make
+
+ENTRYPOINT ["/hera/graph-rules/synthesis_entrypoint.sh"]
