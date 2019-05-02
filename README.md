@@ -61,3 +61,11 @@ Databases should be stored flat in a directory, along with a problem file named 
 ```
 
 Any references to `database1.db` (or any other database) in `problem.json` should be given via the path `/data/database1.db`, *regardless of where `benchmark` is located on the host*.
+
+Finally, an output directory should be prepared. Once the data is stored in an appropriate file, and the output directory is made, we run the image with the appropriate directories *bind-mounted* to the Docker image directories `/data` and `/output`. Usually, absolute paths are needed for this. For example, if we have the above benchmark directory at `/path/to/bm/benchmark`, and we've made an output directory at `/path/to/output`, we can run the following Docker command:
+
+```bash
+docker run -v /path/to/bm/benchmark:/data /path/to/output:/output gr:latest
+```
+
+This will spin up a container, run the synthesis on the `/path/to/bm/benchmark/problem.json` problem file, and save the output `.json` files to `/path/to/output/*.json` on the host file system.
