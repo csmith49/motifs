@@ -1,23 +1,63 @@
 # Graph Rules
 
-## Data Representation
+Synthesis of graph rules for heterogeneous entity extraction.
 
-Data is represented by graphs! That's what makes this approach compelling. The graphs are directed, and possibly cyclic.
+## Installation
 
-Nodes have an associated map of key-value pairs, which is possibly empty. We use elements of type `Identifier.t` to represent nodes.
+With `opam` installed, the project can be compiled by navigating to this directory and running:
 
-Edges carry a possible value label, or nothing at all, so edge labels are of type `Value.t option`.
-
-Separately, we maintain a map from identifiers to `Value.Map.t` attribute maps.
-
-Nodes are identified by elements of `Identifier.t`, and have an associated value map of attributes `Value.Map.t`, which is possibly empty. In short,
-```ocaml
-type dnode = {id : Identifier.t; attributes : Value.Map.t}
+```bash
+opam depext
+opam pin .
+make
 ```
 
-Edges contain less information than nodes. If they carry any value at all, they carry a payload of type `Value.t`. So, edge labels are given by
-```ocaml
-type dedge = Value.t option
+This produces a set of utility scripts in the `./scripts` directory, and a general synthesis executable in the form of `./gr`.
+
+### Docker Installation
+
+To improve portability, some infrastructure for running the code in a Docker container is provided. To build the docker image, simply navigate to this directory and run `docker build -t gr .`.
+
+## Usage
+
+### Main executable
+
+The main executable `./gr` takes several parameters, the most important of which is the *problem* file. A simple problem file is given below:
+
+```json
+{
+    "metadata" : {
+        "views" : ["simple_table"]
+    },
+    "files" : [
+        "path/to/db/database.db",
+        "path/to/other/db/database.db"
+    ],
+    "examples" : [
+        {
+            "file" : "path/to/ex/db/database.db",
+            "example" : 12345
+        }
+    ]
+}
 ```
 
-To use our graph wrapper from `Ocamlgraph`, we have to enforce some properties on
+The *metadata* field carries some relevant info for execution - in this case, which *view* is being used for synthesis. The *files* field contains absolute paths to database files we want our synthesized ensemble to run on. Lastly, the *examples* field contains *file* / *example* pairs.
+
+Problem files are passed in using the *-p* flag. For other flags, run `./gr --help`.
+
+### Docker usage
+
+To interact with the built Docker image, we run a container from the image with input and output directories bind-mounted at appropriate locations. This requires some configuration of the inputs.
+
+Databases should be stored flat in a directory, along with a problem file named `problem.json` that references the stored databases using the prefix `/data`. That is, if we have data for a benchmark and store it in a directory called `benchmark`, our file structure looks like the following:
+
+```txt
+/benchmark
+|-- problem.json
+|-- database1.db
+|-- database2.db
+...
+```
+
+Any references to `database1.db` (or any other database) in `problem.json` should be given via the path `/data/database1.db`, *regardless of where `benchmark` is located on the host*.
