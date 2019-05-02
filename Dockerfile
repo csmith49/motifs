@@ -11,6 +11,6 @@ WORKDIR /hera/graph-rules
 RUN eval $(opam env) && opam depext && opam pin .
 ADD https://api.github.com/repos/csmith49/graph-rules/git/refs/heads/master version.json
 RUN git pull && eval $(opam env) && make
-
 RUN sudo chmod +x ./synthesis_entrypoint.sh
+
 ENTRYPOINT ["sudo", "./synthesis_entrypoint.sh"]
