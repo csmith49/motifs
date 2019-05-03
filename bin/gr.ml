@@ -126,4 +126,6 @@ end
 let _ = print_string "Writing output..."
 let _ = if !quiet then () else
     CCList.iter write_output (Domain.Problem.files problem)
+let _ = if !quiet then () else
+    O.index_to_file (Filename.concat !output_directory "index.json") !output_rules
 let _ = print_endline "done."

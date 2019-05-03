@@ -102,3 +102,14 @@ module Make = struct
             g with graph = RuleGraph.add_edge g.graph edge;
         }
 end
+
+(* for representing as a json object *)
+module JSONRep = Graph.Representation.JSONRepresentation(RuleGraph)
+
+let to_json : t -> JSON.t = fun graph ->
+    let structure = JSONRep.to_json graph.graph in
+    match structure with
+        | `Assoc gs ->
+            let selected = ("selected", graph.selected |> Identifier.to_json) in
+            `Assoc (selected :: gs)
+        | _ -> raise JSON.JSONConversionError

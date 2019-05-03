@@ -19,5 +19,10 @@ module SQLMake (I : SQLData) = struct
         ) rules in
         `Assoc images
 
+    let index_to_file (filename : string) (rules : GraphRule.t list) =
+        let index = CCList.mapi (fun i -> fun rule ->
+            (string_of_int i, GraphRule.to_json rule)
+        ) rules in JSON.to_file filename (`Assoc index)
+
     let to_file (filename : string) (img : t) : unit = JSON.to_file filename img
 end

@@ -4,6 +4,7 @@
 type t = Yojson.Basic.t
 
 exception JSONFileError of string
+exception JSONConversionError
 
 (* file-based io *)
 let from_file : string -> t = fun filename ->
