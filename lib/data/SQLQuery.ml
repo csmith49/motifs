@@ -17,7 +17,7 @@ let table_of_edge : GraphRule.RuleGraph.edge -> table = fun e -> Printf.sprintf
     "SELECT source AS '%s', target AS '%s' FROM %s"
         (e |> GraphRule.RuleGraph.Edge.source |> Identifier.to_string)
         (e |> GraphRule.RuleGraph.Edge.destination |> Identifier.to_string)
-        (e |> GraphRule.RuleGraph.Edge.label |> CCOpt.get_exn |> Filter.to_string)
+        (e |> GraphRule.RuleGraph.Edge.label |> CCOpt.get_exn |> Value.to_string)
 
 let table_of_vertex_opt : GraphRule.RuleGraph.t -> Identifier.t -> table option =
     fun g -> fun v -> match GraphRule.RuleGraph.label g v with
@@ -25,7 +25,7 @@ let table_of_vertex_opt : GraphRule.RuleGraph.t -> Identifier.t -> table option 
             "SELECT id AS '%s' FROM %s WHERE value = %s"
                 (Identifier.to_string v)
                 (hd |> Predicate.Clause.attribute)
-                (hd |> Predicate.Clause.filter |> Filter.value |> Value.to_string)
+                (hd |> Predicate.Clause.filter |> Filter.to_sql_action)
         )
         | _ -> None
 

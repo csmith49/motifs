@@ -21,6 +21,11 @@ val equal : t -> t -> bool
 val of_json : JSON.t -> t option
 val to_json : t -> JSON.t
 
+module Utility : sig
+    val equality : t -> t -> bool
+    val substring : t -> t -> bool
+end
+
 module Map : sig
     type t
 

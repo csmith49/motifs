@@ -58,6 +58,17 @@ let to_json : t -> JSON.t = function
     | `Bool b -> `Bool b
     | `Null -> `Null
 
+(* utilities for encoding filters *)
+module Utility = struct
+
+    let equality = equal
+
+    let substring large small = match large, small with
+        | `String l, `String s ->
+            not (CCString.find_all_l ~sub:s l |> CCList.is_empty)
+        | _ -> false
+end
+
 (* indexing values by strings *)
 module Map = struct
     (* we're always going to index by strings here *)
@@ -101,3 +112,4 @@ module Map = struct
             |> CCString.concat ", "
         in "[" ^ map ^ "]"
 end
+

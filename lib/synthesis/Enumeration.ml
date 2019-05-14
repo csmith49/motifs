@@ -18,7 +18,7 @@ module DocToRuleMapping : Graph.Signatures.Functor with
         )
         | None -> None
     let map_edge_label lbl = match lbl with
-        | Some value -> Some (Filter.Make.of_value value)
+        | Some value -> Some value
         | None -> None
 end
 
@@ -74,7 +74,7 @@ module EdgeSimplification = struct
         | Relax
         | Drop
     
-    let eq = Filter.equal
+    let eq = Value.equal
 
     let apply : t -> GraphRule.RuleGraph.edge -> GraphRule.t -> GraphRule.t = fun simpl -> fun e -> fun rule ->
         match simpl with

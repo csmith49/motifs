@@ -1,7 +1,7 @@
 open Graph
 open Core
 
-module RuleGraph = Graph.SemanticGraph.Make(Identifier)(Predicate)(Filter)
+module RuleGraph = Graph.SemanticGraph.Make(Identifier)(Predicate)(Value)
 
 type t = {
     graph : RuleGraph.t;
@@ -32,7 +32,7 @@ module AppEmbedding : (Signatures.Embedding with
 
     let check_edge filt_opt lbl_opt = match filt_opt with
         | Some filt -> begin match lbl_opt with
-            | Some lbl -> Filter.apply filt lbl
+            | Some lbl -> Value.equal filt lbl
             | None -> false
         end
         | None -> true
@@ -61,7 +61,7 @@ let vertex_to_string rule vertex =
     selected ^ v ^ " - " ^ conj
 let edge_to_string edge =
     let lbl = match RuleGraph.Edge.label edge with
-        | Some lbl -> "+-{" ^ (Filter.to_string lbl) ^ "}->"
+        | Some lbl -> "+-{" ^ (Value.to_string lbl) ^ "}->"
         | None -> "+->" in
     let dest = RuleGraph.Edge.destination edge |> Identifier.to_string in
         lbl ^ " " ^ dest
