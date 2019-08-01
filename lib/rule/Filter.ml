@@ -37,6 +37,8 @@ end
 
 module Weaken = struct
     let substring _ = []
+
+    let greedy f = substring f
 end
 
 (* converting to and from json *)

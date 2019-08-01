@@ -1,6 +1,6 @@
 module R = Rule.GraphRule.RuleGraph
 
-type rule = Rule.GraphRule.t
+type t = Rule.GraphRule.t
 
 (* lower is better! *)
 let score rule =
@@ -21,3 +21,5 @@ let score rule =
         |> CCList.map (R.degree graph)
         |> CCList.fold_left CCInt.max 0 in
     num_labeled_vertices + num_edges + max_degree
+
+let leq l r = (score l) <= (score r)

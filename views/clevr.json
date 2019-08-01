@@ -1,0 +1,15 @@
+{
+    "metadata": {},
+    "labels" : [
+        "left",
+        "right",
+        "front",
+        "back"
+    ],
+    "attributes": [
+        "shape",
+        "size",
+        "color",
+        "material"
+    ]
+}

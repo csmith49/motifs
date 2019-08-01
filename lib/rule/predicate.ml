@@ -11,6 +11,7 @@ module Clause : (sig
     val apply : t -> Value.Map.t -> bool
     val to_json : t -> JSON.t
     val of_json : JSON.t -> t option
+    val weaken : t -> t list
 end) = struct
     type t = {
         attribute : string;
@@ -48,6 +49,10 @@ end) = struct
                 filter = f;
             }
             | _ -> None
+
+    let weaken c =
+        let weakenings = Filter.Weaken.greedy c.filter in
+        CCList.map (fun w -> {c with filter = w}) weakenings
 end
 
 type t = Clause.t list

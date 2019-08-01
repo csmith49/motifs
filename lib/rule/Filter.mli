@@ -17,6 +17,8 @@ end
 
 module Weaken : sig
     val substring : t -> t list
+
+    val greedy : t -> t list
 end
 
 val to_json : t -> JSON.t
