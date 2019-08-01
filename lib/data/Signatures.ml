@@ -15,4 +15,6 @@ module type SQLData = sig
     val apply : t -> SQLQuery.t -> Identifier.t list
 
     val apply_on : t -> SQLQuery.t -> Identifier.t list -> Identifier.t list
+
+    val scene : t -> int -> Identifier.t list
 end

@@ -11,10 +11,15 @@ type t = {
     selected : Identifier.t;
 }
 
+let of_string : string -> t = fun str -> {
+    tables = [str];
+    selected = Identifier.of_int 0;
+}
+
 let selected q = q.selected
 
 let table_of_edge : GraphRule.RuleGraph.edge -> table = fun e -> Printf.sprintf
-    "SELECT source AS '%s', target AS '%s' FROM %s"
+    "SELECT source AS '%s', destination AS '%s' FROM %s"
         (e |> GraphRule.RuleGraph.Edge.source |> Identifier.to_string)
         (e |> GraphRule.RuleGraph.Edge.destination |> Identifier.to_string)
         (e |> GraphRule.RuleGraph.Edge.label |> CCOpt.get_exn |> Value.to_string)
@@ -22,7 +27,7 @@ let table_of_edge : GraphRule.RuleGraph.edge -> table = fun e -> Printf.sprintf
 let table_of_vertex_opt : GraphRule.RuleGraph.t -> Identifier.t -> table option =
     fun g -> fun v -> match GraphRule.RuleGraph.label g v with
         | Some (hd :: _) -> Some (Printf.sprintf
-            "SELECT id AS '%s' FROM %s WHERE value = %s"
+            "SELECT object AS '%s' FROM %s WHERE value = %s"
                 (Identifier.to_string v)
                 (hd |> Predicate.Clause.attribute)
                 (hd |> Predicate.Clause.filter |> Filter.to_sql_action)
@@ -45,7 +50,7 @@ let of_rule : GraphRule.t -> t = fun rule -> {
 
 let filter_by : t -> Identifier.t list -> t = fun q -> fun ids ->
     let filter_table = Printf.sprintf
-        "SELECT identifier AS '%s' FROM vertex WHERE identifier IN (%s)"
+        "SELECT object AS '%s' FROM objects WHERE object IN (%s)"
         (q.selected |> Identifier.to_string)
         (ids
             |> CCList.map Identifier.to_string

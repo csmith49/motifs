@@ -14,7 +14,7 @@ module SQLite : SQLData = struct
         let attrs = View.attributes view in
         let check attr =
             let output = ref None in
-            let query = Printf.sprintf "SELECT value FROM %s WHERE id = '%s'"
+            let query = Printf.sprintf "SELECT value FROM %s WHERE object = '%s'"
                 attr
                 (Identifier.to_string id) in
             let callback row =
@@ -28,7 +28,7 @@ module SQLite : SQLData = struct
         let labels = View.labels view in
         let check label =
             let output = ref false in
-            let query = Printf.sprintf "SELECT * FROM %s WHERE source = '%s' AND target ='%s'"
+            let query = Printf.sprintf "SELECT * FROM %s WHERE source = '%s' AND destination ='%s'"
                 label
                 (Identifier.to_string src)
                 (Identifier.to_string dest) in
@@ -45,9 +45,9 @@ module SQLite : SQLData = struct
             |> CCList.map (fun id -> Printf.sprintf "'%s'" (Identifier.to_string id))
             |> CCString.concat ", " in
         let query = Printf.sprintf
-            "SELECT source AS 'identifier' FROM %s WHERE target IN (%s)
+            "SELECT source AS 'object' FROM %s WHERE destination IN (%s)
                 UNION
-            SELECT target AS 'identifier' FROM %s WHERE source IN (%s)"
+            SELECT destination AS 'object' FROM %s WHERE source IN (%s)"
             label in_clause label in_clause in
         let output = ref IdentifierSet.empty in
         let callback row =
@@ -116,4 +116,14 @@ module SQLite : SQLData = struct
 
     let apply_on db ids q =
         let q' = q |> SQLQuery.filter_by ids in apply db q'
+
+    let scene db index =
+        let query = Printf.sprintf "SELECT object FROM 'objects' WHERE scene = %i" index in
+        let output = ref [] in
+        let callback row =
+            let obj = CCArray.get row 0 |> CCOpt.flat_map Identifier.of_string in
+            match obj with
+                | Some id -> output := id :: !output
+                | None -> () in
+        let _ = Sqlite3.exec_no_headers db ~cb:callback query in !output
 end
