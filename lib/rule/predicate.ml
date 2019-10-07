@@ -9,8 +9,8 @@ module Clause : (sig
     val filter : t -> Filter.t
     val to_string : t -> string
     val apply : t -> Value.Map.t -> bool
-    val to_json : t -> JSON.t
-    val of_json : JSON.t -> t option
+    val to_json : t -> Yojson.Basic.t
+    val of_json : Yojson.Basic.t -> t option
     val weaken : t -> t list
 end) = struct
     type t = {
@@ -37,15 +37,11 @@ end) = struct
         ("filter", Filter.to_json c.filter)
     ]
     let of_json json =
-        let attribute = json
-            |> JSON.assoc "attribute"
-            |> CCOpt.flat_map JSON.to_string_lit in
-        let filter = json
-            |> JSON.assoc "filter"
-            |> CCOpt.flat_map Filter.of_json in
+        let attribute = Utility.JSON.get "attribute" Utility.JSON.string json in
+        let filter = Utility.JSON.get "filter" Filter.of_json json in
         match attribute, filter with
-            | Some attr, Some f -> Some {
-                attribute = attr;
+            | Some attribute, Some f -> Some {
+                attribute = attribute;
                 filter = f;
             }
             | _ -> None
@@ -71,6 +67,4 @@ let to_json p =
         |> CCList.map Clause.to_json in
     `List clauses
 let of_json json = json
-    |> JSON.flatten_list
-    |> CCList.map Clause.of_json
-    |> CCOpt.sequence_l
+    |> Utility.JSON.list Clause.of_json

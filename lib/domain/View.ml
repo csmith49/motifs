@@ -1,5 +1,3 @@
-open Core
-
 exception ViewException
 
 (* the types *)
@@ -25,24 +23,20 @@ let combine : t list -> t = fun vs ->
 let labels : t -> label list = fun c -> c.labels
 let attributes : t -> attribute list = fun c -> c.attributes
 
-let label_of_json : JSON.t -> label option = function
+let label_of_json : Yojson.Basic.t -> label option = function
     | `String s -> Some s
     | _ -> None
-let attribute_of_json : JSON.t -> attribute option = function
+let attribute_of_json : Yojson.Basic.t -> attribute option = function
     | `String s -> Some s
     | _ -> None
 
-let of_json : JSON.t -> t = fun json ->
+let of_json : Yojson.Basic.t -> t = fun json ->
     let labels = json
-        |> JSON.assoc "labels"
-        |> CCOpt.map JSON.flatten_list
-        |> CCOpt.get_or ~default:[]
-        |> CCList.filter_map label_of_json in
+        |> Utility.JSON.get "labels" (Utility.JSON.list Utility.JSON.string)
+        |> CCOpt.get_or ~default:[] in
     let attributes = json
-        |> JSON.assoc "attributes"
-        |> CCOpt.map JSON.flatten_list
-        |> CCOpt.get_or ~default:[]
-        |> CCList.filter_map label_of_json in
+        |> Utility.JSON.get "attributes" (Utility.JSON.list Utility.JSON.string)
+        |> CCOpt.get_or ~default:[] in
     {
         labels = labels;
         attributes = attributes;
@@ -50,7 +44,7 @@ let of_json : JSON.t -> t = fun json ->
 
 (* loading from file *)
 let from_file : string -> t = fun filename -> filename
-    |> JSON.from_file
+    |> Yojson.Basic.from_file
     |> of_json
 
 (* makes assumptions about where views are stored *)

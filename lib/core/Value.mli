@@ -1,4 +1,10 @@
-type t
+type t = [
+    | `Int of int
+    | `String of string
+    | `Bool of bool
+    | `Null
+]
+
 type value = t
 
 val of_int_lit : int -> t
@@ -18,8 +24,8 @@ val is_null : t -> bool
 val compare : t -> t -> int
 val equal : t -> t -> bool
 
-val of_json : JSON.t -> t option
-val to_json : t -> JSON.t
+val of_json : Yojson.Basic.t -> t option
+val to_json : t -> Yojson.Basic.t
 
 module Utility : sig
     val equality : t -> t -> bool
@@ -40,8 +46,8 @@ module Map : sig
     val keys : t -> string list
     val values : t -> value list
 
-    val to_json : t -> JSON.t
-    val of_json : JSON.t -> t option
+    val to_json : t -> Yojson.Basic.t
+    val of_json : Yojson.Basic.t -> t option
 
     val to_string : t -> string
 end

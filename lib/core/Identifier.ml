@@ -2,9 +2,7 @@
 type t = int
 
 (* utilities for converting to and from datatypes *)
-let of_json = function
-    | `Int i -> Some i
-    | _ -> None
+let of_json = Utility.JSON.int
 let to_json id = `Int id
 
 let of_string = int_of_string_opt

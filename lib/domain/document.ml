@@ -9,7 +9,7 @@ module DocJSON = Representation.JSONRepresentation(DocGraph)
 
 (* loading from file *)
 let from_file : string -> t = fun filename -> filename
-    |> JSON.from_file
+    |> Yojson.Basic.from_file
     |> DocJSON.of_json
     |> CCOpt.get_exn
 

@@ -21,5 +21,5 @@ module Weaken : sig
     val greedy : t -> t list
 end
 
-val to_json : t -> JSON.t
-val of_json : JSON.t -> t option
+val to_json : t -> Yojson.Basic.t
+val of_json : Yojson.Basic.t -> t option

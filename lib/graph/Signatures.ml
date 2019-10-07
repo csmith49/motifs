@@ -1,7 +1,7 @@
 module type JSONable = sig
     type t
-    val to_json : t -> Core.JSON.t
-    val of_json : Core.JSON.t -> t option
+    val to_json : t -> Yojson.Basic.t
+    val of_json : Yojson.Basic.t -> t option
 end
 
 (* vertices need to be able to be stored and manipulated easily *)
@@ -144,8 +144,8 @@ end
 module type JSONRepresentation = sig
     module Graph : SemanticGraph
 
-    val to_json : Graph.t -> Core.JSON.t
-    val of_json : Core.JSON.t -> Graph.t option
+    val to_json : Graph.t -> Yojson.Basic.t
+    val of_json : Yojson.Basic.t -> Graph.t option
 end
 
 module type DOTRepresentation = sig

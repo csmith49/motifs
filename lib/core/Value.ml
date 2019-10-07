@@ -46,13 +46,13 @@ let compare = Pervasives.compare
 let equal = (=)
 
 (* converting from json representations *)
-let of_json : JSON.t -> t option = function
+let of_json  = function
     | `Int i -> Some (`Int i)
     | `String s -> Some (`String s)
     | `Bool b -> Some (`Bool b)
     | `Null -> Some (`Null)
     | _ -> None
-let to_json : t -> JSON.t = function
+let to_json = function
     | `Int i -> `Int i
     | `String s -> `String s
     | `Bool b -> `Bool b
@@ -89,13 +89,13 @@ module Map = struct
     let values : t -> value list = fun m -> StringMap.to_list m |> CCList.map snd
 
 
-    let to_json : t -> JSON.t = fun m -> 
+    let to_json = fun m -> 
         let ls = m 
             |> StringMap.to_list
             |> CCList.map (fun (k, v) -> (k, to_json v)) in
         `Assoc ls
     (* the getter from json *)
-    let of_json : JSON.t -> t option = function
+    let of_json = function
         | `Assoc attrs ->
             let binding_of_json (k, v) = match of_json v with
                 | Some v -> Some (k, v)

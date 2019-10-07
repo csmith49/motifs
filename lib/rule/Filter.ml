@@ -42,7 +42,7 @@ module Weaken = struct
 end
 
 (* converting to and from json *)
-let to_json : t -> JSON.t = function
+let to_json = function
     | `Equality v -> `Assoc [
         ("kind", `String "equality"); 
         ("value", Value.to_json v)]
@@ -50,18 +50,13 @@ let to_json : t -> JSON.t = function
         ("kind", `String "substring");
         ("value", Value.to_json v)
     ]
-let of_json : JSON.t -> t option = fun json ->
-    let kind = json
-        |> JSON.assoc "kind"
-        |> CCOpt.flat_map JSON.to_string_lit
-        |> CCOpt.get_exn in
-    if kind = "equality" then json
-        |> JSON.assoc "value"
-        |> CCOpt.flat_map Value.of_json
-        |> CCOpt.map (fun v -> `Equality v)
-    else if kind = "substring" then json
-        |> JSON.assoc "value"
-        |> CCOpt.flat_map Value.of_json
-        |> CCOpt.map (fun v -> `Substring v)
-    else None
-    
+let of_json = fun json ->
+    let kind = Utility.JSON.get "kind" Utility.JSON.string json in
+    match kind with
+        | Some s when s = "equality" -> json
+            |> Utility.JSON.get "value" Value.of_json
+            |> CCOpt.map (fun v -> `Equality v)
+        | Some s when s = "substring" -> json
+            |> Utility.JSON.get "value" Value.of_json
+            |> CCOpt.map (fun v -> `Substring v)
+        | _ -> None
