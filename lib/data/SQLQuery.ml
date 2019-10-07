@@ -25,14 +25,16 @@ let table_of_edge : GraphRule.RuleGraph.edge -> table = fun e -> Printf.sprintf
         (e |> GraphRule.RuleGraph.Edge.label |> CCOpt.get_exn |> Value.to_string)
 
 let table_of_vertex_opt : GraphRule.RuleGraph.t -> Identifier.t -> table option =
-    fun g -> fun v -> match GraphRule.RuleGraph.label g v with
-        | Some (hd :: _) -> Some (Printf.sprintf
-            "SELECT object AS '%s' FROM %s WHERE value = %s"
-                (Identifier.to_string v)
-                (hd |> Predicate.Clause.attribute)
-                (hd |> Predicate.Clause.filter |> Filter.to_sql_action)
-        )
-        | _ -> None
+    fun g -> fun v -> match GraphRule.RuleGraph.label g v  with
+        | Some predicate -> begin match Predicate.clauses predicate with
+            | [] -> None
+            | clause :: _ -> Some (
+                Printf.sprintf "SELECT object as '%s' %s"
+                    (Identifier.to_string v)
+                    (Predicate.Clause.from_clause clause)
+            )
+        end
+        | None -> None
 
 let tables_of_graph : GraphRule.RuleGraph.t -> table list = fun g ->
     let edge_queries = g

@@ -16,7 +16,7 @@ let to_string : t -> string = function
     | `Equality v -> "eq:" ^ (Value.to_string v)
     | `Substring v -> "ss:" ^ (Value.to_string v)
 
-let to_sql_action : t -> string = function
+let where_clause_body : t -> string = function
     | `Equality v -> "value = " ^ (Value.to_string v)
     | `Substring v -> "INSTR(value, " ^ (Value.to_string v) ^ ") > 0"
 

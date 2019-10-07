@@ -2,17 +2,7 @@ open Core
 
 (* predicates are filters applied to particular attributes *)
 
-module Clause : (sig
-    type t
-    val clause : string -> Filter.t -> t
-    val attribute : t -> string
-    val filter : t -> Filter.t
-    val to_string : t -> string
-    val apply : t -> Value.Map.t -> bool
-    val to_json : t -> JSON.t
-    val of_json : JSON.t -> t option
-    val weaken : t -> t list
-end) = struct
+module Clause = struct
     type t = {
         attribute : string;
         filter : Filter.t;
@@ -53,17 +43,27 @@ end) = struct
     let weaken c =
         let weakenings = Filter.Weaken.greedy c.filter in
         CCList.map (fun w -> {c with filter = w}) weakenings
+
+    let from_clause clause =
+        let tbl = attribute clause in
+        let condition = filter clause |> Filter.where_clause_body in
+            Printf.sprintf "FROM %s WHERE %s" tbl condition
 end
 
 type t = Clause.t list
+
+let clauses p = p
+let clause_by_idx pred idx =
+    CCList.get_at_idx idx pred
+
+let of_list clauses = clauses
+let singleton clause = [clause]
 
 let to_string p = p
     |> CCList.map Clause.to_string
     |> CCString.concat " & "
 
 let apply p m = p |> CCList.for_all (fun c -> Clause.apply c m)
-
-let select_clause p i = CCList.nth_opt p i |> CCOpt.map CCList.return
 
 (* json manipulation *)
 let to_json p =

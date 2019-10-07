@@ -12,11 +12,13 @@ module DocToRuleMapping : Graph.Signatures.Functor with
     module Codomain = GraphRule.RuleGraph
 
     let map_vertex id = id
+
     let map_vertex_label lbl = match lbl with
         | Some vm -> Some (Value.Map.to_list vm
-            |> CCList.map (fun (k, v) -> Predicate.Clause.clause k (Filter.Make.of_value v))
-        )
+            |> CCList.map (fun (key, value) -> Predicate.Clause.clause key (Filter.Make.of_value value))
+            |> Predicate.of_list)
         | None -> None
+        
     let map_edge_label lbl = match lbl with
         | Some value -> Some value
         | None -> None
@@ -40,14 +42,16 @@ module VertexSimplification = struct
         match simpl with
             | Project i -> 
                 let label = GraphRule.RuleGraph.label rule.GraphRule.graph id |> CCOpt.get_exn in
-                let proj = Predicate.select_clause label i |> CCOpt.get_exn in
+                let proj = Predicate.clause_by_idx label i 
+                    |> CCOpt.get_exn
+                    |> Predicate.singleton in
                 GraphRule.map (fun g -> GraphRule.RuleGraph.add_label g id proj) rule
             | Relax -> GraphRule.map (fun g -> GraphRule.RuleGraph.remove_label g id) rule
             | Drop -> GraphRule.map (fun g -> GraphRule.RuleGraph.remove_vertex g id) rule
     
     let generate : GraphRule.t -> Identifier.t -> t list = fun rule -> fun id ->
         let conj = match GraphRule.RuleGraph.label rule.GraphRule.graph id with
-            | Some lbl -> lbl
+            | Some lbl -> Predicate.clauses lbl
             | None -> [] in
         let preds = match conj with
             | [] -> [Relax]

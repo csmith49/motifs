@@ -1,25 +1,32 @@
-open Core
-
 type t
 
-val apply : t -> Value.t -> bool
+(* check ad see if a value satisfies a filter *)
+val apply : t -> Core.Value.t -> bool
 
+(* for printing *)
 val to_string : t -> string
 
-val to_sql_action : t -> string
+(* for embedding in a relational algebra *)
+(* constructs a string restraining "value" in the appropriate fashion *)
+val where_clause_body : t -> string
 
+(* so we can sort and compare *)
 val compare : t -> t -> int
 val equal : t -> t -> bool
 
+(* construction techniques *)
 module Make : sig
-    val of_value : Value.t -> t
+    (* equality check on a value *)
+    val of_value : Core.Value.t -> t
 end
 
+(* how do we weaken filters to generate new graph rules? *)
 module Weaken : sig
     val substring : t -> t list
 
     val greedy : t -> t list
 end
 
-val to_json : t -> JSON.t
-val of_json : JSON.t -> t option
+(* conversion to and from json *)
+val to_json : t -> Yojson.Basic.t
+val of_json : Yojson.Basic.t -> t option
