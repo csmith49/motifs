@@ -23,29 +23,28 @@ let combine : t list -> t = fun vs ->
 let labels : t -> label list = fun c -> c.labels
 let attributes : t -> attribute list = fun c -> c.attributes
 
-let label_of_json : Yojson.Basic.t -> label option = function
-    | `String s -> Some s
-    | _ -> None
-let attribute_of_json : Yojson.Basic.t -> attribute option = function
-    | `String s -> Some s
-    | _ -> None
-
-let of_json : Yojson.Basic.t -> t = fun json ->
+let of_json : Yojson.Basic.t -> t option = fun json ->
     let labels = json
-        |> Utility.JSON.get "labels" (Utility.JSON.list Utility.JSON.string)
-        |> CCOpt.get_or ~default:[] in
+        |> Utility.JSON.get
+            "labels"
+            (Utility.JSON.list Utility.JSON.string) in
     let attributes = json
-        |> Utility.JSON.get "attributes" (Utility.JSON.list Utility.JSON.string)
-        |> CCOpt.get_or ~default:[] in
-    {
-        labels = labels;
-        attributes = attributes;
-    }
+        |> Utility.JSON.get
+            "attributes"
+            (Utility.JSON.list Utility.JSON.string) in
+    match labels, attributes with
+        | Some labels, Some attributes -> Some
+            {
+                labels = labels;
+                attributes = attributes;
+            }
+        | _ -> None
 
 (* loading from file *)
 let from_file : string -> t = fun filename -> filename
     |> Yojson.Basic.from_file
     |> of_json
+    |> CCOpt.get_exn
 
 (* makes assumptions about where views are stored *)
 let of_string : string -> t = fun view_name ->

@@ -27,7 +27,7 @@ module O = Data.SparseJSON.SQLMake(D)
 
 (* load problem declaration *)
 let _ = print_string ("Loading problem...")
-let problem = Domain.Problem.of_file !problem_filename
+let problem = Domain.Problem.from_file !problem_filename
 let _ = print_endline "done."
 
 (* load views - use cmd line, or default to problem view, or throw exception *)
@@ -48,13 +48,13 @@ let rules_per_example = total_rules / (CCList.length (Domain.Problem.examples pr
 let process (ex : Domain.Problem.example) = begin
     (* load the example (printing as desired) *)
     let _ = print_string "Loading example data..." in
-    let doc = D.of_string (Domain.Problem.file ex) in
-    let example = Domain.Problem.vertex ex in
+    let doc = D.of_string (fst ex) in
+    let example = snd ex in
     let _ = print_endline "done." in
     let _ = print_endline (Printf.sprintf 
         "Checking vertex %s in %s:" 
         (Core.Identifier.to_string example)
-        (Domain.Problem.file ex)) in
+        (fst ex)) in
 
     let context = D.context doc 2 example view in
     let _ = print_endline (Domain.Document.DocGraph.to_string context) in

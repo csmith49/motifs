@@ -7,15 +7,8 @@ type t = [
 
 type value = t
 
-val of_int_lit : int -> t
-val of_string_lit : string -> t
-val of_bool_lit : bool -> t
-
 val of_string : string -> t
 
-val to_int_opt : t -> int option
-val to_string_opt : t -> string option
-val to_bool_opt : t -> bool option
 
 val to_string : t -> string
 

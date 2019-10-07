@@ -3,11 +3,6 @@ open Core
 type filename = string
 type example = (filename * Identifier.t)
 
-let file = fst
-let vertex = snd
-
-exception IOFailure
-
 type t = {
     files : filename list;
     examples : example list;
@@ -25,13 +20,11 @@ let example_of_json : Yojson.Basic.t -> example option = fun json ->
         | Some filename, Some id -> Some (filename, id)
         | _ -> None
 
-let of_json : Yojson.Basic.t -> t = fun json ->
+let of_json : Yojson.Basic.t -> t option = fun json ->
     let files = json
-        |> Utility.JSON.get "files" (Utility.JSON.list Utility.JSON.string)
-        |> CCOpt.get_exn in
+        |> Utility.JSON.get "files" (Utility.JSON.list Utility.JSON.string) in
     let examples = json
-        |> Utility.JSON.get "examples" (Utility.JSON.list example_of_json)
-        |> CCOpt.get_exn in
+        |> Utility.JSON.get "examples" (Utility.JSON.list example_of_json) in
     let metadata = json
         |> Utility.JSON.get "metadata" (Utility.JSON.assoc Utility.JSON.identity)
         |> CCOpt.get_or ~default:[] in
@@ -39,10 +32,13 @@ let of_json : Yojson.Basic.t -> t = fun json ->
         |> CCList.assoc_opt ~eq:CCString.equal "views"
         |> CCOpt.flat_map (Utility.JSON.list Utility.JSON.string)
         |> CCOpt.map (CCList.map View.of_string) in
-    {
-        files = files;
-        examples = examples;
-        views = views;
-    }
+    match files, examples with
+        | Some files, Some examples -> Some
+            {
+                files = files;
+                examples = examples;
+                views = views;
+            }
+        | _ -> None
 
-let of_file : string -> t = fun filename -> Yojson.Basic.from_file filename |> of_json
+let from_file : string -> t = fun filename -> Yojson.Basic.from_file filename |> of_json |> CCOpt.get_exn

@@ -6,10 +6,6 @@ type t = [
 ]
 type value = t
 
-(* conversions from ocaml literals *)
-let of_int_lit : int -> t = fun i -> `Int i
-let of_string_lit : string -> t = fun s -> `String s
-let of_bool_lit : bool -> t = fun b -> `Bool b
 
 let of_string : string -> t = fun s ->
     match int_of_string_opt s with
@@ -18,16 +14,6 @@ let of_string : string -> t = fun s ->
             | Some b -> `Bool b
             | None -> `String s
 
-(* and to ocaml literals *)
-let to_int_opt : t -> int option = function
-    | `Int i -> Some i
-    | _ -> None
-let to_string_opt : t -> string option = function
-    | `String s -> Some s
-    | _ -> None
-let to_bool_opt : t -> bool option = function
-    | `Bool b -> Some b
-    | _ -> None
 
 (* for printing *)
 let to_string : t -> string = function
