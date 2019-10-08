@@ -33,6 +33,7 @@ module Map : sig
     val add : string -> value -> t -> t
     
     val to_list : t -> (string * value) list
+    val of_list : (string * value) list -> t
     
     val is_empty : t -> bool
 

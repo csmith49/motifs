@@ -68,6 +68,7 @@ module Map = struct
     let get : CCString.t -> t -> value option = StringMap.get
     let add : CCString.t -> value -> t -> t = StringMap.add
     let to_list : t -> (CCString.t * value) list = StringMap.bindings
+    let of_list = StringMap.of_list
 
     let is_empty : t -> bool = StringMap.is_empty
 
