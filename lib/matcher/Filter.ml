@@ -21,3 +21,7 @@ let to_json filter = `List (filter
 let of_json json = match Utility.JSON.list Predicate.of_json json with
     | Some ls -> Some (of_list ls)
     | None -> None
+
+let apply filter map = filter
+    |> to_list
+    |> CCList.for_all (fun p -> Predicate.apply p map)
