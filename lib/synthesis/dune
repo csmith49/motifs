@@ -1,4 +1,4 @@
 (library
     (name synthesis)
-    (libraries data rule)
+    (libraries matcher)
 )

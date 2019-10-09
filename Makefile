@@ -2,8 +2,7 @@ src=bin
 build=_build/default/bin
 
 .phony: all
-all: gr scripts/dot_of_example
-
+all: gr
 gr: lib
 	dune build $(src)/gr.exe
 	mv $(build)/gr.exe gr

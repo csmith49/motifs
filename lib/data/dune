@@ -1,4 +1,0 @@
-(library
-    (name data)
-    (libraries domain rule core sqlite3)
-)

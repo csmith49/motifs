@@ -1,4 +1,0 @@
-(library
-    (name graph)
-    (libraries containers containers.data core)
-)
