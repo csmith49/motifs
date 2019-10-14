@@ -2,8 +2,8 @@ type db = Sqlite3.db
 
 let of_string filename = Sqlite3.db_open filename
 
-let rec nearby_nodes db view origin size =
-    let query = nearby_nodes_query view origin size in
+let rec nearby_nodes db view origins size =
+    let query = nearby_nodes_query view origins size in
     let results = ref [] in
     let callback row = match CCArray.get row 0 |> Core.Identifier.of_string with
         | Some id -> results := id :: !results
@@ -30,8 +30,8 @@ and nearby_nodes_query view origin size = Printf.sprintf
     (View.labels view 
         |> CCList.map (fun lbl -> Printf.sprintf "SELECT * FROM %s" lbl)
         |> CCString.concat " UNION ")
-    (Core.Identifier.to_string origin)
-    (Core.Identifier.to_string origin)
+    (origin |> CCList.map Core.Identifier.to_string |> CCString.concat ", ")
+    (origin |> CCList.map Core.Identifier.to_string |> CCString.concat ", ")
     (size)
 
 let rec edges_between db view identifiers =
@@ -74,8 +74,8 @@ and attributes_for_query view identifier =
         |> CCString.concat " UNION "
 
 (* constructiong document graphs *)
-let neighborhood db view identifier size =
-    let nodes = nearby_nodes db view identifier size in
+let neighborhood db view identifiers size =
+    let nodes = nearby_nodes db view identifiers size in
     let attributes = nodes
         |> CCList.map (attributes_for db view) in
     let edges = edges_between db view nodes in
@@ -128,6 +128,34 @@ let evaluate db motif =
         |> Core.Structure.edges
         |> CCList.map edge_to_select_statement in
     let selects = (vertex_selects @ edge_selects)
+        |> CCList.map (fun s -> "(" ^ s ^ ")")
+        |> CCString.concat " JOIN " in
+    let query = Printf.sprintf "SELECT %s FROM (%s)"
+        (Core.Identifier.to_string motif.Matcher.Motif.selector)
+        (selects) in
+    let results = ref [] in
+    let callback row = match CCArray.get row 0 |> Core.Identifier.of_string with
+        | Some id -> results := id :: !results
+        | None -> () in
+    let _ = Sqlite3.exec_not_null_no_headers db ~cb:callback query in
+        !results
+
+let evaluate_on db motif target =
+    let structure = motif.Matcher.Motif.structure in
+    let vertex_selects = structure
+        |> Core.Structure.vertices
+        |> CCList.filter_map (fun id -> match Core.Structure.label id structure with
+            | Some lbl -> Some (id, lbl)
+            | None -> None)
+        |> CCList.map (fun (id, filt) -> vertex_to_select_statement id filt) in
+    let edge_selects = structure
+        |> Core.Structure.edges
+        |> CCList.map edge_to_select_statement in
+    let target_select = Printf.sprintf
+        "SELECT id AS %s FROM vertex WHERE id IN (%s)"
+        (Core.Identifier.to_string motif.Matcher.Motif.selector)
+        (target |> CCList.map Core.Identifier.to_string |> CCString.concat ", ") in
+    let selects = target_select :: (vertex_selects @ edge_selects)
         |> CCList.map (fun s -> "(" ^ s ^ ")")
         |> CCString.concat " JOIN " in
     let query = Printf.sprintf "SELECT %s FROM (%s)"

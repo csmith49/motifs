@@ -2,6 +2,16 @@ type t =
     | Top
     | Conjunct of Predicate.t * t
 
+module Lattice : sig
+    val weaken : t -> t list
+end
+
+val compare : t -> t -> int
+val equal : t -> t -> bool
+
+val implies : t -> t -> bool
+val (=>) : t -> t -> bool
+
 val of_list : Predicate.t list -> t
 val of_map : Core.Value.Map.t -> t
 

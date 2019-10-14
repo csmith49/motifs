@@ -2,6 +2,24 @@ type t = [
     | `Constant of string * Core.Value.t
 ]
 
+module Lattice = struct
+    let weaken _ = []
+end
+
+let compare left right = match left, right with
+    | `Constant (s, v), `Constant (s', v') ->
+        let s_cmp = CCString.compare s s' in
+        if s_cmp = 0 then
+            Core.Value.compare v v'
+        else s_cmp
+let equal left right = match left, right with
+    | `Constant (s, v), `Constant (s', v') ->
+        (CCString.equal s s') &&
+        (Core.Value.equal v v')
+
+let implies left right = equal left right
+let (=>) left right = implies left right
+
 let of_pair (key, value) = `Constant (key, value)
 
 let apply pred map = match pred with

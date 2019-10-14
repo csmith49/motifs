@@ -9,6 +9,37 @@ let rec to_list = function
     | Top -> []
     | Conjunct (pred, rest) -> pred :: (to_list rest)
 
+let compare left right =
+    let left' = left
+        |> to_list
+        |> CCList.sort Predicate.compare in
+    let right' = right
+        |> to_list
+        |> CCList.sort Predicate.compare in
+    CCList.compare Predicate.compare left' right'
+let equal left right =
+    let left' = left
+        |> to_list
+        |> CCList.sort Predicate.compare in
+    let right' = right
+        |> to_list
+        |> CCList.sort Predicate.compare in
+    CCList.equal Predicate.equal left' right'
+
+let implies left right =
+    let left' = to_list left in right |> to_list
+        |> CCList.for_all (fun r -> CCList.exists (fun l -> Predicate.implies l r) left')
+let (=>) left right = implies left right
+
+module Lattice = struct
+    let weaken = function
+        | Top -> []
+        | _ as conjunct -> conjunct |> to_list
+            |> CCList.map Predicate.Lattice.weaken
+            |> CCList.cartesian_product
+            |> CCList.map of_list
+end
+
 let of_map map = map
     |> Core.Value.Map.to_list
     |> CCList.map Predicate.of_pair
