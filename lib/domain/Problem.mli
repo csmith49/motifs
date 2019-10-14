@@ -1,5 +1,5 @@
 type filename = string
-type example = (filename * Core.Identifier.t)
+type example = (filename * Core.Identifier.t list)
 
 type t
 

@@ -1,7 +1,7 @@
 open Core
 
 type filename = string
-type example = (filename * Identifier.t)
+type example = (filename * Identifier.t list)
 
 type t = {
     files : filename list;
@@ -15,9 +15,9 @@ let views p = p.views
 
 let example_of_json : Yojson.Basic.t -> example option = fun json ->
     let filename = Utility.JSON.get "file" Utility.JSON.string json in
-    let id = Utility.JSON.get "example" Identifier.of_json json in
-    match filename, id with
-        | Some filename, Some id -> Some (filename, id)
+    let ids = Utility.JSON.get "example" (Utility.JSON.one_or_more Identifier.of_json) json in
+    match filename, ids with
+        | Some filename, Some ids -> Some (filename, ids)
         | _ -> None
 
 let of_json : Yojson.Basic.t -> t option = fun json ->

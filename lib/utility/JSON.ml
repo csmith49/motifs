@@ -22,6 +22,10 @@ let list parser json = match json with
         |> CCList.all_some
     | _ -> None
 
+let one_or_more parser json = match parser json with
+    | Some v -> Some [v]
+    | None -> list parser json
+
 let string json = match json with
     | `String s -> Some s
     | _ -> None

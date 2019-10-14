@@ -1,4 +1,4 @@
 (library
     (name synthesis)
-    (libraries matcher)
+    (libraries matcher domain core)
 )
