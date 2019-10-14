@@ -9,6 +9,27 @@ type edge_delta = [
     | `Remove
 ]
 
+(* orderings for deltas *)
+let vd_leq left right = match left, right with
+    | `Keep, _ -> true
+    | _, `Remove -> true
+    | `Weaken f, `Weaken f' -> Matcher.Filter.(f => f')
+    | _ -> false
+let ed_leq left right = match left, right with
+    | `Keep, _ -> true
+    | _, `Remove -> true
+    | _ -> false
+
+let vd_eq left right = match left, right with
+    | `Keep, `Keep -> true
+    | `Remove, `Remove -> true
+    | `Weaken f, `Weaken f' -> Matcher.Filter.equal f f'
+    | _ -> false
+let ed_eq left right = match left, right with
+    | `Keep, `Keep -> true
+    | `Remove, `Remove -> true
+    | _ -> false
+
 (* to simplify some types, these are just Motif edges *)
 type edge = Core.Identifier.t * Matcher.Kinder.t * Core.Identifier.t
 
@@ -101,3 +122,28 @@ let refine delta = match next_vertex delta with
                 edge_deltas = EdgeMap.add edge d delta.edge_deltas
             })
         | None -> []
+
+(* for partial order heaps *)
+let lift_comparison vertex_cmp edge_cmp left right =
+    (* make sure we're dealing with the same motif by checking the hash *)
+    if left.motif_hash != right.motif_hash then false else
+    (* if we are, we have to check if each delta is leq *)
+    (* start with vertices *)
+    let vertices = structure left |> Core.Structure.vertices in
+    let vds_leq = vertices |> CCList.for_all (fun v ->
+        let left_vd = VertexMap.get_or v left.vertex_deltas ~default:`Keep in
+        let right_vd = VertexMap.get_or v right.vertex_deltas ~default:`Keep in
+            vertex_cmp left_vd right_vd) in
+    if not vds_leq then false else
+    (* then check edges *)
+    let edges = structure left |> Core.Structure.edges in
+    let eds_leq = edges |> CCList.for_all (fun e ->
+        let left_ed = EdgeMap.get_or e left.edge_deltas ~default:`Keep in
+        let right_ed = EdgeMap.get_or e right.edge_deltas ~default:`Keep in
+            edge_cmp left_ed right_ed) in
+    if not eds_leq then false else
+        true
+
+(* constructing comparisons *)
+let equal = lift_comparison vd_eq ed_eq
+let leq = lift_comparison vd_leq ed_leq

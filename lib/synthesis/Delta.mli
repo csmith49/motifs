@@ -22,3 +22,7 @@ val refine : t -> t list
 
 (** see if a delta can be refined *)
 val is_total : t -> bool
+
+(* comparisons *)
+val equal : t -> t -> bool
+val leq : t -> t -> bool
