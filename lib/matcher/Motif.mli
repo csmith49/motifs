@@ -5,7 +5,7 @@ type t = {
     structure : pattern_graph;
 }
 
-val equal : t -> t -> bool
+val hash : t -> int
 
 val to_json : t -> Yojson.Basic.t
 val of_json : Yojson.Basic.t -> t option

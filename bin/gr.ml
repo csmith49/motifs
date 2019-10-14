@@ -36,10 +36,10 @@ let view = if CCString.is_empty !view_filename then
 let _ = print_endline "done."
 
 (* the common variables accessed across all examples *)
-let total_rules = 100
-let output_rules = ref []
-let rules_per_example = 
-    total_rules / (CCList.length (Domain.Problem.examples problem))
+let total_motifs = 100
+let output_motifs = ref []
+let motifs_per_example = 
+    total_motifs / (CCList.length (Domain.Problem.examples problem))
 
 (* what we should do per-example *)
 let process (ex : Domain.Problem.example) = begin
@@ -47,16 +47,13 @@ let process (ex : Domain.Problem.example) = begin
     (* load the example (printing as desired) *)
     let _ = print_string "Loading example data..." in
     let db = Domain.SQL.of_string (fst ex) in
-    let node = snd ex in
+    let positive_examples = [snd ex] in
+    let doc = Domain.SQL.neighborhood db view positive_examples !size in
     
     let _ = print_endline "done." in
-    let _ = print_endline (Printf.sprintf 
-        "Checking vertex %s in %s:" 
-        (Core.Identifier.to_string node)
-        (fst ex)) in
 
     (* get negative examples *)
-    let negative_examples = [] in
+    let negative_examples = Domain.Doc.small_window doc positive_examples !negative_width in
 
     (* synthesize rules *)
     let motifs = [] in
@@ -73,7 +70,7 @@ let process (ex : Domain.Problem.example) = begin
     let _ = print_endline (Printf.sprintf "%i consistent motifs." (CCList.length consistent_motifs)) in
 
     (* write output *)
-    output_rules := consistent_motifs @ !output_rules
+    output_motifs := consistent_motifs @ !output_motifs
 end
 
 (* do the thing per-example *)
@@ -84,7 +81,7 @@ let _ = print_endline "Examples processed."
 (* now write out the rules *)
 let write_output filename = begin
     let db = Domain.SQL.of_string filename in
-    let sparse_image = !output_rules
+    let sparse_image = !output_motifs
         |> CCList.map (fun motif -> (motif, Domain.SQL.evaluate db motif)) in
     let output_file = filename
         |> Filename.basename

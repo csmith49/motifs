@@ -21,31 +21,4 @@ let of_json json =
         }
         | _ -> None
 
-let equal left right =
-    (* make sure selectors are the same *)
-    let selectors_equal = Core.Identifier.equal left.selector right.selector in
-    if not selectors_equal then false else
-    (* make sure vertices are the same *)
-    let lvs = left.structure
-        |> Core.Structure.vertices
-        |> CCList.sort Core.Identifier.compare in
-    let rvs = right.structure
-        |> Core.Structure.vertices
-        |> CCList.sort Core.Identifier.compare in
-    let vertices_equal = CCList.equal Core.Identifier.equal lvs rvs in
-    if not vertices_equal then false else
-    (* make sure filters are the same *)
-    let filters_equal = lvs |> CCList.for_all (fun v ->
-        let l_filter = Core.Structure.label v left.structure |> CCOpt.get_exn in
-        let r_filter = Core.Structure.label v right.structure |> CCOpt.get_exn in
-            Filter.equal l_filter r_filter) in
-    if not filters_equal then false else
-    (* make sure the edges are the same *)
-    let les = left.structure
-        |> Core.Structure.edges
-        |> CCList.sort (Core.Structure.lift_compare Kinder.compare) in
-    let res = right.structure
-        |> Core.Structure.edges
-        |> CCList.sort (Core.Structure.lift_compare Kinder.compare) in
-    let edges_equal = CCList.equal (Core.Structure.lift_equal Kinder.equal) les res in
-    edges_equal
+let hash = CCHash.poly

@@ -23,6 +23,7 @@ end)
 
 type t = {
     base_motif : Matcher.Motif.t;
+    motif_hash : int;
     vertex_deltas : vertex_delta VertexMap.t;
     edge_deltas : edge_delta EdgeMap.t;
 }
@@ -53,6 +54,7 @@ let concretize delta = apply delta.base_motif delta
 
 let initial motif = {
     base_motif = motif;
+    motif_hash = Matcher.Motif.hash motif;
     vertex_deltas = VertexMap.empty;
     edge_deltas = EdgeMap.empty;
 }
@@ -99,4 +101,3 @@ let refine delta = match next_vertex delta with
                 edge_deltas = EdgeMap.add edge d delta.edge_deltas
             })
         | None -> []
-
