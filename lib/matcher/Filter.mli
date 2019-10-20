@@ -1,6 +1,4 @@
-type t =
-    | Top
-    | Conjunct of Predicate.t * t
+type t = Predicate.t list
 
 module Lattice : sig
     val weaken : t -> t list
@@ -12,7 +10,6 @@ val equal : t -> t -> bool
 val implies : t -> t -> bool
 val (=>) : t -> t -> bool
 
-val of_list : Predicate.t list -> t
 val of_map : Core.Value.Map.t -> t
 
 val to_json : t -> Yojson.Basic.t

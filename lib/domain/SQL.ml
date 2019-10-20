@@ -96,8 +96,8 @@ let predicate_to_subquery = function
 
 (* and filters to combinations of queries *)
 let rec filter_to_where_clause = function
-    | Matcher.Filter.Top -> "TRUE"
-    | Matcher.Filter.Conjunct (pred, rest) ->
+    | [] -> "TRUE"
+    | pred :: rest ->
         let rest = filter_to_where_clause rest in
         let pred = predicate_to_subquery pred in
         Printf.sprintf "identifier IN (%s) AND %s" pred rest
@@ -135,7 +135,6 @@ let evaluate db motif =
     let query = Printf.sprintf "SELECT DISTINCT %s FROM %s"
         (id_to_column motif.Matcher.Motif.selector)
         (selects) in
-    let _ = print_endline query in
     let results = ref [] in
     let callback row = match CCArray.get row 0 |> Core.Identifier.of_string with
         | Some id -> results := id :: !results
@@ -146,6 +145,4 @@ let evaluate db motif =
 
 let check_consistency db negatives motif =
     let image = evaluate db motif in
-    let _ = print_endline (motif |> Matcher.Motif.to_string) in
-    let _ = print_endline (image |> CCList.map Core.Identifier.to_string |> CCString.concat ", ") in
     CCList.for_all (fun n -> not (CCList.mem ~eq:Core.Identifier.equal n image)) negatives

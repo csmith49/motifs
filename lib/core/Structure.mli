@@ -43,14 +43,29 @@ val to_string : ('v -> string) -> ('e -> string) -> ('v, 'e) t -> string
 
 
 module Embedding : sig
+    (** embeddings are bijective functions from identifiers to identifiers *)
     type t
-    
+
+    (** returns all identifiers in the domain of the embedding *)
     val domain : t -> Identifier.t list
+
+    (** returns all identifiers in the codomain of the embedding *)
     val codomain : t -> Identifier.t list
 
+    (** constructs an empty embedding *)
     val empty : t
+
+    (** extends an embedding with a left/right pair *)
     val extend : Identifier.t -> Identifier.t -> t -> t
+
+    (** makes an embedding from a single left/right pair *)
+    val embed : Identifier.t -> Identifier.t -> t
+
+    (** looks up the image of an identifier in the embedding *)
     val image : Identifier.t -> t -> Identifier.t option
+
+    (** converts an edge using image *)
+    val edge_image : 'e edge -> t -> 'e edge option
 end
 
 module BiPath : sig

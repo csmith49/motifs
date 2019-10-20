@@ -64,15 +64,17 @@ let process (ex : Domain.Problem.example) = begin
     (* synthesize rules *)
     let motifs = Synthesis.Cone.from_independent_examples db view positive_examples !size
         |> Synthesis.Cone.flat_enumerate
-            ~filter:(fun d -> d |> Synthesis.Delta.concretize |> Matcher.Motif.well_connected)
-
+            ~filter:(fun d -> 
+                let m = d |> Synthesis.Delta.concretize in
+                Matcher.Motif.well_connected m && Matcher.Motif.well_formed m)
             ~verbose:(!yell) 
     in
     let _ = print_endline (Printf.sprintf "Found %i total motifs." (CCList.length motifs)) in
     
     (* check for consistency *)
     let consistent_motifs = motifs
-        |> CCList.filter (Domain.SQL.check_consistency db negative_examples) in
+        |> CCList.filter (Domain.SQL.check_consistency db negative_examples)
+    in
     let _ = print_endline (Printf.sprintf "%i consistent motifs." (CCList.length consistent_motifs)) in
 
     (* write output *)

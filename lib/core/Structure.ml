@@ -234,9 +234,15 @@ module Embedding = struct
     
     let empty = IdentBijection.empty
     let extend left right embedding = IdentBijection.add left right embedding
+    let embed left right = extend left right empty
     let image left embedding = 
         try Some (IdentBijection.find_left left embedding)
         with Not_found -> None
+
+    let edge_image (src, lbl, dest) embedding =
+        match image src embedding, image dest embedding with
+            | Some s, Some d -> Some (s, lbl, d)
+            | _ -> None
 end
 
 (* type ('v, 'u, 'e, 'g) task = {
