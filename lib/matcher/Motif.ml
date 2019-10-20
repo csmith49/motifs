@@ -124,5 +124,130 @@ module PartialOrder = struct
     (* alternate syntax *)
     let (<=) x y = leq x y
 
-    let join _ = []
+    (* JOINS *)
+
+    (* computed over candidates *)
+    type candidate = {
+        c_selector : Core.Identifier.t;
+        c_structure : pattern_graph;
+        c_embeddings : E.t list;
+    }
+
+    (* extensions are lists of images *)
+
+    (* convert to motif *)
+    let to_motif candidate = {
+        selector = candidate.c_selector;
+        structure = candidate.c_structure;
+    }
+
+    (* consistent if this is the only way we make candidates *)
+    let fresh_id candidate = candidate.c_structure
+        |> Core.Structure.vertices
+        |> CCList.length
+        |> Core.Identifier.of_int
+
+    (* get an initial candidate by "intersecting" all the selectors *)
+    let initial_candidate motifs =
+        let selector = Core.Identifier.of_int 0 in
+        let label = motifs
+            |> CCList.filter_map (fun m -> Core.Structure.label m.selector m.structure)
+            |> Filter.Lattice.join in
+        let structure = Core.Structure.empty
+            |> Core.Structure.add_vertex selector label in
+        let embeddings = motifs
+            |> CCList.map (fun m -> E.embed selector m.selector) in
+        {
+            c_selector = selector;
+            c_structure = structure;
+            c_embeddings = embeddings;
+        }
+
+    (* for every motif in the join, find a candidate vertex in the neighborhood *)
+    let candidate_extensions motifs candidate =
+        let codomains = candidate.c_embeddings
+            |> CCList.map E.codomain in
+        CCList.map2 candidates motifs codomains
+            |> CCList.cartesian_product
+    
+    (* given an extension, see what the label can be via joining *)
+    let extension_label motifs extension =
+        CCList.map2 (fun m -> fun x -> Core.Structure.label x m.structure) motifs extension
+            |> CCList.all_some
+            |> CCOpt.get_or ~default:[]
+            |> Filter.Lattice.join
+
+    (* effectively a join for edges - just check if all of them are equal *)
+    let rec check_edges = function
+        | [] -> None
+        | e :: [] -> Some e
+        | e :: rest -> match check_edges rest with
+            | Some e' -> if Core.Structure.Edge.equal Kinder.equal e e' then Some e else None
+            | None -> None
+
+    (* given a motif edge, get the corresponding candidate edge *)
+    let edge_preimage embedding (src, lbl, dest) =
+        match E.preimage src embedding, E.preimage dest embedding with
+            | Some src', Some dest' -> Some (src', lbl, dest')
+            | _ -> None
+
+    (* get any edges to be added to the candidate *)
+    let extension_edges motifs extension candidate =
+        let get_edges_bt structure c bound =
+            let incoming = Core.Structure.incoming c structure
+                |> CCList.filter (fun (_, _, dest) -> not (CCList.mem ~eq:Core.Identifier.equal dest bound)) in
+            let outgoing = Core.Structure.outgoing c structure
+                |> CCList.filter (fun (src, _, _) -> not (CCList.mem ~eq:Core.Identifier.equal src bound)) in
+            incoming @ outgoing in
+        (* get any edges between the bound nodes and the candidate in the extension *)
+        CCList.map2 (fun m -> fun c -> (m, c)) motifs extension |> CCList.map2 (fun e -> fun (m, c) -> 
+                get_edges_bt m.structure c (E.codomain e) |> CCList.filter_map (edge_preimage e)
+            ) candidate.c_embeddings
+            |> CCList.cartesian_product
+            |> CCList.filter_map check_edges
+
+    (* apply an extension *)
+    let apply_extension candidate vertex label edges extension =
+        let structure = candidate.c_structure
+            |> Core.Structure.add_vertex vertex label
+            |> CCList.fold_right Core.Structure.add_edge edges in
+        let embeddings = candidate.c_embeddings
+            |> CCList.map2 (fun c -> fun e -> E.extend vertex c e) extension in
+        {
+            candidate with
+                c_structure = structure;
+                c_embeddings = embeddings;
+        }
+
+    (* get all further candidates *)
+    let refine_candidate motifs candidate =
+        let vertex = fresh_id candidate in
+        let extensions = candidate_extensions motifs candidate in
+        extensions |> CCList.map (fun e ->
+            let label = extension_label motifs e in
+            let edges = extension_edges motifs e candidate in
+                apply_extension candidate vertex label edges e
+        )
+    
+    (* apply a step - if we can't refine any more, we're already maximal, so that's good *)
+    let step motifs candidate = match refine_candidate motifs candidate with
+        | [] -> `Maximal
+        | _ as ans -> `Refinements ans
+
+    let join motifs =
+        let candidates = ref [initial_candidate motifs] in
+        let answers = ref [] in
+        while not (CCList.is_empty !candidates) do
+            let candidate, rest = CCList.hd_tl !candidates in
+            match step motifs candidate with
+                | `Maximal -> begin
+                    answers := candidate :: !answers;
+                    candidates := rest
+                end
+                | `Refinements refs -> begin
+                    answers := !answers @ refs;
+                    candidates := !candidates @ rest
+                end
+        done;
+        !answers |> CCList.map to_motif
 end

@@ -16,10 +16,18 @@ let rec implies left right = match right with
 let (=>) left right = implies left right
 
 module Lattice = struct
-    let rec weaken_aux filter_list = match filter_list with
+    let rec weaken = function
         | [] -> [ [] ]
-        | x :: rest -> (weaken_aux rest) @ (CCList.map (fun l -> x :: l) (weaken_aux rest))
-    and weaken filter = filter |> weaken_aux
+        | x :: rest -> 
+            let weakened = weaken rest in
+            weakened @ (CCList.map (fun l -> x :: l) weakened)
+
+    (* TODO - this is a pretty weak form of join, as it avoids any Pred lattice structure *)
+    let rec join preds = match preds with
+        | [] -> []
+        | pred :: [] -> pred
+        | pred :: rest -> CCList.inter ~eq:Predicate.equal pred (join rest)
+
 end
 
 let of_map map = map

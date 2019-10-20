@@ -64,6 +64,9 @@ module Embedding : sig
     (** looks up the image of an identifier in the embedding *)
     val image : Identifier.t -> t -> Identifier.t option
 
+    (** looks up the preimage of an identifier in the embedding *)
+    val preimage : Identifier.t -> t -> Identifier.t option
+
     (** converts an edge using image *)
     val edge_image : 'e edge -> t -> 'e edge option
 end

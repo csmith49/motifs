@@ -238,6 +238,9 @@ module Embedding = struct
     let image left embedding = 
         try Some (IdentBijection.find_left left embedding)
         with Not_found -> None
+    let preimage right embedding =
+        try Some (IdentBijection.find_right right embedding)
+        with Not_found -> None
 
     let edge_image (src, lbl, dest) embedding =
         match image src embedding, image dest embedding with
