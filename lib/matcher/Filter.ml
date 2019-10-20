@@ -32,12 +32,10 @@ let implies left right =
 let (=>) left right = implies left right
 
 module Lattice = struct
-    let weaken = function
-        | Top -> []
-        | _ as conjunct -> conjunct |> to_list
-            |> CCList.map Predicate.Lattice.weaken
-            |> CCList.cartesian_product
-            |> CCList.map of_list
+    let rec weaken_aux filter_list = match filter_list with
+        | [] -> [ [] ]
+        | x :: rest -> (weaken_aux rest) @ (CCList.map (fun l -> x :: l) (weaken_aux rest))
+    and weaken filter = filter |> to_list |> weaken_aux |> CCList.map of_list
 end
 
 let of_map map = map
@@ -56,3 +54,11 @@ let of_json json = match Utility.JSON.list Predicate.of_json json with
 let apply filter map = filter
     |> to_list
     |> CCList.for_all (fun p -> Predicate.apply p map)
+
+let rec to_string = function
+    | Top -> "⊤"
+    | Conjunct (p, Top) -> Predicate.to_string p
+    | Conjunct (p, rest) -> Printf.sprintf
+        "%s ∧ %s"
+        (Predicate.to_string p)
+        (to_string rest)

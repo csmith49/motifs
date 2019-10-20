@@ -4,6 +4,10 @@ type t =
 
 let of_value v = Constant v
 
+let to_string = function
+    | Star -> "*"
+    | Constant v -> Core.Value.to_string v
+
 let apply kinder value = match kinder with
     | Star -> true
     | Constant c -> Core.Value.equal c value

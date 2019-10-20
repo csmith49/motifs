@@ -1,5 +1,6 @@
 (* identifiers are integers, nothing more *)
 type t = int
+type identifier = t
 
 (* utilities for converting to and from datatypes *)
 let of_json = Utility.JSON.int

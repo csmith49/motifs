@@ -1,5 +1,8 @@
+(** Identifiers represent unique names for objects *)
 type t
+type identifier = t
 
+(** JSON conversion *)
 val of_json : Yojson.Basic.t -> t option
 val to_json : t -> Yojson.Basic.t
 

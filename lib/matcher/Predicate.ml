@@ -6,6 +6,12 @@ module Lattice = struct
     let weaken _ = []
 end
 
+let to_string = function
+    | `Constant (s, v) -> Printf.sprintf
+        "%s = %s"
+        s
+        (Core.Value.to_string v)
+
 let compare left right = match left, right with
     | `Constant (s, v), `Constant (s', v') ->
         let s_cmp = CCString.compare s s' in

@@ -1,6 +1,14 @@
+(* graph includes *)
+
 module Graph = Utility.Graph.Make(Identifier)
 
 include Graph
+
+(* type aliases *)
+
+type ('v, 'e) structure = ('v, 'e) t
+
+(* JSON parsing *)
 
 let of_json j2v j2e json =
     let j2edge json =
@@ -48,37 +56,169 @@ let to_json (v2j : 'v -> Yojson.Basic.t) (e2j : 'e -> Yojson.Basic.t) (g : ('v, 
         ("vertices", `List vertices)
     ]
 
-let lift_equal eq left right = match left, right with
-    | (src, lbl, dest), (src', lbl', dest') ->
-        (Identifier.equal src src') &&
-        (Identifier.equal dest dest') &&
-        (eq lbl lbl')
-let lift_compare cmp left right = match left, right with
-    | (src, lbl, dest), (src', lbl', dest') ->
-        let src_cmp = Identifier.compare src src' in
-        if src_cmp = 0 then
-            let lbl_cmp = cmp lbl lbl' in
-            if lbl_cmp = 0 then
-                Identifier.compare dest dest'
-            else lbl_cmp
-        else src_cmp
-(* TODO
-    bijection between identifiers
+(* Edge utility module *)
 
-    start with simple bijection (target node mapped to something)
+module Edge = struct
+    let equal eq left right = match left, right with
+        | (src, lbl, dest), (src', lbl', dest') ->
+            (Identifier.equal src src') &&
+            (Identifier.equal dest dest') &&
+            (eq lbl lbl')
 
-    pick any other node in the embedded graph
+    let compare cmp left right = match left, right with
+        | (src, lbl, dest), (src', lbl', dest') ->
+            let src_cmp = Identifier.compare src src' in
+            if src_cmp = 0 then
+                let lbl_cmp = cmp lbl lbl' in
+                if lbl_cmp = 0 then
+                    Identifier.compare dest dest'
+                else lbl_cmp
+            else src_cmp
 
-    find all constraints between that node and nodes already chosen
+    let source (src, _, _) = src
+    let destination (_, _, dest) = dest
+    let label (_, lbl, _) = lbl
+end
 
-    select nodes in the large graph that satisfy those constraints
+(* Bipath utility module *)
+module BiPath = struct
+    type 'e t = {
+        source : Identifier.t;
+        destination : Identifier.t;
+        edges : 'e edge list;
+    }
 
-    extend bijection
+    let of_forward_edge edge = {
+        source = Edge.source edge;
+        destination = Edge.destination edge;
+        edges = [edge];
+    }
+    let of_backward_edge edge = {
+        source = Edge.destination edge;
+        destination = Edge.source edge;
+        edges = [edge];
+    }
 
-    repeat until total subgraph bijection found - by construction, will satisfy constraints
+    let extend bipath edge =
+        if Identifier.equal bipath.destination (Edge.source edge) then
+            Some { bipath with
+                destination = Edge.destination edge;
+                edges = bipath.edges @ [edge]}
+        else if Identifier.equal bipath.destination (Edge.destination edge) then
+            Some { bipath with
+                destination = Edge.source edge;
+                edges = bipath.edges @ [edge]}
+        else None
+    
+    let edges bipath = bipath.edges
+    let source bipath = bipath.source
+    let destination bipath = bipath.destination
 
+    let get_next src edge =
+        if Identifier.equal src (Edge.source edge) then
+            Edge.destination edge
+        else Edge.source edge
+    let rec visited bipath = visited_aux bipath.source bipath.edges
+    and visited_aux src edges = match edges with
+        | [] -> [src]
+        | e :: rest -> src :: (visited_aux (get_next src e) rest)
+    let loop_free bipath =
+        let states = visited bipath in
+        let num_states = CCList.length states in
+        let num_unique_states = states 
+            |> CCList.uniq ~eq:Identifier.equal |> CCList.length in
+        num_states = num_unique_states
 
- *)
+    let between structure src dest =
+        (* initialize worklist *)
+        let out_paths = outgoing src structure
+            |> CCList.map of_forward_edge in
+        let in_paths = incoming src structure
+            |> CCList.map of_backward_edge in
+        (* mainained resources *)
+        let worklist = ref (out_paths @ in_paths) in
+        let output = ref [] in
+        while not (CCList.is_empty !worklist) do
+            let bipath, rest = CCList.hd_tl !worklist in
+            if Identifier.equal (destination bipath) (dest) then
+                output := bipath :: !output
+            else
+                let src = destination bipath in
+                let out_paths = outgoing src structure
+                    |> CCList.filter_map (extend bipath) in
+                let in_paths = incoming src structure
+                    |> CCList.filter_map (extend bipath) in
+                let loop_free_paths = CCList.filter 
+                    loop_free
+                    (out_paths @ in_paths) in
+                worklist := rest @ loop_free_paths
+        done;
+        !output
+end
+
+(* string conversion *)
+
+let to_string v2s e2s structure =
+    let context_strings = structure |> vertices
+        |> CCList.map (fun v ->
+            let v_label = match label v structure with
+                | Some vl -> Printf.sprintf
+                    " @ %s" (v2s vl)
+                | None -> "" in
+            let edges = outgoing v structure
+                |> CCList.map (fun (_, lbl, dest) -> Printf.sprintf
+                    "  --{%s}-> %s" (e2s lbl) (Identifier.to_string dest)
+                ) in
+            Printf.sprintf "%s%s\n%s"
+                (Identifier.to_string v)
+                (v_label)
+                (edges |> CCString.concat "\n")
+        ) in
+    context_strings |> CCString.concat "\n"
+
+module Algorithms = struct
+    module IdSet = CCSet.Make(Identifier)
+    
+    let step structure id = structure
+        |> outgoing id
+        |> CCList.map Edge.destination
+        |> IdSet.of_list
+    let bistep structure id = structure
+        |> incoming id
+        |> CCList.map Edge.source
+        |> IdSet.of_list
+        |> IdSet.union (step structure id)
+
+    let extend structure ids = IdSet.fold
+        (fun v -> fun g -> IdSet.union g (step structure v))
+        ids ids
+    let biextend structure ids = IdSet.fold
+        (fun v -> fun g -> IdSet.union g (bistep structure v))
+        ids ids
+
+    let rec neighborhood structure ids size =
+        let set = IdSet.of_list ids in
+        neighborhood_aux structure set size |> IdSet.to_list
+    and neighborhood_aux structure ids size =
+        if size <= 0 then ids else
+        let by_one = biextend structure ids in
+        if size = 1 then by_one else
+            neighborhood_aux structure by_one (size - 1)
+
+    let rec reachable structure ids =
+        let set = IdSet.of_list ids in
+        reachable_aux structure set |> IdSet.to_list
+    and reachable_aux structure ids =
+        let extended = extend structure ids in
+        if IdSet.equal ids extended then ids else reachable_aux structure extended
+    
+    let rec bireachable structure ids =
+        let set = IdSet.of_list ids in
+        bireachable_aux structure set |> IdSet.to_list
+    and bireachable_aux structure ids =
+        let biextended = biextend structure ids in
+        if IdSet.equal ids biextended then ids else bireachable_aux structure biextended
+end
 
 module Embedding = struct
     module IdentBijection = CCBijection.Make(Identifier)(Identifier)

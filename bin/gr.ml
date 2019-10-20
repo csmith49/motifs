@@ -4,6 +4,7 @@ let output_directory = ref ""
 let quiet = ref false
 let negative_width = ref 2
 let size = ref 2
+let yell = ref false
 
 (* for the REST argument *)
 let view_filename = ref ""
@@ -15,6 +16,7 @@ let spec_list = [
     ("-n", Arg.Set_int negative_width, "Sets window for negative examples");
     ("-s", Arg.Set_int size, "Sets max size of synthesized rules");
     ("-v", Arg.Set_string view_filename, "Sets view to be used");
+    ("-y", Arg.Set yell, "Sets yelling on")
 ]
 
 let usage_msg = "Rule Synthesis for Hera"
@@ -45,28 +47,32 @@ let motifs_per_example =
 let process (ex : Domain.Problem.example) = begin
     
     (* load the example (printing as desired) *)
-    let _ = print_string "Loading example data..." in
+    let _ = print_endline "Loading example data..." in
     let db = Domain.SQL.of_string (fst ex) in
-    let positive_examples = [snd ex] in
+    let positive_examples = snd ex in
     let doc = Domain.SQL.neighborhood db view positive_examples !size in
+    let _ = doc |> Domain.Doc.to_string |> print_endline in
     
-    let _ = print_endline "done." in
+    let _ = print_endline "...done." in
 
     (* get negative examples *)
     let negative_examples = Domain.Doc.small_window doc positive_examples !negative_width in
+    let _ = Printf.printf "Found negative examples: %s\n" (
+        negative_examples |> CCList.map Core.Identifier.to_string |> CCString.concat ", "
+        ) in
 
     (* synthesize rules *)
-    let motifs = [] in
+    let motifs = Synthesis.Cone.from_independent_examples db view positive_examples !size
+        |> Synthesis.Cone.flat_enumerate
+            ~filter:(fun d -> d |> Synthesis.Delta.concretize |> Matcher.Motif.well_connected)
+
+            ~verbose:(!yell) 
+    in
     let _ = print_endline (Printf.sprintf "Found %i total motifs." (CCList.length motifs)) in
     
     (* check for consistency *)
-    let check_consistency motif =
-        let img = Domain.SQL.evaluate db motif in
-        negative_examples
-            |> CCList.inter ~eq:Core.Identifier.equal img
-            |> CCList.is_empty in
     let consistent_motifs = motifs
-        |> CCList.filter check_consistency in
+        |> CCList.filter (Domain.SQL.check_consistency db negative_examples) in
     let _ = print_endline (Printf.sprintf "%i consistent motifs." (CCList.length consistent_motifs)) in
 
     (* write output *)

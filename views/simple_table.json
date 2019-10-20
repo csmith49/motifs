@@ -1,10 +1,8 @@
 {
     "metadata": {},
     "labels" : [
-        "DOWN_OF",
         "LEFT_OF",
-        "RIGHT_OF",
-        "UP_OF"
+        "DOWN_OF"
     ],
     "attributes": [
         "text"

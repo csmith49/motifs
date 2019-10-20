@@ -30,6 +30,14 @@ let ed_eq left right = match left, right with
     | `Remove, `Remove -> true
     | _ -> false
 
+let vertex_delta_to_string = function
+    | `Keep -> "KEEP"
+    | `Remove -> "REMOVE"
+    | `Weaken f -> Printf.sprintf "WEAKEN %s" (Matcher.Filter.to_string f)
+let edge_delta_to_string = function
+    | `Keep -> "KEEP"
+    | `Remove -> "REMOVE"
+
 (* to simplify some types, these are just Motif edges *)
 type edge = Core.Identifier.t * Matcher.Kinder.t * Core.Identifier.t
 
@@ -39,7 +47,7 @@ module EdgeMap = CCMap.Make(struct
     type t = edge
 
     (* lexicographic comparison *)
-    let compare = Core.Structure.lift_compare Matcher.Kinder.compare
+    let compare = Core.Structure.Edge.compare Matcher.Kinder.compare
 end)
 
 type t = {
@@ -83,45 +91,97 @@ let initial motif = {
 let structure delta = delta.base_motif.Matcher.Motif.structure
 
 (* pick the next vertex or edge to be refined - returns None if one doesn't exist *)
-let next_vertex delta =
+let free_vertices delta =
     let vertices_changed = delta.vertex_deltas
         |> VertexMap.to_list
         |> CCList.map fst in
-    let vertices = structure delta |> Core.Structure.vertices in
-    CCList.find_opt (fun v -> 
-        not (CCList.mem ~eq:Core.Identifier.equal v vertices_changed)) 
-    vertices
-    
-let next_edge delta =
+    let vertices = delta |> structure |> Core.Structure.vertices in
+    CCList.filter (fun v -> not (CCList.mem ~eq:Core.Identifier.equal v vertices_changed)) vertices
+let free_edges delta = 
     let edges_changed = delta.edge_deltas
         |> EdgeMap.to_list
         |> CCList.map fst in
     let edges = structure delta |> Core.Structure.edges in
-    let eq = Core.Structure.lift_equal Matcher.Kinder.equal in
-    CCList.find_opt (fun e -> not (CCList.mem ~eq:eq e edges_changed)) edges
+    let eq = Core.Structure.Edge.equal Matcher.Kinder.equal in
+    CCList.filter (fun e -> not (CCList.mem ~eq:eq e edges_changed)) edges
+
+let next_vertex delta = free_vertices delta |> CCList.head_opt
+let next_edge delta = free_edges delta |> CCList.head_opt
 
 let is_total delta = match next_vertex delta, next_edge delta with
     | None, None -> true
     | _ -> false
 
-let refine delta = match next_vertex delta with
-    | Some vertex ->
-        let structure = structure delta in
-        let deltas = match Core.Structure.label vertex structure with
-            | Some filter ->
-                let weakened_filters = Matcher.Filter.Lattice.weaken filter in
-                `Keep :: `Remove :: (CCList.map (fun f -> `Weaken f) weakened_filters)
-            | None -> [] in
-        deltas |> CCList.map (fun d -> { 
-            delta with vertex_deltas = VertexMap.add vertex d delta.vertex_deltas
-        })
-    | None -> match next_edge delta with
-        | Some edge -> 
-            let deltas = `Keep :: `Remove :: [] in
-            deltas |> CCList.map (fun d -> { delta with
-                edge_deltas = EdgeMap.add edge d delta.edge_deltas
+let coverage delta =
+    let num_vertices = delta |> structure |> Core.Structure.vertices |> CCList.length in
+    let num_edges = delta |> structure |> Core.Structure.edges |> CCList.length in
+    let covered_vertices = delta.vertex_deltas
+        |> VertexMap.to_list
+        |> CCList.length in
+    let covered_edges = delta.edge_deltas
+        |> EdgeMap.to_list
+        |> CCList.length in
+    let numerator = (covered_edges + covered_vertices)
+        |> CCFloat.of_int in
+    let denominator = (num_edges + num_vertices)
+        |> CCFloat.of_int in
+    numerator /. denominator
+
+let refine ?verbose:(verbose=false) delta =
+    let vprint = if verbose then print_endline else (fun _ -> ()) in
+    match next_vertex delta with
+        | Some vertex ->
+            let structure = structure delta in
+            let deltas = match Core.Structure.label vertex structure with
+                | Some filter ->
+                    let weakened_filters = Matcher.Filter.Lattice.weaken filter in
+                    `Keep :: `Remove :: (CCList.map (fun f -> `Weaken f) weakened_filters)
+                | None -> [] in
+            let _ = vprint (Printf.sprintf "[VERTEX REFINEMENT] %s >> %s"
+                (Core.Identifier.to_string vertex)
+                (deltas |> CCList.map vertex_delta_to_string |> CCString.concat ", ")
+            ) in
+            deltas |> CCList.map (fun d -> { 
+                delta with vertex_deltas = VertexMap.add vertex d delta.vertex_deltas
             })
-        | None -> []
+        | None -> match next_edge delta with
+            | Some edge -> 
+                let deltas = `Keep :: `Remove :: [] in
+                let _ = let src, lbl, dest = edge in
+                    vprint (Printf.sprintf "[EDGE REFINEMENT] %s --{%s}-> %s >> %s"
+                    (Core.Identifier.to_string src)
+                    (Matcher.Kinder.to_string lbl)
+                    (Core.Identifier.to_string dest)
+                    (deltas |> CCList.map edge_delta_to_string |> CCString.concat ", ")
+                ) in
+                deltas |> CCList.map (fun d -> { delta with
+                    edge_deltas = EdgeMap.add edge d delta.edge_deltas
+                })
+            | None -> []
+
+let flat_refine ?verbose:(verbose=false) delta =
+    let _ = if verbose then print_endline "[FLAT REFINE]" in
+    let vertex_deltas = delta
+        |> free_vertices
+        |> CCList.filter_map (fun v -> Core.Structure.label v (structure delta))
+        |> CCList.map (fun lbl -> 
+            let weakenings = Matcher.Filter.Lattice.weaken lbl in
+            `Keep :: `Remove :: (CCList.map (fun w -> `Weaken w) weakenings)) in
+    let edge_deltas = delta
+        |> free_edges
+        |> CCList.map (fun _ -> `Keep :: `Remove :: []) in
+    let vertex_flattened_deltas = vertex_deltas
+        |> CCList.cartesian_product
+        |> CCList.map (fun deltas ->
+            let assoc = CCList.map2 (fun x -> fun y -> (x, y)) (free_vertices delta) deltas in
+            { delta with vertex_deltas = VertexMap.add_list delta.vertex_deltas assoc}
+        ) in
+    edge_deltas
+        |> CCList.cartesian_product
+        |> CCList.flat_map (fun deltas -> CCList.map (fun delta ->
+            let assoc = CCList.map2 (fun x -> fun y -> (x, y)) (free_edges delta) deltas in
+            { delta with edge_deltas = EdgeMap.add_list delta.edge_deltas assoc}
+        ) vertex_flattened_deltas)
 
 (* for partial order heaps *)
 let lift_comparison vertex_cmp edge_cmp left right =

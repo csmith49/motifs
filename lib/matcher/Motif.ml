@@ -22,3 +22,18 @@ let of_json json =
         | _ -> None
 
 let hash = CCHash.poly
+
+let to_string motif = 
+    let struct_s = Core.Structure.to_string
+        Filter.to_string
+        Kinder.to_string
+        motif.structure in
+    let sel_s = Core.Identifier.to_string motif.selector in
+    Printf.sprintf "select %s in\n%s" sel_s struct_s
+
+let well_connected motif =
+    let reachable = Core.Structure.Algorithms.bireachable motif.structure [motif.selector] in
+    let vertices = Core.Structure.vertices motif.structure in
+    vertices |>
+        CCList.for_all (fun v -> CCList.mem ~eq:Core.Identifier.equal v reachable)
+    
