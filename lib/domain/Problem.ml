@@ -28,10 +28,15 @@ let of_json : Yojson.Basic.t -> t option = fun json ->
     let metadata = json
         |> Utility.JSON.get "metadata" (Utility.JSON.assoc Utility.JSON.identity)
         |> CCOpt.get_or ~default:[] in
-    let views = metadata
-        |> CCList.assoc_opt ~eq:CCString.equal "views"
-        |> CCOpt.flat_map (Utility.JSON.list Utility.JSON.string)
-        |> CCOpt.map (CCList.map View.of_string) in
+    let views = match CCList.assoc_opt ~eq:CCString.equal "view_db" metadata |> CCOpt.flat_map Utility.JSON.string with
+        | Some filename -> metadata
+            |> CCList.assoc_opt ~eq:CCString.equal "views"
+            |> CCOpt.flat_map (Utility.JSON.list Utility.JSON.string)
+            |> CCOpt.map (CCList.map (SQL.view filename))
+        | None -> metadata
+            |> CCList.assoc_opt ~eq:CCString.equal "views"
+            |> CCOpt.flat_map (Utility.JSON.list Utility.JSON.string)
+            |> CCOpt.map (CCList.map View.of_string) in
     match files, examples with
         | Some files, Some examples -> Some
             {
