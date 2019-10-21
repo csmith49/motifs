@@ -11,7 +11,8 @@ let from_examples db view examples size =
     let initial_motifs = examples
         |> CCList.map (fun ex -> (ex, Domain.SQL.neighborhood db view [ex] size))
         |> CCList.map (fun (ex, doc) -> Domain.Doc.to_motif doc ex) in
-    let joins = Matcher.Motif.PartialOrder.join initial_motifs in
+    let joins = Matcher.Motif.PartialOrder.join initial_motifs
+        |> CCList.uniq ~eq:Matcher.Motif.PartialOrder.equal in
     let deltas = joins
         |> CCList.map Delta.initial in
     DeltaHeap.of_list deltas

@@ -50,7 +50,7 @@ module PartialOrder = struct
     let candidates motif ids =
         let neighborhood = Core.Structure.Algorithms.neighborhood
             motif.structure ids 1 in
-        CCList.filter (fun v -> CCList.mem ~eq:Core.Identifier.equal v ids) neighborhood
+        CCList.filter (fun v -> not (CCList.mem ~eq:Core.Identifier.equal v ids)) neighborhood
 
     (* check if an edge embeds *)
     let edge_embeds left embedding edge = match E.edge_image edge embedding with
@@ -188,21 +188,29 @@ module PartialOrder = struct
     (* given a motif edge, get the corresponding candidate edge *)
     let edge_preimage embedding (src, lbl, dest) =
         match E.preimage src embedding, E.preimage dest embedding with
-            | Some src', Some dest' -> Some (src', lbl, dest')
+            | Some src', Some dest' -> 
+                let _ = print_endline "SOME "in Some (src', lbl, dest')
             | _ -> None
 
     (* get any edges to be added to the candidate *)
-    let extension_edges motifs extension candidate =
-        let get_edges_bt structure c bound =
-            let incoming = Core.Structure.incoming c structure
-                |> CCList.filter (fun (_, _, dest) -> not (CCList.mem ~eq:Core.Identifier.equal dest bound)) in
-            let outgoing = Core.Structure.outgoing c structure
-                |> CCList.filter (fun (src, _, _) -> not (CCList.mem ~eq:Core.Identifier.equal src bound)) in
+    let extension_edges motifs extension candidate vertex =
+        let get_edges_bt motif codom bound =
+            let structure = motif.structure in
+            let incoming = Core.Structure.incoming codom structure
+                |> CCList.filter (fun (_, _, dest) ->  (CCList.mem ~eq:Core.Identifier.equal dest bound)) in
+            let outgoing = Core.Structure.outgoing codom structure
+                |> CCList.filter (fun (src, _, _) ->  (CCList.mem ~eq:Core.Identifier.equal src bound)) in
             incoming @ outgoing in
         (* get any edges between the bound nodes and the candidate in the extension *)
-        CCList.map2 (fun m -> fun c -> (m, c)) motifs extension |> CCList.map2 (fun e -> fun (m, c) -> 
-                get_edges_bt m.structure c (E.codomain e) |> CCList.filter_map (edge_preimage e)
-            ) candidate.c_embeddings
+        let problems = CCList.map2 (fun m -> fun codom -> (m, codom)) motifs extension
+            |> CCList.map2 (fun e -> fun (m, codom) -> (m, codom, e)) candidate.c_embeddings in
+        let edges_per_motif = CCList.map (fun (m, codom, e) ->
+                let e = E.extend vertex codom e in
+                let bound = E.codomain e in
+                let edges = get_edges_bt m codom bound in
+                CCList.filter_map (edge_preimage e) edges
+            ) problems in
+        edges_per_motif
             |> CCList.cartesian_product
             |> CCList.filter_map check_edges
 
@@ -225,7 +233,7 @@ module PartialOrder = struct
         let extensions = candidate_extensions motifs candidate in
         extensions |> CCList.map (fun e ->
             let label = extension_label motifs e in
-            let edges = extension_edges motifs e candidate in
+            let edges = extension_edges motifs e candidate vertex in
                 apply_extension candidate vertex label edges e
         )
     
@@ -245,9 +253,12 @@ module PartialOrder = struct
                     candidates := rest
                 end
                 | `Refinements refs -> begin
-                    answers := !answers @ refs;
-                    candidates := !candidates @ rest
+                    candidates := rest @ refs;
                 end
         done;
         !answers |> CCList.map to_motif
+
+    (* equality *)
+    let equal left right =
+        leq left right && leq right left
 end

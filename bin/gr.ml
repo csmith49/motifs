@@ -62,7 +62,7 @@ let process (ex : Domain.Problem.example) = begin
         ) in
 
     (* synthesize rules *)
-    let motifs = Synthesis.Cone.from_independent_examples db view positive_examples !size
+    let motifs = Synthesis.Cone.from_examples db view positive_examples !size
         |> Synthesis.Cone.enumerate
             ~filter:(fun d -> 
                 let m = d |> Synthesis.Delta.concretize in

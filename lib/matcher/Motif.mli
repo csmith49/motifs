@@ -26,6 +26,7 @@ val well_formed : t -> bool
 
 (** motifs form a natural partial order from subset inclusion on the image *)
 module PartialOrder : sig
+    val equal : t -> t -> bool
     val leq : t -> t -> bool
     val (<=) : t -> t -> bool
 
