@@ -15,6 +15,10 @@ type t
 (** get the history of changes *)
 val changes : t -> (index * change) list
 
+(** add a change safely *)
+val add_change : t -> (index * change) -> t option
+val add_changes : t -> (index * change) list -> t option
+
 (** get the base motif *)
 val motif : t -> Matcher.Motif.t
 
@@ -32,6 +36,8 @@ val refine : ?verbose:bool -> t -> t list
 
 (** {1 Partial Order} *)
 module PartialOrder : sig
+    val entry_eq : (index * change) -> (index * change) -> bool
+
     val leq : t -> t -> bool
     val equal : t -> t -> bool
 end

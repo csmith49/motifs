@@ -92,10 +92,15 @@ let label vertex delta = Core.Structure.label
     delta.base_motif.Matcher.Motif.structure
 
 let add_change delta change =
-    let index = fst change in
-    if CCList.mem ~eq:index_eq index (CCList.map fst delta.changes) then
-        None
-    else Some {delta with changes = delta.changes @ [change]}
+    let i, c = change in
+    match CCList.assoc_opt ~eq:index_eq i delta.changes with
+        | Some c' -> if change_eq c c' then Some delta else None
+        | None -> Some {delta with changes = change :: delta.changes}
+let rec add_changes delta changes = match changes with
+    | [] -> Some delta
+    | c :: rest -> match add_changes delta rest with
+        | Some d -> add_change d c
+        | None -> None
 
 let refine ?verbose:(verbose=false) delta =
     let vprint = if verbose then print_endline else (fun _ -> ()) in
@@ -116,6 +121,8 @@ let refine ?verbose:(verbose=false) delta =
         | None -> []
 
 module PartialOrder = struct
+    let entry_eq = CCPair.equal index_eq change_eq
+
     (* for partial order heaps *)
     let lift_comparison change_cmp left right =
         (* make sure we're dealing with the same motif by checking the hash *)

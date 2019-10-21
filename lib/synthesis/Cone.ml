@@ -29,43 +29,42 @@ let enumerate
     (* enumerate until heap is empty *)
     while not (DeltaHeap.is_empty !heap) do
         let _ = vprint "\n[ITERATION START]" in
-
         (* how big is the heap *)
         let _ = vprint (Printf.sprintf "[HEAP SIZE] %d" (!heap |> DeltaHeap.size)) in
-
         (* get the smallest element *)
         let heap', delta = DeltaHeap.take_exn !heap in
-
         (* print the motif *)
         let _ = vprint (Printf.sprintf "[BEGIN MOTIF]\n%s\n[END MOTIF]" (
             delta |> Delta.concretize |> Matcher.Motif.to_string
         )) in
-
-        (* apply the filter *)
-        let filter_result = filter delta in
-
-        (* print if we've passed the filter *)
-        let _ = vprint (Printf.sprintf "[FILTER CHECK] %b" filter_result) in
-
-        let _ = if not filter_result then
-            heap := heap'
-        else
-            (* check if it's total, aka can be returned *)
-            let is_total = Delta.is_total delta in
-
-            let _ = vprint (Printf.sprintf "[TOTAL?] %b" is_total) in
-
-            let _ = if is_total then
-                solutions := delta :: !solutions in
-            
-            (* generate refinements *)
-            let refinements = Delta.refine ~verbose:verbose delta in
-
-            let _ = vprint (Printf.sprintf "[REFINEMENTS FOUND] %d" (CCList.length refinements)) in
-
-            (* reconstruct heap *)
-            heap := DeltaHeap.add_list heap' refinements
-        
+        let _ = vprint "[CHECKING CONSTRAINTS]" in
+        (* transform with checks *)
+        let delta = CCOpt.Infix.(Some delta 
+            >>= Constraint.keep_selector
+            >>= Constraint.drop_dangling_edges
+            >>= Constraint.stay_connected) in
+        match delta with
+            | None -> 
+                let _ = vprint "[CONSTRAINTS FAILED]" in
+                heap := heap'
+            | Some delta ->
+                let _ = vprint "[CONSTRAINTS PASSED]" in
+                (* apply the filter *)
+                let filter_result = filter delta in
+                (* print if we've passed the filter *)
+                let _ = vprint (Printf.sprintf "[FILTER CHECK] %b" filter_result) in
+                let _ = if not filter_result then
+                    heap := heap' else
+                (* check if it's total, aka can be returned *)
+                let is_total = Delta.is_total delta in
+                let _ = vprint (Printf.sprintf "[TOTAL?] %b" is_total) in
+                let _ = if is_total then
+                    solutions := delta :: !solutions in
+                (* generate refinements *)
+                let refinements = Delta.refine ~verbose:verbose delta in
+                let _ = vprint (Printf.sprintf "[REFINEMENTS FOUND] %d" (CCList.length refinements)) in
+                (* reconstruct heap *)
+                heap := DeltaHeap.add_list heap' refinements
         in vprint "[ITERATION END]"
     done;
 
