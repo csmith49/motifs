@@ -9,6 +9,18 @@ type t = {
     attributes : attribute list;
 }
 
+let empty = {
+    labels = [];
+    attributes = [];
+}
+
+let add_attributes attrs view = {
+    view with attributes = attrs @ view.attributes
+}
+let add_labels labels view = {
+    view with labels = labels @ view.labels
+}
+
 let combine : t list -> t = fun vs ->
     let labels = vs
         |> CCList.flat_map (fun v -> v.labels) 

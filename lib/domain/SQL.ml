@@ -142,7 +142,26 @@ let evaluate db motif =
     let _ = Sqlite3.exec_not_null_no_headers db ~cb:callback query in
         !results
 
-
 let check_consistency db negatives motif =
     let image = evaluate db motif in
     CCList.for_all (fun n -> not (CCList.mem ~eq:Core.Identifier.equal n image)) negatives
+
+let view filename name =
+    let view_db = of_string filename in
+    let attributes_query = Printf.sprintf
+        "SELECT attribute FROM attributes WHERE view = '%s'" name in
+    let attributes = ref [] in
+    let attr_callback = fun row -> 
+        let attr = CCArray.get row 0 in
+        attributes := attr :: !attributes in
+    let _ = Sqlite3.exec_not_null_no_headers view_db ~cb:attr_callback attributes_query in
+    let labels_query = Printf.sprintf
+        "SELECT label FROM labels WHERE view = '%s'" name in
+    let labels = ref [] in
+    let label_callback = fun row ->
+        let lbl = CCArray.get row 0 in
+        labels := lbl :: !labels in
+    let _ = Sqlite3.exec_not_null_no_headers view_db ~cb:label_callback labels_query in
+    View.empty
+        |> View.add_attributes !attributes
+        |> View.add_labels !labels

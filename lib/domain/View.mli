@@ -5,6 +5,10 @@ type attribute = string
 
 type t
 
+val empty : t
+val add_attributes : attribute list -> t -> t
+val add_labels : label list -> t -> t
+
 val combine : t list -> t
 
 val labels : t -> label  list
