@@ -21,6 +21,7 @@ module type GRAPH = sig
     val empty : ('v, 'e) t
     val add_edge : 'e edge -> ('v, 'e) t -> ('v, 'e) t
     val add_vertex : vertex -> 'v -> ('v, 'e) t -> ('v, 'e) t
+    val add_label : vertex -> 'v -> ('v, 'e) t -> ('v, 'e) t
     val remove_edge : 
         eq:('e -> 'e -> bool) -> 'e edge -> ('v, 'e) t -> ('v, 'e) t
     val remove_vertex : vertex -> ('v, 'e) t -> ('v, 'e) t

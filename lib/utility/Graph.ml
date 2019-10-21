@@ -21,6 +21,7 @@ module type GRAPH = sig
     val empty : ('v, 'e) t
     val add_edge : 'e edge -> ('v, 'e) t -> ('v, 'e) t
     val add_vertex : vertex -> 'v -> ('v, 'e) t -> ('v, 'e) t
+    val add_label : vertex -> 'v -> ('v, 'e) t -> ('v, 'e) t
     val remove_edge : 
         eq:('e -> 'e -> bool) -> 'e edge -> ('v, 'e) t -> ('v, 'e) t
     val remove_vertex : vertex -> ('v, 'e) t -> ('v, 'e) t
@@ -84,6 +85,10 @@ module Make (V : VERTEX) : (GRAPH with type vertex = V.t) = struct
                     dest
                     {dest_c with incoming = edge :: dest_c.incoming}
             | _ -> graph
+
+    let add_label vertex label graph = match context vertex graph with
+        | Some c -> VertexMap.add vertex {c with label = label} graph
+        | None -> add_vertex vertex label graph
 
     let src (src, _, _) = src
     let dest (_, _, dest) = dest

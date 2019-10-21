@@ -1,4 +1,7 @@
-module DeltaHeap = CCHeap.Make(Delta)
+module DeltaHeap = CCHeap.Make(struct
+    type t = Delta.t
+    let leq = Delta.PartialOrder.leq
+end)
 
 type t = DeltaHeap.t
 
@@ -38,9 +41,6 @@ let enumerate
             delta |> Delta.concretize |> Matcher.Motif.to_string
         )) in
 
-        (* print motif coverage *)
-        let _ = vprint (Printf.sprintf "[COVERAGE] %f" (Delta.coverage delta)) in
-
         (* apply the filter *)
         let filter_result = filter delta in
 
@@ -71,28 +71,3 @@ let enumerate
 
     (* return solutions *)
     !solutions |> CCList.rev |> CCList.map Delta.concretize
-
-let flat_enumerate
-    ?filter:(filter=(fun _ -> true))
-    ?verbose:(verbose=false)
-        heap =
-    
-    let vprint = if verbose then print_endline else (fun _ -> ()) in
-
-    (* no in place resources to build...so get right to enumeration *)
-
-    let _ = vprint "\n[FLAT ITERATION START]" in
-
-    let deltas = heap
-        |> DeltaHeap.to_list
-        |> CCList.flat_map (Delta.flat_refine ~verbose:verbose) in
-
-    let _ = vprint (Printf.sprintf "[FLAT ITERATION END] Found %d motifs" (CCList.length deltas)) in
-
-    let deltas = CCList.filter filter deltas in
-
-    let _ = vprint (Printf.sprintf "[FILTER] %d motifs passed filter" (CCList.length deltas)) in
-
-    (* let _ = CCList.iter (fun d -> Delta.concretize d |> Matcher.Motif.to_string |> print_endline) deltas in *)
-
-    deltas |> CCList.map Delta.concretize

@@ -5,5 +5,3 @@ type enumeration = ?filter:(Delta.t -> bool) -> ?verbose:(bool) -> t -> Matcher.
 val from_independent_examples : Domain.SQL.db -> Domain.View.t -> Core.Identifier.t list -> int -> t
 
 val enumerate : enumeration
-
-val flat_enumerate : enumeration

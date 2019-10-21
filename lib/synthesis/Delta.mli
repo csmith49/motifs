@@ -1,33 +1,37 @@
-type vertex_delta = [
+type change = [
     | `Keep
     | `Remove
     | `Weaken of Matcher.Filter.t
 ]
 
-type edge_delta = [
-    | `Keep
-    | `Remove
-]
+type vertex = Core.Identifier.t
+type edge = vertex * Matcher.Kinder.t * vertex
 
+type index =
+    | V of vertex
+    | E of edge
 type t
 
-(** concretize a delta wrt its initial motif *)
-val concretize : t -> Matcher.Motif.t
+(** get the history of changes *)
+val changes : t -> (index * change) list
 
-(** generate an initial delta *)
+(** get the base motif *)
+val motif : t -> Matcher.Motif.t
+
+(** make from a motif *)
 val initial : Matcher.Motif.t -> t
 
-(** refine a delta to produce more weakenings of a motif *)
-val refine : ?verbose:bool -> t -> t list
+(** convert to a motif by applying changes *)
+val concretize : t -> Matcher.Motif.t
 
-val flat_refine : ?verbose:bool -> t -> t list
-
-(** see if a delta can be refined *)
+(** check if we can extend the delta at all *)
 val is_total : t -> bool
 
-(** how many choices have we made vs how many can we make *)
-val coverage : t -> float
+(** refine a delta to more deltas *)
+val refine : ?verbose:bool -> t -> t list
 
-(* comparisons *)
-val equal : t -> t -> bool
-val leq : t -> t -> bool
+(** {1 Partial Order} *)
+module PartialOrder : sig
+    val leq : t -> t -> bool
+    val equal : t -> t -> bool
+end
