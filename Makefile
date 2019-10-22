@@ -17,4 +17,4 @@ live: lib
 .phony: clean
 clean:
 	dune clean
-	rm -rf _build gr scripts
+	rm -rf _build synthesize scripts
