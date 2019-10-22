@@ -1,0 +1,16 @@
+{
+    "metadata" : {
+        "views" : ["simple_table"],
+        "size" : 1
+    },
+    "files" : [
+        "./tests/Bill_Clinton.db"
+    ],
+
+    "examples" : [
+        {
+            "file" : "./tests/Bill_Clinton.db",
+            "example" : 4925
+        }
+    ]
+}
