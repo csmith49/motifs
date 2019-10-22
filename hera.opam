@@ -3,7 +3,7 @@ name: "hera"
 version: "0.1"
 author: "Calvin Smith"
 maintainer: "cjsmith@cs.wisc.edu"
-synopsis: "Graph rule synthesis"
+synopsis: "Motif synthesis for knowledge bases"
 depends: [
     "ocaml" { >= "4.07.0" }
     "yojson"

@@ -1,4 +1,4 @@
 (executables
-    (names gr dot_of_example)
+    (names synthesize)
     (libraries hera)
 )

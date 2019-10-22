@@ -12,11 +12,11 @@ opam pin .
 make
 ```
 
-This produces a set of utility scripts in the `./scripts` directory, and a general synthesis executable in the form of `./gr`.
+This produces a set of utility scripts in the `./scripts` directory, and a general synthesis executable in the form of `./synthesize`.
 
 ### Docker Installation
 
-To improve portability, some infrastructure for running the code in a Docker container is provided. To build the docker image, simply navigate to this directory and run `docker build -t gr .`.
+To improve portability, some infrastructure for running the code in a Docker container is provided. To build the docker image, simply navigate to this directory and run `docker build -t synthesize .`.
 
 ## Usage
 
