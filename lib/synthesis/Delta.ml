@@ -102,23 +102,20 @@ let rec add_changes delta changes = match changes with
         | Some d -> add_change d c
         | None -> None
 
-let refine ?verbose:(verbose=false) delta =
-    let vprint = if verbose then print_endline else (fun _ -> ()) in
-    let _ = vprint "REFINING" in
-    match free_index delta with
-        | Some (V v) ->
-            let filters = match label v delta with
-                | Some f -> Matcher.Filter.Lattice.weaken f
-                | None -> [] in
-            let weakened = CCList.map (fun f -> `Weaken f) filters in
-            let changes = `Keep :: `Remove :: weakened
-                |> CCList.map (fun c -> (V v, c)) in
-            CCList.filter_map (add_change delta) changes
-        | Some (E e) ->
-            let changes = `Keep :: `Remove :: []
-                |> CCList.map (fun c -> (E e, c)) in
-            CCList.filter_map (add_change delta) changes
-        | None -> []
+let refine delta = match free_index delta with
+    | Some (V v) ->
+        let filters = match label v delta with
+            | Some f -> Matcher.Filter.Lattice.weaken f
+            | None -> [] in
+        let weakened = CCList.map (fun f -> `Weaken f) filters in
+        let changes = `Keep :: `Remove :: weakened
+            |> CCList.map (fun c -> (V v, c)) in
+        CCList.filter_map (add_change delta) changes
+    | Some (E e) ->
+        let changes = `Keep :: `Remove :: []
+            |> CCList.map (fun c -> (E e, c)) in
+        CCList.filter_map (add_change delta) changes
+    | None -> []
 
 module PartialOrder = struct
     let entry_eq = CCPair.equal index_eq change_eq

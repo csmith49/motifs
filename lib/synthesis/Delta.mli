@@ -32,7 +32,7 @@ val concretize : t -> Matcher.Motif.t
 val is_total : t -> bool
 
 (** refine a delta to more deltas *)
-val refine : ?verbose:bool -> t -> t list
+val refine : t -> t list
 
 (** {1 Partial Order} *)
 module PartialOrder : sig

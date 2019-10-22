@@ -35,10 +35,12 @@ let enumerate
     (* build the in-place resources *)
     let heap = ref heap in
     let solutions = ref [] in
+    let count = ref 0 in
 
     (* enumerate until heap is empty *)
     while not (DeltaHeap.is_empty !heap) do
-        let _ = vprint "\n[ITERATION START]" in
+        let _ = vprint (Printf.sprintf "\n[ITERATION %d]" !count) in
+        let _ = count := 1 + !count in
         (* how big is the heap *)
         let _ = vprint (Printf.sprintf "[HEAP SIZE] %d" (!heap |> DeltaHeap.size)) in
         (* get the smallest element *)
@@ -47,7 +49,6 @@ let enumerate
         let _ = vprint (Printf.sprintf "[BEGIN MOTIF]\n%s\n[END MOTIF]" (
             delta |> Delta.concretize |> Matcher.Motif.to_string
         )) in
-        let _ = vprint "[CHECKING CONSTRAINTS]" in
         (* transform with checks *)
         let delta = CCOpt.Infix.(Some delta 
             >>= Constraint.keep_selector
@@ -62,7 +63,7 @@ let enumerate
                 (* apply the filter *)
                 let filter_result = filter delta in
                 (* print if we've passed the filter *)
-                let _ = vprint (Printf.sprintf "[FILTER CHECK] %b" filter_result) in
+                (* let _ = vprint (Printf.sprintf "[FILTER CHECK] %b" filter_result) in *)
                 let _ = if not filter_result then
                     heap := heap' else
                 (* check if it's total, aka can be returned *)
@@ -71,7 +72,7 @@ let enumerate
                 let _ = if is_total then
                     solutions := delta :: !solutions in
                 (* generate refinements *)
-                let refinements = Delta.refine ~verbose:verbose delta in
+                let refinements = Delta.refine delta in
                 let _ = vprint (Printf.sprintf "[REFINEMENTS FOUND] %d" (CCList.length refinements)) in
                 (* reconstruct heap *)
                 heap := DeltaHeap.add_list heap' refinements
@@ -80,3 +81,4 @@ let enumerate
 
     (* return solutions *)
     !solutions |> CCList.rev |> CCList.map Delta.concretize
+        |> CCList.uniq ~eq:Matcher.Motif.PartialOrder.equal

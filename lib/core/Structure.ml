@@ -169,7 +169,11 @@ let to_string v2s e2s structure =
                 |> CCList.map (fun (_, lbl, dest) -> Printf.sprintf
                     "  --{%s}-> %s" (e2s lbl) (Identifier.to_string dest)
                 ) in
-            Printf.sprintf "%s%s\n%s"
+            (* if there aren't any edges... *)
+            if CCList.is_empty edges then Printf.sprintf "%s%s"
+                (Identifier.to_string v)
+                (v_label)
+            else Printf.sprintf "%s%s\n%s"
                 (Identifier.to_string v)
                 (v_label)
                 (edges |> CCString.concat "\n")
@@ -247,43 +251,3 @@ module Embedding = struct
             | Some s, Some d -> Some (s, lbl, d)
             | _ -> None
 end
-
-(* type ('v, 'u, 'e, 'g) task = {
-    source : ('v, 'e) t;
-    destination : ('u, 'g) t;
-    vertex_map : 'v -> 'u -> bool;
-    edge_map : 'e -> 'g -> bool;
-}
-
-let edges_from x y graph = outgoing x graph
-    |> CCList.filter (fun (_, _, dest) -> Identifier.equal y dest)
-let (->+) x y = edges_from x y
-
-let refine : ('v, 'u, 'e, 'g) task -> Embedding.t -> Embedding.t list = fun task -> fun embedding ->
-    let dom = Embedding.domain embedding in
-    let target = task.source
-        |> vertices
-        |> CCList.filter (fun v -> CCList.mem ~eq:Identifier.equal v dom)
-        |> CCList.hd in
-    let in_constraints = CCList.flat_map (fun x -> task.source |> x ->+ target) dom in
-    let in_solutions = CCList.flat_map (fun (src, lbl, _) -> match Embedding.image src embedding with
-        | None -> []
-        | Some img -> task.destination
-            |> outgoing img
-            |> CCList.filter_map (fun (_, lbl', dest') ->
-                if task.vertex_map target dest' && task.edge_map lbl lbl' then
-                    Some dest'
-                else None))
-        in_constraints in
-    let out_constraints = CCList.flat_map (fun x -> task.source |> target ->+ x) dom in
-    let out_solutions = CCList.flat_map (fun (_, lbl, dest) -> match Embedding.image dest embedding with
-        | None -> []
-        | Some img -> task.destination
-            |> incoming img
-            |> CCList.filter_map (fun (src', lbl', _) ->
-                if task.vertex_map target src' && task.edge_map lbl lbl' then
-                    Some src'
-                else None))
-        out_constraints in
-    let solutions = CCList.inter ~eq:Identifier.equal in_solutions out_solutions in
-    solutions |> CCList.map (fun s -> Embedding.extend target s embedding) *)

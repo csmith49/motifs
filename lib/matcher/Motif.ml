@@ -29,7 +29,8 @@ let to_string motif =
         Kinder.to_string
         motif.structure in
     let sel_s = Core.Identifier.to_string motif.selector in
-    Printf.sprintf "select %s in\n%s" sel_s struct_s
+    if CCString.is_empty struct_s then Printf.sprintf "select %s in Ø" sel_s else
+        Printf.sprintf "select %s in\n%s" sel_s struct_s
 
 let well_connected motif =
     let reachable = Core.Structure.Algorithms.bireachable motif.structure [motif.selector] in
@@ -95,7 +96,7 @@ module PartialOrder = struct
 
     (* check if an embedding is total *)
     let is_total right embedding = candidates right (E.domain embedding)
-        |> CCList.is_empty |> CCBool.negate
+        |> CCList.is_empty
 
     (* refine an embedding *)
     let refine left right embedding = candidate_pairs left right embedding
@@ -259,6 +260,5 @@ module PartialOrder = struct
         !answers |> CCList.map to_motif
 
     (* equality *)
-    let equal left right =
-        leq left right && leq right left
+    let equal left right = leq left right && leq right left
 end
