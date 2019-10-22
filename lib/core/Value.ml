@@ -28,7 +28,7 @@ let is_null : t -> bool = function
     | _ -> false
 
 (* comparisons don't really mean much with such a heterogeneous type *)
-let compare = Pervasives.compare
+let compare = compare
 let equal = (=)
 
 (* converting from json representations *)
