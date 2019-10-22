@@ -7,11 +7,13 @@ type t = {
     files : filename list;
     examples : example list;
     views : View.t list option;
+    size : int option;
 }
 
 let files p = p.files
 let examples p = p.examples
 let views p = p.views
+let size p = p.size
 
 let example_of_json : Yojson.Basic.t -> example option = fun json ->
     let filename = Utility.JSON.get "file" Utility.JSON.string json in
@@ -28,6 +30,9 @@ let of_json : Yojson.Basic.t -> t option = fun json ->
     let metadata = json
         |> Utility.JSON.get "metadata" (Utility.JSON.assoc Utility.JSON.identity)
         |> CCOpt.get_or ~default:[] in
+    let size = metadata
+        |> CCList.assoc_opt ~eq:CCString.equal "size"
+        |> CCOpt.flat_map Utility.JSON.int in
     let views = match CCList.assoc_opt ~eq:CCString.equal "view_db" metadata |> CCOpt.flat_map Utility.JSON.string with
         | Some filename -> metadata
             |> CCList.assoc_opt ~eq:CCString.equal "views"
@@ -43,6 +48,7 @@ let of_json : Yojson.Basic.t -> t option = fun json ->
                 files = files;
                 examples = examples;
                 views = views;
+                size = size;
             }
         | _ -> None
 

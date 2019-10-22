@@ -6,6 +6,7 @@ type t
 val files : t -> filename list
 val examples : t -> example list
 val views : t -> View.t list option
+val size : t -> int option
 
 val of_json : Yojson.Basic.t -> t option
 

@@ -1,5 +1,6 @@
 {
     "metadata" : {
+        "view_db" : "./tests/views.db",
         "views" : ["simple_table"],
         "size" : 1
     },

@@ -28,6 +28,11 @@ let _ = print_string ("Loading problem...")
 let problem = Domain.Problem.from_file !problem_filename
 let _ = print_endline "done."
 
+(* set the size, if necessary *)
+let _ = match Domain.Problem.size problem with
+    | Some s -> size := s
+    | _ -> ()
+
 (* load views - use cmd line, or default to problem view, or throw exception *)
 let _ = print_string ("Loading views...")
 let view = if CCString.is_empty !view_filename then

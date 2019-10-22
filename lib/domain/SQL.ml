@@ -148,20 +148,34 @@ let check_consistency db negatives motif =
 
 let view filename name =
     let view_db = of_string filename in
-    let attributes_query = Printf.sprintf
-        "SELECT attribute FROM attributes WHERE view = '%s'" name in
-    let attributes = ref [] in
-    let attr_callback = fun row -> 
-        let attr = CCArray.get row 0 in
-        attributes := attr :: !attributes in
-    let _ = Sqlite3.exec_not_null_no_headers view_db ~cb:attr_callback attributes_query in
-    let labels_query = Printf.sprintf
-        "SELECT label FROM labels WHERE view = '%s'" name in
-    let labels = ref [] in
-    let label_callback = fun row ->
-        let lbl = CCArray.get row 0 in
-        labels := lbl :: !labels in
-    let _ = Sqlite3.exec_not_null_no_headers view_db ~cb:label_callback labels_query in
+    (* get the labels *)
+    let lbl_q = Printf.sprintf
+    "SELECT label FROM (
+        SELECT view_id as id, name as label FROM view_label AS V 
+            JOIN 
+        labels AS L where V.label_id = L.id
+        ) as L 
+            JOIN 
+        views as V 
+        ON L.id = V.id where V.name='%s'" name in
+    let lbls = ref [] in
+    let lbl_cb row =
+        let lbl = CCArray.get row 0 in lbls := lbl :: !lbls in
+    let _ = Sqlite3.exec_not_null_no_headers view_db ~cb:lbl_cb lbl_q in
+    (* get the attributes *)
+    let attr_q = Printf.sprintf
+    "SELECT attribute FROM (
+        SELECT view_id as id, name as attribute FROM view_attr AS V 
+            JOIN 
+        attributes AS A where V.attr_id = A.id
+        ) as A
+            JOIN 
+        views as V 
+        ON A.id = V.id where V.name='%s'" name in
+    let attrs = ref [] in
+    let attr_cb row =
+        let attr = CCArray.get row 0 in attrs := attr :: !attrs in
+    let _ = Sqlite3.exec_not_null_no_headers view_db ~cb:attr_cb attr_q in
     View.empty
-        |> View.add_attributes !attributes
-        |> View.add_labels !labels
+        |> View.add_attributes !attrs
+        |> View.add_labels !lbls
