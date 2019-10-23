@@ -1,5 +1,14 @@
 type db = Sqlite3.db
 
+exception SQLException of string
+let handle_rc rc = match rc with
+    | Sqlite3.Rc.OK -> ()
+    | _ as e -> raise (SQLException (Sqlite3.Rc.to_string e))
+
+let run db cb q =
+    let rc = Sqlite3.exec_not_null_no_headers db ~cb:cb q in
+        handle_rc rc
+
 let of_string filename = Sqlite3.db_open filename
 
 let id_to_column id = Printf.sprintf "_%s" (Core.Identifier.to_string id)
@@ -10,7 +19,7 @@ let rec nearby_nodes db view origins size =
     let callback row = match CCArray.get row 0 |> Core.Identifier.of_string with
         | Some id -> results := id :: !results
         | None -> () in
-    let _ = Sqlite3.exec_not_null_no_headers db ~cb:callback query in
+    let _ = run db callback query in
     !results
 and nearby_nodes_query view origin size = Printf.sprintf 
     "WITH RECURSIVE
@@ -48,7 +57,7 @@ let rec edges_between db view identifiers =
                 | Some src, Some dest -> results := (src, lbl, dest) :: !results
                 | _ -> () end
         | _ -> () in
-    let _ = Sqlite3.exec_not_null_no_headers db ~cb:callback query in
+    let _ = run db callback query in
     !results
 and edges_between_query view identifiers =
     let ids = identifiers
@@ -66,7 +75,7 @@ let rec attributes_for db view identifier =
     let callback row = match row |> CCArray.to_list with
         | [attr ; value] -> results := (attr, Core.Value.of_string value) :: !results
         | _ -> () in
-    let _ = Sqlite3.exec_not_null_no_headers db ~cb:callback query in
+    let _ = run db callback query in
     !results |> Core.Value.Map.of_list
 and attributes_for_query view identifier =
     let select_attr attr = Printf.sprintf "SELECT '%s', value FROM %s WHERE id = %s"
@@ -139,7 +148,7 @@ let evaluate db motif =
     let callback row = match CCArray.get row 0 |> Core.Identifier.of_string with
         | Some id -> results := id :: !results
         | None -> () in
-    let _ = Sqlite3.exec_not_null_no_headers db ~cb:callback query in
+    let _ = run db callback query in
         !results
 
 let check_consistency db negatives motif =
@@ -161,7 +170,7 @@ let view filename name =
     let lbls = ref [] in
     let lbl_cb row =
         let lbl = CCArray.get row 0 in lbls := lbl :: !lbls in
-    let _ = Sqlite3.exec_not_null_no_headers view_db ~cb:lbl_cb lbl_q in
+    let _ = run view_db lbl_cb lbl_q in
     (* get the attributes *)
     let attr_q = Printf.sprintf
     "SELECT attribute FROM (
@@ -175,7 +184,7 @@ let view filename name =
     let attrs = ref [] in
     let attr_cb row =
         let attr = CCArray.get row 0 in attrs := attr :: !attrs in
-    let _ = Sqlite3.exec_not_null_no_headers view_db ~cb:attr_cb attr_q in
+    let _ = run view_db attr_cb attr_q in
     View.empty
         |> View.add_attributes !attrs
         |> View.add_labels !lbls

@@ -10,6 +10,10 @@ type t = {
     size : int option;
 }
 
+let example_to_string example =
+    let filename, ids = example in
+    Printf.sprintf "{%s : [%s]}" filename (ids |> CCList.map Core.Identifier.to_string |> CCString.concat ", ")
+
 let files p = p.files
 let examples p = p.examples
 let views p = p.views

@@ -3,6 +3,8 @@ type example = (filename * Core.Identifier.t list)
 
 type t
 
+val example_to_string : example -> string
+
 val files : t -> filename list
 val examples : t -> example list
 val views : t -> View.t list option

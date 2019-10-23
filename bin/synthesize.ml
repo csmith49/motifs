@@ -40,7 +40,9 @@ let view = if CCString.is_empty !view_filename then
         | Some views -> Domain.View.combine views
         | None -> raise Domain.View.ViewException
     else Domain.View.from_file !view_filename
-let _ = print_endline "done."
+let _ = Printf.printf "done. Found %d labels and %d attributes.\n"
+    (view |> Domain.View.labels |> CCList.length)
+    (view |> Domain.View.attributes |> CCList.length)
 
 (* the common variables accessed across all examples *)
 let total_motifs = 100
@@ -87,7 +89,10 @@ let process (ex : Domain.Problem.example) = begin
 end
 
 (* do the thing per-example *)
-let _ = print_endline "Processing examples:\n"
+let _ = Printf.printf "Found examples:\n\t%s\n"
+    (problem |> Domain.Problem.examples |> CCList.map Domain.Problem.example_to_string |> CCString.concat "\n\t")
+
+let _ = print_endline "Processing examples:"
 let _ = CCList.iter process (Domain.Problem.examples problem)
 let _ = print_endline "Examples processed."
 

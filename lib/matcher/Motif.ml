@@ -189,8 +189,7 @@ module PartialOrder = struct
     (* given a motif edge, get the corresponding candidate edge *)
     let edge_preimage embedding (src, lbl, dest) =
         match E.preimage src embedding, E.preimage dest embedding with
-            | Some src', Some dest' -> 
-                let _ = print_endline "SOME "in Some (src', lbl, dest')
+            | Some src', Some dest' -> Some (src', lbl, dest')
             | _ -> None
 
     (* get any edges to be added to the candidate *)

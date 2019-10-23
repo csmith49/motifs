@@ -1,5 +1,7 @@
 type db
 
+exception SQLException of string
+
 val view : string -> string -> View.t
 
 val of_string : string -> db

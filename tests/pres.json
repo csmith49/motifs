@@ -1,0 +1,34 @@
+{
+    "metadata": {
+        "size": 1,
+        "view_db": "./tests/views.db",
+        "views": [
+            "all"
+        ]
+    },
+    "files": [
+        "./tests/db/63.db",
+        "./tests/db/35.db",
+        "./tests/db/64.db"
+    ],
+    "examples": [
+        {
+            "file": "./tests/db/64.db",
+            "example": [
+                15977
+            ]
+        },
+        {
+            "file": "./tests/db/35.db",
+            "example": [
+                22622
+            ]
+        },
+        {
+            "file": "./tests/db/63.db",
+            "example": [
+                15503
+            ]
+        }
+    ]
+}
