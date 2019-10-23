@@ -20,7 +20,7 @@ let rec nearby_nodes db view origins size =
         | Some id -> results := id :: !results
         | None -> () in
     let _ = run db callback query in
-    !results
+    !results @ origins |> CCList.uniq ~eq:Core.Identifier.equal
 and nearby_nodes_query view origin size = Printf.sprintf 
     "WITH RECURSIVE
         connected (source, dest) AS (

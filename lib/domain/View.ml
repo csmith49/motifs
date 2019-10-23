@@ -32,6 +32,20 @@ let combine : t list -> t = fun vs ->
         labels = labels;
         attributes = attrs;
     }
+
+let subsample lbls attrs view =
+    let lbl_dist = view.labels
+        |> CCRandom.choose_return 
+        |> CCRandom.sample_without_duplicates ~cmp:CCString.compare lbls in
+    let attr_dist = view.attributes
+        |> CCRandom.choose_return 
+        |> CCRandom.sample_without_duplicates ~cmp:CCString.compare attrs in
+    {
+        labels = if lbls < (CCList.length view.labels) then CCRandom.run lbl_dist else view.labels;
+        attributes = if attrs < (CCList.length view.attributes) then CCRandom.run attr_dist else view.attributes;
+    }
+
+
 let labels : t -> label list = fun c -> c.labels
 let attributes : t -> attribute list = fun c -> c.attributes
 

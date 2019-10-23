@@ -6,6 +6,10 @@ let negative_width = ref 2
 let size = ref 2
 let yell = ref false
 
+(* arguments for subsampling *)
+let max_labels = ref 10
+let max_attributes = ref 10
+
 (* for the REST argument *)
 let view_filename = ref ""
 
@@ -16,7 +20,10 @@ let spec_list = [
     ("-n", Arg.Set_int negative_width, "Sets window for negative examples");
     ("-s", Arg.Set_int size, "Sets max size of synthesized rules");
     ("-v", Arg.Set_string view_filename, "Sets view to be used");
-    ("-y", Arg.Set yell, "Sets yelling on")
+    ("-y", Arg.Set yell, "Sets yelling on");
+
+    ("-ml", Arg.Set_int max_labels, "Sets maximum number of labels to be used (default 10)");
+    ("-ma", Arg.Set_int max_attributes, "Sets maximum number of attributes to be used (default 10)");
 ]
 
 let usage_msg = "Rule Synthesis for Hera"
@@ -33,6 +40,14 @@ let _ = match Domain.Problem.size problem with
     | Some s -> size := s
     | _ -> ()
 
+(* set the max labels and attributes, if necessary *)
+let _ = match Domain.Problem.max_labels problem with
+    | Some m -> max_labels := m
+    | _ -> ()
+let _ = match Domain.Problem.max_attributes problem with
+    | Some m -> max_attributes := m
+    | _ -> ()
+
 (* load views - use cmd line, or default to problem view, or throw exception *)
 let _ = print_string ("Loading views...")
 let view = if CCString.is_empty !view_filename then
@@ -43,6 +58,12 @@ let view = if CCString.is_empty !view_filename then
 let _ = Printf.printf "done. Found %d labels and %d attributes.\n"
     (view |> Domain.View.labels |> CCList.length)
     (view |> Domain.View.attributes |> CCList.length)
+let _ = Printf.printf "Subsampling views: %d labels and %d attributes\n"
+    !max_labels !max_attributes
+let view = Domain.View.subsample !max_labels !max_attributes view
+let _ = Printf.printf "Labels:\n    %s\n" (view |>Domain.View.labels |> CCString.concat "\n    ")
+let _ = Printf.printf "Attributes:\n    %s\n" (view |>Domain.View.attributes |> CCString.concat "\n    ")
+
 
 (* the common variables accessed across all examples *)
 let total_motifs = 100

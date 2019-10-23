@@ -8,6 +8,8 @@ type t = {
     examples : example list;
     views : View.t list option;
     size : int option;
+    max_labels : int option;
+    max_attributes : int option;
 }
 
 let example_to_string example =
@@ -18,6 +20,8 @@ let files p = p.files
 let examples p = p.examples
 let views p = p.views
 let size p = p.size
+let max_labels p = p.max_labels
+let max_attributes p = p.max_attributes
 
 let example_of_json : Yojson.Basic.t -> example option = fun json ->
     let filename = Utility.JSON.get "file" Utility.JSON.string json in
@@ -37,6 +41,12 @@ let of_json : Yojson.Basic.t -> t option = fun json ->
     let size = metadata
         |> CCList.assoc_opt ~eq:CCString.equal "size"
         |> CCOpt.flat_map Utility.JSON.int in
+    let max_labels = metadata
+        |> CCList.assoc_opt ~eq:CCString.equal "max_labels"
+        |> CCOpt.flat_map Utility.JSON.int in
+    let max_attributes = metadata
+        |> CCList.assoc_opt ~eq:CCString.equal "max_attributes"
+        |> CCOpt.flat_map Utility.JSON.int in
     let views = match CCList.assoc_opt ~eq:CCString.equal "view_db" metadata |> CCOpt.flat_map Utility.JSON.string with
         | Some filename -> metadata
             |> CCList.assoc_opt ~eq:CCString.equal "views"
@@ -53,6 +63,8 @@ let of_json : Yojson.Basic.t -> t option = fun json ->
                 examples = examples;
                 views = views;
                 size = size;
+                max_labels = max_labels;
+                max_attributes = max_attributes;
             }
         | _ -> None
 

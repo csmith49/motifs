@@ -2,9 +2,9 @@
     "metadata": {
         "size": 1,
         "view_db": "./tests/views.db",
-        "views": [
-            "simple"
-        ]
+        "views": ["all"],
+        "max_labels": 3,
+        "max_attributes": 3
     },
     "files": [
         "./tests/db/35.db"
