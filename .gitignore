@@ -2,3 +2,4 @@ _build
 synthesize
 scripts
 **/.merlin
+**/.DS_Store
