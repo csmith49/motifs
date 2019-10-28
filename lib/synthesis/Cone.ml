@@ -53,7 +53,8 @@ let enumerate
         let delta = CCOpt.Infix.(Some delta 
             >>= Constraint.keep_selector
             >>= Constraint.drop_dangling_edges
-            >>= Constraint.stay_connected) in
+            >>= Constraint.stay_connected
+            >>= Constraint.attribute_per_node) in
         match delta with
             | None -> 
                 let _ = vprint "[CONSTRAINTS FAILED]" in

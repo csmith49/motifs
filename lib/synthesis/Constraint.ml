@@ -40,3 +40,11 @@ let stay_connected delta =
     let edge_changes = dangling_edges
         |> CCList.map (fun e -> Delta.E e, `Remove) in
     Delta.add_changes delta (vertex_changes @ edge_changes)
+
+(* make sure each node has some attribute being selected for *)
+let attribute_per_node delta =
+    let changes = Delta.changes delta in
+    let check_change c = match c with
+        | Delta.V _, `Weaken [] -> false
+        | _ -> true in
+    if CCList.for_all check_change changes then Some delta else None
