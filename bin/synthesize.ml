@@ -1,6 +1,7 @@
 (* references for inputs *)
 let problem_filename = ref ""
 let output_directory = ref ""
+let shortcut_filename = ref ""
 let quiet = ref false
 let negative_width = ref 2
 let size = ref 2
@@ -9,6 +10,9 @@ let yell = ref false
 (* arguments for subsampling *)
 let max_labels = ref 10
 let max_attributes = ref 10
+
+let fixed_labels = ref []
+let fixed_attributes = ref []
 
 (* for the REST argument *)
 let view_filename = ref ""
@@ -24,11 +28,12 @@ let spec_list = [
 
     ("-ml", Arg.Set_int max_labels, "Sets maximum number of labels to be used (default 10)");
     ("-ma", Arg.Set_int max_attributes, "Sets maximum number of attributes to be used (default 10)");
+
+    ("-shortcut", Arg.Set_string shortcut_filename, "Shortcut file");
 ]
 
 let usage_msg = "Rule Synthesis for Hera"
 let _ = Arg.parse spec_list print_endline usage_msg
-
 
 (* load problem declaration *)
 let _ = print_string ("Loading problem...")
@@ -48,6 +53,13 @@ let _ = match Domain.Problem.max_attributes problem with
     | Some m -> max_attributes := m
     | _ -> ()
 
+let _ = match Domain.Problem.fixed_labels problem with
+    | Some m -> fixed_labels := m
+    | _ -> ()
+let _ = match Domain.Problem.fixed_attributes problem with
+    | Some m -> fixed_attributes := m
+    | _ -> ()
+
 (* load views - use cmd line, or default to problem view, or throw exception *)
 let _ = print_string ("Loading views...")
 let view = if CCString.is_empty !view_filename then
@@ -61,15 +73,22 @@ let _ = Printf.printf "done. Found %d labels and %d attributes.\n"
 let _ = Printf.printf "Subsampling views: %d labels and %d attributes\n"
     !max_labels !max_attributes
 let view = Domain.View.subsample !max_labels !max_attributes view
+    |> Domain.View.add_labels !fixed_labels
+    |> Domain.View.add_attributes !fixed_attributes
 let _ = Printf.printf "Labels:\n    %s\n" (view |>Domain.View.labels |> CCString.concat "\n    ")
 let _ = Printf.printf "Attributes:\n    %s\n" (view |>Domain.View.attributes |> CCString.concat "\n    ")
 
+(* load the shortcuts *)
+let _ = print_string "Loading shortcuts..."
+let shortcuts = if CCString.is_empty !shortcut_filename then 
+    match Domain.Problem.shortcuts problem with
+        | Some shortcuts -> shortcuts
+        | None -> []
+    else Domain.Shortcut.from_file !shortcut_filename
+let _ = Printf.printf "done. Found %d shortcuts.\n" (CCList.length shortcuts)
 
 (* the common variables accessed across all examples *)
-let total_motifs = 100
 let output_motifs = ref []
-let motifs_per_example = 
-    total_motifs / (CCList.length (Domain.Problem.examples problem))
 
 (* what we should do per-example *)
 let process (ex : Domain.Problem.example) = begin
@@ -78,7 +97,8 @@ let process (ex : Domain.Problem.example) = begin
     let _ = print_endline "Loading example data..." in
     let db = Domain.SQL.of_string (fst ex) in
     let positive_examples = snd ex in
-    let doc = Domain.SQL.neighborhood db view positive_examples !size in
+    let doc = Domain.SQL.neighborhood db view positive_examples !size
+        |> Domain.SQL.shortcut db view shortcuts in
     let _ = doc |> Domain.Doc.to_string |> print_endline in
     
     let _ = print_endline "...done." in

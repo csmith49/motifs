@@ -188,3 +188,54 @@ let view filename name =
     View.empty
         |> View.add_attributes !attrs
         |> View.add_labels !lbls
+
+let apply_shortcut db shortcut =
+    let structure = Shortcut.structure shortcut in
+    let vertex_selects = structure
+        |> Core.Structure.vertices
+        |> CCList.filter_map (fun id -> match Core.Structure.label id structure with
+            | Some lbl -> Some (id, lbl)
+            | None -> None)
+        |> CCList.map (fun (id, filt) -> vertex_to_select_statement id filt) in
+    let edge_selects = structure
+        |> Core.Structure.edges
+        |> CCList.map edge_to_select_statement in
+    let selects = (vertex_selects @ edge_selects)
+        |> CCList.map (fun s -> "(" ^ s ^ ")")
+        |> CCString.concat " NATURAL JOIN " in
+    let query = Printf.sprintf "SELECT %s FROM %s"
+        (structure |> Core.Structure.vertices |> CCList.map id_to_column |> CCString.concat ", ")
+        (selects) in
+    let results = ref [] in
+    let cb row = match Shortcut.concretization_of_row shortcut row with
+        | Some conc -> results := conc :: !results
+        | None -> () in
+    let _ = run db cb query in !results
+
+let shortcut db view shortcuts doc =
+    let neighborhood = Core.Structure.vertices doc in
+    let new_edges = ref [] in
+    let new_vertices = ref [] in
+    (* do the thing *)
+    let process_shortcut shortcut = begin
+        if Shortcut.in_view shortcut view then
+            let concretizations = apply_shortcut db shortcut in
+            CCList.iter (fun conc ->
+                new_vertices := (Shortcut.vertices shortcut conc) @ !new_vertices;
+                new_edges := (Shortcut.edges shortcut conc) @ !new_edges;
+            ) concretizations
+        else ()
+    end in
+    let _ = CCList.iter process_shortcut shortcuts in
+    (* build the result *)
+    let result = ref doc in
+    let _ = CCList.iter (fun (v, _) ->
+        if not (CCList.mem ~eq:Core.Identifier.equal v neighborhood) then
+            let lbl = attributes_for db view v in
+            result := Core.Structure.add_vertex v lbl !result
+    ) !new_vertices in
+    let _ = CCList.iter (fun e ->
+        if not (CCList.mem ~eq:(Core.Structure.Edge.equal Core.Value.equal) e (Core.Structure.edges doc)) then
+            result := Core.Structure.add_edge e !result
+    ) !new_edges in
+    !result

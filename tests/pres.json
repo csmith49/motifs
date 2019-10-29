@@ -4,6 +4,15 @@
         "view_db": "./tests/views.db",
         "views": [
             "all"
+        ],
+        "max_labels": 5,
+        "fixed_labels": [
+            "LEFT_OF",
+            "CONTAINS"
+        ],
+        "max_attributes": 3,
+        "fixed_attributes": [
+            "TEXT"
         ]
     },
     "files": [

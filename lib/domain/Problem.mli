@@ -11,7 +11,9 @@ val views : t -> View.t list option
 val size : t -> int option
 val max_labels : t -> int option
 val max_attributes : t -> int option
-
+val fixed_labels : t -> string list option
+val fixed_attributes : t -> string list option
+val shortcuts : t -> Shortcut.t list option
 
 val of_json : Yojson.Basic.t -> t option
 
