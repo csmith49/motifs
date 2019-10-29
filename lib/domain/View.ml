@@ -41,8 +41,14 @@ let subsample lbls attrs view =
         |> CCRandom.choose_return 
         |> CCRandom.sample_without_duplicates ~cmp:CCString.compare attrs in
     {
-        labels = if lbls < (CCList.length view.labels) then CCRandom.run lbl_dist else view.labels;
-        attributes = if attrs < (CCList.length view.attributes) then CCRandom.run attr_dist else view.attributes;
+        labels = 
+            if lbls < (CCList.length view.labels) then 
+                if lbls = 0 then [] else CCRandom.run lbl_dist 
+            else view.labels;
+        attributes =
+            if attrs < (CCList.length view.attributes) then
+                if attrs = 0 then [] else CCRandom.run attr_dist 
+            else view.attributes;
     }
 
 

@@ -5,19 +5,20 @@
         "views": [
             "all"
         ],
-        "max_labels": 5,
+        "max_labels": 0,
         "fixed_labels": [
             "LEFT_OF",
-            "CONTAINS"
+            "CONTAINS",
+            "PREVIOUS",
+            "NEXT"
         ],
-        "max_attributes": 3,
+        "max_attributes": 0,
         "fixed_attributes": [
             "TEXT"
-        ]
+        ],
+        "shortcuts": "./tests/shortcuts.json"
     },
     "files": [
-        "./tests/db/63.db",
-        "./tests/db/35.db",
         "./tests/db/64.db"
     ],
     "examples": [
@@ -25,18 +26,6 @@
             "file": "./tests/db/64.db",
             "example": [
                 15977
-            ]
-        },
-        {
-            "file": "./tests/db/35.db",
-            "example": [
-                22622
-            ]
-        },
-        {
-            "file": "./tests/db/63.db",
-            "example": [
-                15503
             ]
         }
     ]

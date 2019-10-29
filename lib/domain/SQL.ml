@@ -219,7 +219,8 @@ let shortcut db view shortcuts doc =
     (* do the thing *)
     let process_shortcut shortcut = begin
         if Shortcut.in_view shortcut view then
-            let concretizations = apply_shortcut db shortcut in
+            let concretizations = apply_shortcut db shortcut
+                |> CCList.filter (fun conc -> Shortcut.intersects_neighborhood conc neighborhood) in
             CCList.iter (fun conc ->
                 new_vertices := (Shortcut.vertices shortcut conc) @ !new_vertices;
                 new_edges := (Shortcut.edges shortcut conc) @ !new_edges;
@@ -230,12 +231,13 @@ let shortcut db view shortcuts doc =
     (* build the result *)
     let result = ref doc in
     let _ = CCList.iter (fun (v, _) ->
-        if not (CCList.mem ~eq:Core.Identifier.equal v neighborhood) then
+        (* for every vertex in a valid concretization... *)
+        if not (Core.Structure.mem v !result) then
             let lbl = attributes_for db view v in
             result := Core.Structure.add_vertex v lbl !result
     ) !new_vertices in
     let _ = CCList.iter (fun e ->
-        if not (CCList.mem ~eq:(Core.Structure.Edge.equal Core.Value.equal) e (Core.Structure.edges doc)) then
+        if not (CCList.mem ~eq:(Core.Structure.Edge.equal Core.Value.equal) e (Core.Structure.edges !result)) then
             result := Core.Structure.add_edge e !result
     ) !new_edges in
     !result

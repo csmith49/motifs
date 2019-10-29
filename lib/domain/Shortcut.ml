@@ -48,7 +48,7 @@ let structure = Core.Structure.map
     Matcher.Kinder.of_value
 
 (* check if the structure is in a view *)
-let attributes shortcut = shortcut
+(* let attributes shortcut = shortcut
     |> Core.Structure.vertices
     |> CCList.filter_map (fun v ->
         Core.Structure.label v shortcut
@@ -59,10 +59,18 @@ let attributes shortcut = shortcut
 let labels shortcut = shortcut
     |> Core.Structure.edges
     |> CCList.map Core.Structure.Edge.label
-    |> CCList.map Core.Value.to_string
+    |> CCList.map Core.Value.to_string *)
 
-let in_view shortcut view =
+(* let contains small big = CCList.for_all (fun s ->
+    CCList.mem ~eq:CCString.equal s big
+) small *)
+
+(* let in_view shortcut view =
+    let attrs = View.labels view in
+    let _ = print_endline (CCString.concat ", " attrs) in
     (* check if all the attributes are in the view *)
-    if CCList.subset ~eq:CCString.equal (attributes shortcut) (View.attributes view) then
-        CCList.subset ~eq:CCString.equal (labels shortcut) (View.labels view)
-    else false
+    if contains (attributes shortcut) (View.attributes view) then
+        contains (labels shortcut) (View.labels view)
+    else false *)
+
+let in_view _ _ = true

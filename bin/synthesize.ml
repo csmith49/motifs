@@ -110,12 +110,8 @@ let process (ex : Domain.Problem.example) = begin
         ) in
 
     (* synthesize rules *)
-    let motifs = Synthesis.Cone.from_examples db view positive_examples !size
-        |> Synthesis.Cone.enumerate
-            (* ~filter:(fun d -> 
-                let m = d |> Synthesis.Delta.concretize in
-                Matcher.Motif.well_connected m && Matcher.Motif.well_formed m) *)
-            ~verbose:(!yell)
+    let motifs = Synthesis.Cone.from_document doc positive_examples
+        |> Synthesis.Cone.enumerate ~verbose:(!yell)
     in
     let _ = print_endline (Printf.sprintf "\nFound %i total motifs." (CCList.length motifs)) in
     

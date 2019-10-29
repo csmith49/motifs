@@ -7,6 +7,15 @@ type t = DeltaHeap.t
 
 type enumeration = ?filter:(Delta.t -> bool) -> ?verbose:(bool) -> t -> Matcher.Motif.t list
 
+let from_document doc examples =
+    let initial_motifs = examples
+        |> CCList.map (fun ex -> Domain.Doc.to_motif doc ex) in
+    let joins = Matcher.Motif.PartialOrder.join initial_motifs
+        |> CCList.uniq ~eq:Matcher.Motif.PartialOrder.equal in
+    let deltas = joins
+        |> CCList.map Delta.initial in
+    DeltaHeap.of_list deltas
+
 let from_examples db view examples size =
     let initial_motifs = examples
         |> CCList.map (fun ex -> (ex, Domain.SQL.neighborhood db view [ex] size))
