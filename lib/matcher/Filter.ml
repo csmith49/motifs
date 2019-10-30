@@ -18,8 +18,12 @@ let (=>) left right = implies left right
 module Lattice = struct
     let rec weaken = function
         | [] -> [ [] ]
+        | x :: rest -> [x] :: (weaken rest)
+    
+    let rec power_weaken = function
+        | [] -> [ [] ]
         | x :: rest -> 
-            let weakened = weaken rest in
+            let weakened = power_weaken rest in
             weakened @ (CCList.map (fun l -> x :: l) weakened)
 
     (* TODO - this is a pretty weak form of join, as it avoids any Pred lattice structure *)

@@ -106,7 +106,7 @@ let process (ex : Domain.Problem.example) = begin
     let db = Domain.SQL.of_string (fst ex) in
     let positive_examples = snd ex in
     let doc = Domain.SQL.neighborhood db view positive_examples !size
-        |> Domain.SQL.shortcut db view shortcuts in
+        |> Domain.SQL.shortcut db view shortcuts positive_examples in
     let _ = doc |> Domain.Doc.to_string |> print_endline in
     
     let _ = print_endline "...done." in

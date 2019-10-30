@@ -1,0 +1,29 @@
+{
+    "metadata": {
+        "size": 1,
+        "view_db": "/tests/views.db",
+        "views": [
+            "simple"
+        ]
+    },
+    "files": [
+        "./tests/db/66.db",
+        "./tests/db/29.db"
+    ],
+    "examples": [
+        {
+            "file": "./tests/db/66.db",
+            "example": [
+                16690
+            ]
+        },
+        {
+            "file": "./tests/db/29.db",
+            "example": [
+                20922,
+                20925,
+                20928
+            ]
+        }
+    ]
+}

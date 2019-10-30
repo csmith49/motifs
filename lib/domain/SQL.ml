@@ -212,15 +212,14 @@ let apply_shortcut db shortcut =
         | None -> () in
     let _ = run db cb query in !results
 
-let shortcut db view shortcuts doc =
-    let neighborhood = Core.Structure.vertices doc in
+let shortcut db view shortcuts pos doc =
     let new_edges = ref [] in
     let new_vertices = ref [] in
     (* do the thing *)
     let process_shortcut shortcut = begin
         if Shortcut.in_view shortcut view then
             let concretizations = apply_shortcut db shortcut
-                |> CCList.filter (fun conc -> Shortcut.intersects_neighborhood conc neighborhood) in
+                |> CCList.filter (fun conc -> Shortcut.intersects_neighborhood conc pos) in
             CCList.iter (fun conc ->
                 new_vertices := (Shortcut.vertices shortcut conc) @ !new_vertices;
                 new_edges := (Shortcut.edges shortcut conc) @ !new_edges;

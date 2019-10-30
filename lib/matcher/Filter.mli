@@ -2,6 +2,7 @@ type t = Predicate.t list
 
 module Lattice : sig
     val weaken : t -> t list
+    val power_weaken : t -> t list
     val join : t list -> t
 end
 

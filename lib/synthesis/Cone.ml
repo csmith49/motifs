@@ -117,7 +117,8 @@ let enumerate
             >>= Constraint.max_edges 3
             >>= Constraint.drop_dangling_edges
             >>= Constraint.stay_connected
-            >>= Constraint.attribute_per_node) in
+            >>= Constraint.attribute_per_node
+        ) in
         match delta with
             | None -> 
                 let _ = vprint "[CONSTRAINTS FAILED]" in
