@@ -151,9 +151,10 @@ let evaluate db motif =
     let _ = run db callback query in
         !results
 
-let check_consistency db negatives motif =
+let check_consistency db negatives positives motif =
     let image = evaluate db motif in
     CCList.for_all (fun n -> not (CCList.mem ~eq:Core.Identifier.equal n image)) negatives
+        && CCList.for_all (fun n -> CCList.mem ~eq:Core.Identifier.equal n image) positives
 
 let view filename name =
     let view_db = of_string filename in

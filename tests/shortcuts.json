@@ -1,6 +1,6 @@
 [
     {
-        "_description": "0 <- CONTAINS -- 1 <- LEFT_OF -- 2 -- CONTAINS -> 3",
+        "_description": "0 <- CONTAINS -- 1 <- RIGHT_OF -- 2 -- CONTAINS -> 3",
         "edges": [
             {
                 "source": 1,
@@ -13,9 +13,9 @@
                 "destination": 3
             },
             {
-                "source": 2,
-                "label": "LEFT_OF",
-                "destination": 1
+                "source": 1,
+                "label": "RIGHT_OF",
+                "destination": 2
             }
         ],
         "vertices": [

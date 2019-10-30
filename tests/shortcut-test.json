@@ -9,7 +9,7 @@
         "max_attributes": 0,
         "max_labels": 0,
         "fixed_attributes": ["TEXT", "KIND", "NER"],
-        "fixed_labels": ["LEFT_OF", "CONTAINS", "NEXT"]
+        "fixed_labels": ["RIGHT_OF", "CONTAINS", "NEXT"]
     },
     "files": [
         "./tests/db/66.db"

@@ -1,0 +1,67 @@
+{
+    "metadata": {
+        "size": 1,
+        "view_db": "./tests/views.db",
+        "views": [
+            "simple"
+        ],
+        "shortcuts": "./tests/shortcuts.json",
+        "max_attributes": 0,
+        "max_labels": 0,
+        "fixed_attributes": [
+            "TEXT",
+            "KIND",
+            "NER"
+        ],
+        "fixed_labels": [
+            "RIGHT_OF",
+            "CONTAINS",
+            "NEXT"
+        ]
+    },
+    "files": [
+        "./tests/db/Abraham_Lincoln.db"
+    ],
+    "examples": [
+        {
+            "file": "./tests/db/Abraham_Lincoln.db",
+            "example": [
+                1071690,
+                1071691
+            ]
+        },
+        {
+            "file": "./tests/db/Abraham_Lincoln.db",
+            "example": [
+                1071690
+            ]
+        },
+        {
+            "file": "./tests/db/Abraham_Lincoln.db",
+            "example": [
+                1071690,
+                1071691,
+                1071692
+            ]
+        },
+        {
+            "file": "./tests/db/Abraham_Lincoln.db",
+            "example": [
+                1071696
+            ]
+        },
+        {
+            "file": "./tests/db/Abraham_Lincoln.db",
+            "example": [
+                1071694,
+                1071695
+            ]
+        },
+        {
+            "file": "./tests/db/Abraham_Lincoln.db",
+            "example": [
+                1071694
+            ]
+        }
+    ]
+}

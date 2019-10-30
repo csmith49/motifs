@@ -15,6 +15,10 @@ let from_document doc examples =
         |> CCList.map Delta.initial in
     DeltaHeap.of_list deltas
 
+let simple_from_document doc examples =
+    let initial_motif = Domain.Doc.to_motif doc (examples |> CCList.hd) in
+    DeltaHeap.of_list [Delta.initial initial_motif]
+
 let from_examples db view examples size =
     let initial_motifs = examples
         |> CCList.map (fun ex -> (ex, Domain.SQL.neighborhood db view [ex] size))

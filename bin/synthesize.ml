@@ -118,7 +118,7 @@ let process (ex : Domain.Problem.example) = begin
         ) in
 
     (* synthesize rules *)
-    let cone = Synthesis.Cone.from_document doc positive_examples in
+    let cone = Synthesis.Cone.simple_from_document doc positive_examples in
     let _ = print_endline "Cone constructed." in
     let motifs = match !strategy with
         | s when s = "enumerate" -> Synthesis.Cone.enumerate ~verbose:(!yell) cone
@@ -128,7 +128,7 @@ let process (ex : Domain.Problem.example) = begin
     
     (* check for consistency *)
     let consistent_motifs = motifs
-        |> CCList.filter (Domain.SQL.check_consistency db negative_examples)
+        |> CCList.filter (Domain.SQL.check_consistency db negative_examples positive_examples)
     in
     let _ = print_endline (Printf.sprintf "%i consistent motifs." (CCList.length consistent_motifs)) in
 

@@ -12,4 +12,4 @@ val shortcut : db -> View.t -> Shortcut.t list -> Core.Identifier.t list -> Doc.
 
 val evaluate : db -> Matcher.Motif.t -> Core.Identifier.t list
 
-val check_consistency : db -> Core.Identifier.t list -> Matcher.Motif.t -> bool
+val check_consistency : db -> Core.Identifier.t list -> Core.Identifier.t list -> Matcher.Motif.t -> bool
