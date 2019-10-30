@@ -20,6 +20,6 @@ let to_motif doc identifier =
         structure = structure;
     }
 
-let small_window doc pos size = 
+let small_window doc pos size =
     let all = Core.Structure.Algorithms.neighborhood doc pos size in
-    all |> CCList.filter (fun a -> not (CCList.mem ~eq:Core.Identifier.equal a pos))
+        all |> CCList.filter (fun a -> not (CCList.mem ~eq:Core.Identifier.equal a pos))

@@ -200,14 +200,19 @@ module Algorithms = struct
         (fun v -> fun g -> IdSet.union g (bistep structure v))
         ids ids
 
+    let nearby structure vertex =
+        let incoming = incoming vertex structure
+            |> CCList.map Edge.source in
+        let outgoing = outgoing vertex structure
+            |> CCList.map Edge.destination in
+        CCList.uniq ~eq:Identifier.equal (incoming @ outgoing)
+
     let rec neighborhood structure ids size =
-        let set = IdSet.of_list ids in
-        neighborhood_aux structure set size |> IdSet.to_list
-    and neighborhood_aux structure ids size =
         if size <= 0 then ids else
-        let by_one = biextend structure ids in
-        if size = 1 then by_one else
-            neighborhood_aux structure by_one (size - 1)
+        let bigger = CCList.flat_map (nearby structure) ids
+            |> CCList.append ids
+            |> CCList.uniq ~eq:Identifier.equal in
+        neighborhood structure bigger (size - 1)
 
     let rec reachable structure ids =
         let set = IdSet.of_list ids in

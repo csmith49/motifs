@@ -48,3 +48,20 @@ let attribute_per_node delta =
         | Delta.V _, `Weaken [] -> false
         | _ -> true in
     if CCList.for_all check_change changes then Some delta else None
+
+let max_nodes max delta =
+    let changes = Delta.changes delta in
+    let check_change c = match c with
+        | Delta.V _, `Weaken _ -> true
+        | Delta.V _, `Keep -> true
+        | _ -> false in
+    let count = changes |> CCList.filter check_change |> CCList.length in
+    if max >= count then Some delta else None
+
+let max_edges max delta =
+    let changes = Delta.changes delta in
+    let check_change c = match c with
+        | Delta.E _, `Keep -> true
+        | _ -> false in
+    let count = changes |> CCList.filter check_change |> CCList.length in
+    if max >= count then Some delta else None

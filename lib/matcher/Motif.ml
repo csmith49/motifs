@@ -242,7 +242,10 @@ module PartialOrder = struct
         | [] -> `Maximal
         | _ as ans -> `Refinements ans
 
-    let join motifs =
+    let join motifs = match motifs with
+        | [] -> []
+        | x :: [] -> [x]
+        | motifs ->
         let candidates = ref [initial_candidate motifs] in
         let answers = ref [] in
         while not (CCList.is_empty !candidates) do

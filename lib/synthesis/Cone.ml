@@ -34,6 +34,58 @@ let from_independent_examples db view examples size =
         |> CCList.map Delta.initial in
     DeltaHeap.of_list deltas
 
+let sample_one_change max_nodes max_edges delta =
+    let options = delta
+        |> Delta.refine
+        |> CCList.filter_map (fun r -> CCOpt.Infix.(Some r
+            >>= Constraint.keep_selector
+            >>= Constraint.max_nodes max_nodes
+            >>= Constraint.max_edges max_edges
+            >>= Constraint.drop_dangling_edges
+            >>= Constraint.stay_connected
+            >>= Constraint.attribute_per_node
+        )) in
+    match options with
+        | [] -> None
+        | xs -> Some (CCRandom.run (CCRandom.pick_list xs))
+
+let rec sample_no_backtrack max_nodes max_edges delta =
+    if Delta.is_total delta then Some delta else
+    match sample_one_change max_nodes max_edges delta with
+        | None -> None
+        | Some result -> sample_no_backtrack max_nodes max_edges result
+
+let sample_from_heap heap = if DeltaHeap.is_empty heap then None else
+    Some (CCRandom.run (heap |> DeltaHeap.to_list |> CCRandom.pick_list))
+
+let sample
+    ?count:(count=1)
+    ?verbose:(verbose=false)
+    ?max_nodes:(max_nodes=10)
+    ?max_edges:(max_edges=10)
+        heap =
+    
+    (* for printing *)
+    let vprint = if verbose then print_endline else (fun _ -> ()) in
+
+    (* we only have a list of solutions we maintain *)
+    let solutions = ref [] in
+
+    (* until we have enough solutions, keep getting a new one *)
+    while (CCList.length !solutions) < count do
+        (* nice printing *)
+        let _ = vprint (Printf.sprintf "Starting iteration, %d solutions found" (CCList.length !solutions)) in
+        (* get something from the heap *)
+        let sample = CCOpt.Infix.(
+            sample_from_heap heap >>= sample_no_backtrack max_nodes max_edges
+        ) in match sample with
+            | Some delta -> 
+                let motif = Delta.concretize delta in
+                solutions := motif :: !solutions
+            | None -> ()
+    done;
+    !solutions
+
 let enumerate 
     ?filter:(filter=(fun _ -> true))
     ?verbose:(verbose=false)
@@ -61,6 +113,8 @@ let enumerate
         (* transform with checks *)
         let delta = CCOpt.Infix.(Some delta 
             >>= Constraint.keep_selector
+            >>= Constraint.max_nodes 4
+            >>= Constraint.max_edges 3
             >>= Constraint.drop_dangling_edges
             >>= Constraint.stay_connected
             >>= Constraint.attribute_per_node) in
