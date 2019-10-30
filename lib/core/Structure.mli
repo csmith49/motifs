@@ -69,6 +69,9 @@ module Embedding : sig
 
     (** converts an edge using image *)
     val edge_image : 'e edge -> t -> 'e edge option
+
+    (** applies an embedding to a structure *)
+    val embed_structure : ('v, 'e) structure -> t -> ('v, 'e) structure option
 end
 
 module BiPath : sig

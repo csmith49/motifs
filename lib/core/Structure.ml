@@ -255,4 +255,25 @@ module Embedding = struct
         match image src embedding, image dest embedding with
             | Some s, Some d -> Some (s, lbl, d)
             | _ -> None
+
+    let embed_structure structure embedding =
+        let vertices = structure
+            |> vertices
+            |> CCList.map (fun v -> match image v embedding, label v structure with
+                | Some v, Some lbl -> Some (v, lbl)
+                | _ -> None)
+            |> CCList.all_some in
+        let edges = structure
+            |> edges
+            |> CCList.map (fun e -> edge_image e embedding)
+            |> CCList.all_some in
+        match vertices, edges with
+            | Some vertices, Some edges ->
+                Graph.empty
+                    |> CCList.fold_right (fun (v, lbl) -> fun s ->
+                            Graph.add_vertex v lbl s
+                        ) vertices
+                    |> CCList.fold_right Graph.add_edge edges
+                    |> CCOpt.return
+            | _ -> None
 end

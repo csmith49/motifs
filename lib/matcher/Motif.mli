@@ -32,4 +32,5 @@ module PartialOrder : sig
 
     (** to implement join, must lift to lattice of antichains *)
     val join : t list -> t list
+    val weak_join : t list -> t list
 end

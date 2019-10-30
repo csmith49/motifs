@@ -1,0 +1,29 @@
+{
+    "metadata": {
+        "size": 1,
+        "view_db": "./tests/views.db",
+        "views": [
+            "simple"
+        ],
+        "shortcuts": "./tests/shortcuts.json",
+        "max_attributes": 0,
+        "max_labels": 0,
+        "fixed_attributes": ["TEXT", "KIND", "NER"],
+        "fixed_labels": ["LEFT_OF", "CONTAINS", "NEXT"]
+    },
+    "files": [
+        "./tests/db/29.db"
+    ],
+    "examples": [
+
+        {
+            "file": "./tests/db/29.db",
+            "example": [
+                20922,
+                20925,
+                20928,
+                20931
+            ]
+        }
+    ]
+}
