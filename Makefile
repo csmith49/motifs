@@ -4,7 +4,7 @@ data=data
 
 # entrypoint just uses dune to build the synthesis tool
 .phony: all
-all: synthesize $(data)/results/disjunction/pob-cell.csv
+all: synthesize
 synthesize: lib
 	dune build $(src)/synthesize.exe
 	mv $(build)/synthesize.exe synthesize
@@ -13,6 +13,16 @@ synthesize: lib
 .phony: live
 live: lib
 	dune utop lib
+
+# pattern for generatic prc stats for disjunctive ensemble
+.PRECIOUS: $(data)/results/%.csv
+$(data)/results/%-disjunction.csv: $(data)/gt/%.json $(data)/image/%.json scripts/evaluate_disjunction.py
+	@echo "Getting stats for the disjunctive ensemble for experiment $*..."
+	@python3 scripts/evaluate_disjunction.py\
+		--ground-truth $(data)/gt/$*.json\
+		--image $(data)/image/$*.json\
+		--output $@\
+		--prc-steps 100
 
 # pattern for constructing ground truth of a particular kind
 .PRECIOUS: $(data)/gt/%.json
@@ -39,22 +49,13 @@ $(data)/image/%.json: $(data)/problem/%.json synthesize
 	@echo "Constructing image for $*..."
 	@./synthesize -p $(data)/problem/$*.json -o $@
 
-# pattern for generatic prc stats for disjunctive ensemble
-.PRECIOUS: $(data)/results/disjunction/%.csv
-$(data)/results/disjunction/%.csv: $(data)/gt/%.json $(data)/image/$.json scripts/evaluate_disjunction.py
-	@echo "Getting stats for the disjunctive ensemble for experiment $*..."
-	@python3 scripts/evaluate_disjunction.py\
-		--ground-truth $(data)/gt/$*.json\
-		--image $(data)/image/$*.json\
-		--output $@\
-		--prc-steps 100
-
 # various forms of cleaning
 .phony: clean-experiments
 clean-experiments:
 	rm -rf $(data)/gt/*
 	rm -rf $(data)/problem/*
 	rm -rf $(data)/image/*
+	rm -rf $(data)/results/*
 
 .phony: clean
 clean:

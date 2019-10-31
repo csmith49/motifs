@@ -13,7 +13,6 @@ args = parser.parse_args()
 # compute precision, recall, and f beta scores
 def results(relevant, selected, beta=1):
     relevant, selected = set(relevant), set(selected)
-    print(len(relevant), len(selected))
 
     true_positives = relevant & selected
     false_positives = selected - relevant
