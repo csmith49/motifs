@@ -1,6 +1,6 @@
 (* references for inputs *)
 let problem_filename = ref ""
-let output_directory = ref ""
+let output_file = ref "output.json"
 let shortcut_filename = ref ""
 let strategy = ref "enumerate"
 let sample_goal = ref 10
@@ -24,7 +24,7 @@ let output_amount = ref (-1)
 
 let spec_list = [
     ("-p", Arg.Set_string problem_filename, "Input problem declaration file");
-    ("-o", Arg.Set_string output_directory, "Output directory");
+    ("-o", Arg.Set_string output_file, "Output file");
     ("-q", Arg.Set quiet, "Sets quiet mode");
     ("-n", Arg.Set_int negative_width, "Sets window for negative examples");
     ("-s", Arg.Set_int size, "Sets max size of synthesized rules");
@@ -145,23 +145,16 @@ let _ = CCList.iter process (Domain.Problem.examples problem)
 let _ = print_endline "Examples processed."
 
 (* now write out the rules *)
-let write_output filename = begin
-    let db = Domain.SQL.of_string filename in
-    let sparse_image = !output_motifs
-        |> CCList.map (fun motif -> (motif, Domain.SQL.evaluate db motif)) in
-    let output_file = filename
-        |> Filename.basename
-        |> Filename.remove_extension
-        |> (fun r -> r ^ ".json")
-        |> Filename.concat !output_directory in
-    sparse_image
-        |> Domain.SparseImage.to_json
-        |> Yojson.Basic.to_file output_file
-end
-
 let _ = print_string "Writing output..."
-let _ = if !quiet then () else
-    CCList.iter write_output (Domain.Problem.files problem)
+let sparse_image = ref (Domain.SparseImage.of_motifs !output_motifs)
+let _ = if !quiet then () else begin
+    CCList.iter (fun filename ->
+        let db = Domain.SQL.of_string filename in
+        let images = CCList.map (Domain.SQL.evaluate db) !output_motifs in
+        sparse_image := Domain.SparseImage.add_results filename images !sparse_image
+    ) (Domain.Problem.files problem);
+    !sparse_image |> Domain.SparseImage.to_json |> Yojson.Basic.to_file !output_file
+end
 let _ = print_endline "done."
 
 let _ = if !output_amount > 0 then

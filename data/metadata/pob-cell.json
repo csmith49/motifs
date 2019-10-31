@@ -1,0 +1,18 @@
+{
+    "size": 1,
+    "view_db": "./tests/views.db",
+    "views": [
+        "simple"
+    ],
+    "shortcuts": "./tests/shortcuts.json",
+    "max_attributes": 0,
+    "max_labels": 0,
+    "fixed_attributes": [
+        "TEXT",
+        "KIND"
+    ],
+    "fixed_labels": [
+        "RIGHT_OF",
+        "CONTAINS"
+    ]
+}

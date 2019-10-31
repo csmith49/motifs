@@ -1,3 +1,8 @@
-type t = (Matcher.Motif.t * Core.Identifier.t list) list
+type filename = string
+type image = filename * (Core.Identifier.t list)
+type sparse_row = Matcher.Motif.t * (image list)
+type t = sparse_row list
 
 val to_json : t -> Yojson.Basic.t
+val of_motifs : Matcher.Motif.t list -> t
+val add_results : filename -> (Core.Identifier.t list) list -> t -> t

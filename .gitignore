@@ -1,5 +1,8 @@
 _build
 synthesize
-scripts
+data/db/*
+data/image/*
+data/gt/*
+data/problem/*
 **/.merlin
 **/.DS_Store
