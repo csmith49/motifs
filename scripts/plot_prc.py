@@ -39,6 +39,7 @@ if __name__ == '__main__':
     # plot the darn thing
     seaborn.lineplot(x='recall', y='precision', data=data,
         hue='experiment', estimator=None, sort=False,
+        # style="experiment",markers=True, dashes=False,
         palette=palette
     )
     seaborn.despine()

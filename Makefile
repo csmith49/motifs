@@ -26,13 +26,24 @@ $(data)/results/%-disjunction.csv $(data)/results/%-disjunction-prc.csv: $(data)
 		--prc-output $(data)/results/$*-disjunction-prc.csv
 
 # pattern for generating prc stats for confidence-based ensemble
-.PRECIOUS: $(data)/results/%-confidence-prc.csv
-$(data)/results/%-confidence-prc.csv: $(data)/gt/%.json $(data)/image/%.json scripts/evaluate_confidence.py
+.PRECIOUS: $(data)/results/%-confidence-big-prc.csv $(data)/results/%-confidence-small-prc.csv $(data)/results/%-confidence-scaled-prc.csv
+$(data)/results/%-confidence-big-prc.csv $(data)/results/%-confidence-small-prc.csv $(data)/results/%-confidence-scaled-prc.csv: $(data)/gt/%.json $(data)/image/%.json scripts/evaluate_confidence.py
 	@echo "Getting stats for the confidence ensemble for experiment $*..."
 	@python3 scripts/evaluate_confidence.py\
 		--ground-truth $(data)/gt/$*.json\
 		--image $(data)/image/$*.json\
-		--output $@
+		--accuracy big\
+		--output $(data)/results/$*-confidence-big-prc.csv
+	@python3 scripts/evaluate_confidence.py\
+		--ground-truth $(data)/gt/$*.json\
+		--image $(data)/image/$*.json\
+		--accuracy small\
+		--output $(data)/results/$*-confidence-small-prc.csv
+	@python3 scripts/evaluate_confidence.py\
+		--ground-truth $(data)/gt/$*.json\
+		--image $(data)/image/$*.json\
+		--accuracy scaled\
+		--output $(data)/results/$*-confidence-scaled-prc.csv
 
 # pattern for constructing ground truth of a particular kind
 .PRECIOUS: $(data)/gt/%.json
@@ -67,9 +78,12 @@ $(data)/graphs/%-disjunction-performance.png: $(data)/results/%-disjunction.csv 
 		--output $@
 
 .PRECIOUS: $(data)/graphs/%-prc.png
-$(data)/graphs/%-prc.png: $(data)/results/%-disjunction-prc.csv $(data)/results/%-confidence-prc.csv scripts/plot_prc.py
+$(data)/graphs/%-prc.png: $(data)/results/%-disjunction-prc.csv $(data)/results/%-confidence-big-prc.csv $(data)/results/%-confidence-small-prc.csv $(data)/results/%-confidence-scaled-prc.csv scripts/plot_prc.py
 	@python3 scripts/plot_prc.py\
-		--prc-csv $(data)/results/$*-disjunction-prc.csv $(data)/results/$*-confidence-prc.csv\
+		--prc-csv $(data)/results/$*-disjunction-prc.csv\
+			$(data)/results/$*-confidence-big-prc.csv\
+			$(data)/results/$*-confidence-small-prc.csv\
+			$(data)/results/$*-confidence-scaled-prc.csv\
 		--output $@
 
 # various forms of cleaning for experiments

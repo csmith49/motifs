@@ -1,11 +1,15 @@
 import json, csv
 from argparse import ArgumentParser
 from numpy import exp
+from math import inf
 
 parser = ArgumentParser()
 parser.add_argument("--ground-truth", required=True)
 parser.add_argument("--image", required=True)
 parser.add_argument("--output", required=True)
+parser.add_argument("--accuracy",
+    choices=["big", "small", "scaled"],
+    default="big")
 
 args = parser.parse_args()
 
@@ -35,9 +39,17 @@ def images_containing(value, program_images):
             count += 1
     return count
 
+# accuracies
 def accuracy(image, total_image):
-    ratio = len(image) / len(total_image)
-    return (2 * (1 - ratio)) - 1
+    i, t = len(image), len(total_image)
+    if args.accuracy == "big":
+        return t / i
+    elif args.accuracy == "small":
+        return 1 - (i / t)
+    elif args.accuracy == "scaled":
+        return 2 * (1 - i / t) - 1
+    else:
+        return None
 
 def program_confidences(program_images):
     output = []
@@ -52,9 +64,6 @@ def confidence(value, confidences):
         if value in image:
             cumulative_confidence += confidence
     return cumulative_confidence
-    denom = exp(cumulative_confidence) - exp(-1 * cumulative_confidence)
-    if denom == 0: return 0
-    return exp(cumulative_confidence) / denom
 
 # prc evaluation
 def prc_evaluation(images, ground_truth, ranking, output):
@@ -71,22 +80,25 @@ def prc_evaluation(images, ground_truth, ranking, output):
     # open the output
     with open(output, 'w') as f:
         writer = csv.DictWriter(f, fieldnames=[
-            'ranking', 'value', 'precision', 'recall', 'gt'
+            'ranking', 'value', 'precision', 'recall', 'gt', 'accuracy'
         ])
         writer.writeheader()
 
         # for every value/ranking, compute pr assuming that ranking as a threshold
         for (value, ranking) in ranking:
             selected.append(value)
-            precision, recall, _ = results(ground_truth, selected, beta=1)
+            try:
+                precision, recall, _ = results(ground_truth, selected, beta=1)
+            except:
+                precision, recall = 0, 0
             writer.writerow({
                 'ranking': ranking,
                 'value': value,
                 'precision': precision,
                 'recall': recall,
-                'gt': value in ground_truth
+                'gt': value in ground_truth,
+                'accuracy': args.accuracy
             })
-
 
 # main
 if __name__ == "__main__":
