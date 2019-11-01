@@ -5,8 +5,9 @@ from numpy import linspace
 parser = ArgumentParser()
 parser.add_argument("--ground-truth", required=True)
 parser.add_argument("--image", required=True)
-parser.add_argument("--output", required=True)
-parser.add_argument("--prc-steps", type=int, default=1)
+parser.add_argument("--threshold-output", required=True)
+parser.add_argument("--threshold-steps", type=int, default=1)
+parser.add_argument("--prc-output", default=None)
 
 args = parser.parse_args()
 
@@ -29,6 +30,70 @@ def get_selection(program_images):
         result.update(image)
     return result
 
+def images_containing(value, program_images):
+    count = 0
+    for img in program_images:
+        if value in img:
+            count += 1
+    return count
+
+# threshold evaluation
+def threshold_evaluation(program_images, ground_truth, steps, output):
+    # compute threshold program counts
+    thresholds = [int(f) for f in linspace(len(program_images), 1, steps)]
+    thresholds.reverse()
+
+    # open the output file
+    with open(output, 'w') as f:
+        writer = csv.DictWriter(f, fieldnames=[
+            'ensemble-ratio', 'precision', 'recall', 'f-beta', 'beta'
+        ])
+        writer.writeheader()
+
+        # for each threshold, compute the stats
+        for threshold in thresholds:
+            image = get_selection(program_images[:threshold])
+            precision, recall, f1 = results(ground_truth, image, beta=1)
+            writer.writerow({
+                'ensemble-ratio': threshold / len(program_images),
+                'precision': precision,
+                'recall': recall,
+                'f-beta': f1,
+                'beta': 1
+            })
+
+# prc evaluation
+def prc_evaluation(program_images, ground_truth, output):
+    # flatten the program images temporarily
+    image = get_selection(program_images)
+
+    # rank the nodes in the image by confidence (aka the number of programs they appear in)
+    ranking = [(i, images_containing(i, program_images)) for i in image]
+    ranking.sort(key=lambda p: p[-1], reverse=True)
+    
+    # list to hold the already-selected images
+    selected = []
+
+    # open the output
+    with open(output, 'w') as f:
+        writer = csv.DictWriter(f, fieldnames=[
+            'ranking', 'value', 'precision', 'recall', 'gt'
+        ])
+        writer.writeheader()
+
+        # for every value/ranking, compute pr assuming that ranking as a threshold
+        for (value, ranking) in ranking:
+            selected.append(value)
+            precision, recall, _ = results(ground_truth, selected, beta=1)
+            writer.writerow({
+                'ranking': ranking,
+                'value': value,
+                'precision': precision,
+                'recall': recall,
+                'gt': value in ground_truth
+            })
+
+
 # main
 if __name__ == "__main__":
     # load the ground truth
@@ -44,13 +109,6 @@ if __name__ == "__main__":
     with open(args.image, 'r') as f:
         image = json.load(f)
 
-    # compute the number of programs to use at each roc step
-    num_programs = len(image)
-    steps = [
-        int(step) for step in linspace(num_programs, 1, args.prc_steps)
-    ]
-    steps.reverse()
-
     # compute image per-program
     program_images = []
     for row in image:
@@ -64,22 +122,8 @@ if __name__ == "__main__":
     program_images.sort(key=lambda s: len(s))
 
     # open the output file
-    with open(args.output, 'w') as f:
-        writer = csv.DictWriter(f, [
-            'ensemble-size', 'precision', 'recall', 'f-beta'
-        ])
+    threshold_evaluation(program_images, ground_truth_image, args.threshold_steps, args.threshold_output)
 
-        writer.writeheader()
-
-        # iterate based on ensemble size
-        for ensemble_size in steps:
-            ensemble_image = get_selection(program_images[:ensemble_size])
-            precision, recall, f_beta = results(ground_truth_image, ensemble_image)
-            # construct the output dict
-            output = {
-                'ensemble-size': ensemble_size,
-                'precision': precision,
-                'recall': recall,
-                'f-beta': f_beta
-            }
-            writer.writerow(output)
+    # if there's also a prc output, do that thing
+    if args.prc_output != None:
+        prc_evaluation(program_images, ground_truth_image, args.prc_output)

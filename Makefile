@@ -16,13 +16,14 @@ live: lib
 
 # pattern for generatic prc stats for disjunctive ensemble
 .PRECIOUS: $(data)/results/%.csv
-$(data)/results/%-disjunction.csv: $(data)/gt/%.json $(data)/image/%.json scripts/evaluate_disjunction.py
+$(data)/results/%-disjunction.csv $(data)/results/%-disjunction-prc.csv: $(data)/gt/%.json $(data)/image/%.json scripts/evaluate_disjunction.py
 	@echo "Getting stats for the disjunctive ensemble for experiment $*..."
 	@python3 scripts/evaluate_disjunction.py\
 		--ground-truth $(data)/gt/$*.json\
 		--image $(data)/image/$*.json\
-		--output $@\
-		--prc-steps 100
+		--threshold-output $(data)/results/$*-disjunction.csv\
+		--threshold-steps 100\
+		--prc-output $(data)/results/$*-disjunction-prc.csv
 
 # pattern for constructing ground truth of a particular kind
 .PRECIOUS: $(data)/gt/%.json
@@ -49,6 +50,19 @@ $(data)/image/%.json: $(data)/problem/%.json synthesize
 	@echo "Constructing image for $*..."
 	@./synthesize -p $(data)/problem/$*.json -o $@
 
+# graph construction
+.PRECIOUS: $(data)/graphs/%-disjunction-performance.png
+$(data)/graphs/%-disjunction-performance.png: $(data)/results/%-disjunction.csv scripts/plot_disjunction_performance.py
+	@python3 scripts/plot_disjunction_performance.py\
+		--threshold-csv $(data)/results/$*-disjunction.csv\
+		--output $@
+
+.PRECIOUS: $(data)/graphs/%-disjunction-prc.json
+$(data)/graphs/%-disjunction-prc.png: $(data)/results/%-disjunction-prc.csv scripts/plot_prc.py
+	@python3 scripts/plot_prc.py\
+		--prc-csv $(data)/results/$*-disjunction-prc.csv\
+		--output $@
+
 # various forms of cleaning
 .phony: clean-experiments
 clean-experiments:
@@ -56,6 +70,7 @@ clean-experiments:
 	rm -rf $(data)/problem/*
 	rm -rf $(data)/image/*
 	rm -rf $(data)/results/*
+	rm -rf $(data)/graphs/*
 
 .phony: clean
 clean:
