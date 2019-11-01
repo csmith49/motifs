@@ -15,7 +15,7 @@ live: lib
 	dune utop lib
 
 # pattern for generatic prc stats for disjunctive ensemble
-.PRECIOUS: $(data)/results/%.csv
+.PRECIOUS: $(data)/results/%-disjunction.csv $(data)/results/%-disjunction-prc.csv
 $(data)/results/%-disjunction.csv $(data)/results/%-disjunction-prc.csv: $(data)/gt/%.json $(data)/image/%.json scripts/evaluate_disjunction.py
 	@echo "Getting stats for the disjunctive ensemble for experiment $*..."
 	@python3 scripts/evaluate_disjunction.py\
@@ -24,6 +24,15 @@ $(data)/results/%-disjunction.csv $(data)/results/%-disjunction-prc.csv: $(data)
 		--threshold-output $(data)/results/$*-disjunction.csv\
 		--threshold-steps 100\
 		--prc-output $(data)/results/$*-disjunction-prc.csv
+
+# pattern for generating prc stats for confidence-based ensemble
+.PRECIOUS: $(data)/results/%-confidence-prc.csv
+$(data)/results/%-confidence-prc.csv: $(data)/gt/%.json $(data)/image/%.json scripts/evaluate_confidence.py
+	@echo "Getting stats for the confidence ensemble for experiment $*..."
+	@python3 scripts/evaluate_confidence.py\
+		--ground-truth $(data)/gt/$*.json\
+		--image $(data)/image/$*.json\
+		--output $@
 
 # pattern for constructing ground truth of a particular kind
 .PRECIOUS: $(data)/gt/%.json
@@ -57,22 +66,32 @@ $(data)/graphs/%-disjunction-performance.png: $(data)/results/%-disjunction.csv 
 		--threshold-csv $(data)/results/$*-disjunction.csv\
 		--output $@
 
-.PRECIOUS: $(data)/graphs/%-disjunction-prc.json
-$(data)/graphs/%-disjunction-prc.png: $(data)/results/%-disjunction-prc.csv scripts/plot_prc.py
+.PRECIOUS: $(data)/graphs/%-prc.png
+$(data)/graphs/%-prc.png: $(data)/results/%-disjunction-prc.csv $(data)/results/%-confidence-prc.csv scripts/plot_prc.py
 	@python3 scripts/plot_prc.py\
-		--prc-csv $(data)/results/$*-disjunction-prc.csv\
+		--prc-csv $(data)/results/$*-disjunction-prc.csv $(data)/results/$*-confidence-prc.csv\
 		--output $@
 
-# various forms of cleaning
+# various forms of cleaning for experiments
+.phony: clean-results
+clean-results:
+	@echo "Removing results..."
+	@rm -rf $(data)/results/*
+.phony: clean-graphs
+clean-graphs:
+	@echo "Removing graphs..."
+	@rm -rf $(data)/graphs/*
+.phony: clean-data
+clean-data:
+	@echo "Removing all data..."
+	@rm -rf $(data)/gt/*
+	@rm -rf $(data)/problem/*
+	@rm -rf $(data)/image/*
 .phony: clean-experiments
-clean-experiments:
-	rm -rf $(data)/gt/*
-	rm -rf $(data)/problem/*
-	rm -rf $(data)/image/*
-	rm -rf $(data)/results/*
-	rm -rf $(data)/graphs/*
+clean-experiments: clean-results clean-graphs
 
-.phony: clean
-clean:
+# for cleaning the bulid
+.phony: clean-build
+clean-build:
 	dune clean
 	rm -rf _build synthesize
