@@ -6,5 +6,7 @@ data/gt/*
 data/problem/*
 data/graphs/*
 data/results/*
+**/__pycache__
+
 **/.merlin
 **/.DS_Store

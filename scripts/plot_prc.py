@@ -1,6 +1,8 @@
-import csv, seaborn, pandas, os
+import seaborn
 import matplotlib.pyplot as plt
 from argparse import ArgumentParser
+from pandas import concat
+from analysis import load_prc
 
 parser = ArgumentParser()
 parser.add_argument('--prc-csv', nargs="+")
@@ -8,29 +10,16 @@ parser.add_argument('--output', default=None)
 
 args = parser.parse_args()
 
-def load_dataframe(filepath):
-    # pull the base out of the filepath
-    experiment_name = os.path.splitext(os.path.basename(filepath))[0]
-    # load the frame
-    frame = pandas.read_csv(filepath)
-    # add the base as a new column so we can plot all possible values
-    exp_column = [experiment_name for _ in frame['value']]
-    frame['experiment'] = exp_column
-    # return
-    return frame
-
-def join(frames):
-    return pandas.concat(frames, ignore_index=True, sort=False)
-
 # main
 if __name__ == '__main__':
     # load the input data
     frames = []
     for csv_filepath in args.prc_csv:
         with open(csv_filepath, 'r') as f:
-            frames.append(load_dataframe(csv_filepath))
+            frames.append(load_prc(csv_filepath))
 
-    data = join(frames)
+    # stick them all together
+    data = concat(frames, ignore_index=True, sort=False)
 
     # set some stylistic stuff up
     seaborn.set_style("white")
@@ -38,8 +27,7 @@ if __name__ == '__main__':
 
     # plot the darn thing
     seaborn.lineplot(x='recall', y='precision', data=data,
-        hue='experiment', estimator=None, sort=False,
-        # style="experiment",markers=True, dashes=False,
+        hue='tag', estimator=None, sort=False,
         palette=palette
     )
     seaborn.despine()

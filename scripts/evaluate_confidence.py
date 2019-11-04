@@ -59,11 +59,12 @@ def program_confidences(program_images):
     return output
 
 def confidence(value, confidences):
-    cumulative_confidence = 0.0
+    c = 0.0
     for image, confidence in confidences:
         if value in image:
-            cumulative_confidence += confidence
-    return cumulative_confidence
+            c += confidence
+    return c
+    # return exp(c) / (exp(c) - exp(-c))
 
 # prc evaluation
 def prc_evaluation(images, ground_truth, ranking, output):
