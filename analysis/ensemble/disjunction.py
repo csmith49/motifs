@@ -8,7 +8,7 @@ class Disjunction(Ensemble):
 
 class Count(RankingEnsemble):
     def rank(self, value):
-        count += 0
+        count = 0
         for motif in self.motifs:
             if value in motif: count += 1
         return count

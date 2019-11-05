@@ -1,4 +1,5 @@
 from .motif import Motif
-from .ensemble import *
+from .ensemble import Disjunction, Count, MostSpecific, MajorityVote, ensemble_from_string, Frontier
 from .utility import load_prc, load_ground_truth
-from .active import maximal_entropy
+from .active import Active
+from .evaluation import performance_statistics, prc

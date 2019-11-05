@@ -1,6 +1,6 @@
 # row
 class Row:
-    def __init__(file, image):
+    def __init__(self, file, image):
         self.file = file
         self.image = image
     def __contains__(self, other):
@@ -12,11 +12,18 @@ class Row:
 # motifs
 class Motif:
     def __init__(self, motif, rows):
-        self.motif = json_rep['motif']
+        self.motif = motif
         self.rows = rows
     def __contains__(self, other):
         return any([other in row for row in self.rows])
+    # what are the values captured by this motif
+    def domain(self):
+        result = set()
+        for row in self.rows:
+            result.update(row.image)
+        return result
+    # for ease of construction
     @classmethod
     def of_json(cls, json_rep):
         rows = [Row.of_json(row) for row in json_rep['images']]
-        return cls(json_rep['motif'], rows)
+        return cls(json_rep['motif'], rows)    

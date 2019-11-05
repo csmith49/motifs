@@ -1,6 +1,10 @@
+# BUILD VARIABLES =======================
+
 # build locations
 src=bin
 build=_build/default/bin
+
+# DATA LOCATIONS ========================
 
 # data locations
 data=data
@@ -9,6 +13,13 @@ image=$(data)/image
 results=$(data)/results
 graphs=$(data)/graphs
 problem=$(data)/problem
+
+# script locations
+eval=scripts/evaluate
+mk=scripts/make
+plt=scripts/plot
+
+# BUILDING THE TOOL =====================
 
 # entrypoint just uses dune to build the synthesis tool
 .phony: all
@@ -22,97 +33,99 @@ synthesize: lib
 live: lib
 	dune utop lib
 
-# the desired graphs to build (for now)
-.phony: graphs
-graphs: $(graphs)/pob-cell-active.png $(graphs)/pob-cell-disjunction-performance.png $(graphs)/pob-cell-prc.png
+# MAKING NECESSARY EXPERIMENT DATA ======
 
-# pattern for generating prc stats for disjunctive ensemble
-.PRECIOUS: $(results)/%-disjunction.csv $(results)/%-disjunction-prc.csv
-$(results)/%-disjunction.csv $(results)/%-disjunction-prc.csv: $(gt)/%.json $(image)/%.json scripts/evaluate_disjunction.py
-	@echo "Getting stats for the disjunctive ensemble for experiment $*..."
-	@python3 scripts/evaluate_disjunction.py\
-		--ground-truth $(gt)/$*.json\
-		--image $(image)/$*.json\
-		--threshold-output $(results)/$*-disjunction.csv\
-		--threshold-steps 100\
-		--prc-output $(results)/$*-disjunction-prc.csv
-
-# pattern for generating performance curves for faked active learning
-.PRECIOUS: $(results)/%-active.csv
-$(results)/%-active.csv: $(gt)/%.json $(image)/%.json scripts/evaluate_active.py
-	@echo "Getting stats for the active ensemble for experiment $*..."
-	@python3 scripts/evaluate_active.py\
-		--ground-truth $(gt)/$*.json\
-		--image $(image)/$*.json\
-		--output $@\
-		--learning-steps 10
-
-# pattern for generating prc stats for confidence-based ensemble
-.PRECIOUS: $(results)/%-confidence-big-prc.csv $(results)/%-confidence-small-prc.csv $(results)/%-confidence-scaled-prc.csv
-$(results)/%-confidence-big-prc.csv $(results)/%-confidence-small-prc.csv $(results)/%-confidence-scaled-prc.csv: $(gt)/%.json $(image)/%.json scripts/evaluate_confidence.py
-	@echo "Getting stats for the confidence ensemble for experiment $*..."
-	@python3 scripts/evaluate_confidence.py\
-		--ground-truth $(gt)/$*.json\
-		--image $(image)/$*.json\
-		--accuracy big\
-		--output $(results)/$*-confidence-big-prc.csv
-	@python3 scripts/evaluate_confidence.py\
-		--ground-truth $(gt)/$*.json\
-		--image $(image)/$*.json\
-		--accuracy small\
-		--output $(results)/$*-confidence-small-prc.csv
-	@python3 scripts/evaluate_confidence.py\
-		--ground-truth $(gt)/$*.json\
-		--image $(image)/$*.json\
-		--accuracy scaled\
-		--output $(results)/$*-confidence-scaled-prc.csv
-
-# pattern for constructing ground truth of a particular kind
+# constructing ground truth of a particular kind
 .PRECIOUS: $(gt)/%.json
-$(gt)/%.json: scripts/make_ground_truth.py $(data)/sql/%.sql
+$(gt)/%.json: $(mk)/make_ground_truth.py $(data)/sql/%.sql
 	@echo "Constructing ground truth for $*..."
-	@python3 scripts/make_ground_truth.py\
+	@python3 $(mk)/make_ground_truth.py\
 		--input-directory $(data)/db\
 		--output $@\
 		--sql-path $(data)/sql/$*.sql
 
-# pattern for making a problem file from the metadata and ground truth
+# making a problem file from the metadata and ground truth
 .PRECIOUS: $(problem)/%.json
-$(problem)/%.json: scripts/make_problem_file.py $(data)/metadata/%.json $(gt)/%.json
+$(problem)/%.json: $(mk)/make_problem_file.py $(data)/metadata/%.json $(gt)/%.json
 	@echo "Constructing a problem file for $*..."
-	@python3 scripts/make_problem_file.py\
+	@python3 $(mk)/make_problem_file.py\
 		--ground-truth $(gt)/$*.json\
 		--output $@\
 		--metadata $(data)/metadata/$*.json\
 		--number-of-examples 1
 
-# pattern for making an image file from a problem file and the synthesizer
+# making an image file from a problem file and the synthesizer
 .PRECIOUS: $(image)/%.json
 $(image)/%.json: $(data)/problem/%.json synthesize
 	@echo "Constructing image for $*..."
 	@./synthesize -p $(problem)/$*.json -o $@
 
-# graph construction
-.PRECIOUS: $(graphs)/%-disjunction-performance.png
-$(graphs)/%-disjunction-performance.png: $(results)/%-disjunction.csv scripts/plot_disjunction_performance.py
-	@python3 scripts/plot_disjunction_performance.py\
-		--threshold-csv $(results)/$*-disjunction.csv\
+# EXPERIMENTS ===================
+
+# Experiment 1 - how does active learning improve disjunction?
+
+# active-learning data for disjunction
+.PRECIOUS: $(results)/%-disjunction-active.csv
+$(results)/%-disjunction-active.csv: $(gt)/%.json $(image)/%.json $(eval)/evaluate_active.py
+	@python3 $(eval)/evaluate_active.py\
+		--image $(image)/$*.json\
+		--ground-truth $(gt)/$*.json\
+		--output $@\
+		--learning-steps 7\
+		--ensemble disjunction
+
+# learning graph for disjunction
+$(graphs)/%-disjunction-active.png: $(results)/%-disjunction-active.csv $(plt)/plot_active_performance.py
+	@python3 $(plt)/plot_active_performance.py\
+		--active-csv $(results)/$*-disjunction-active.csv\
 		--output $@
 
-.PRECIOUS: $(graphs)/%-prc.png
-$(graphs)/%-prc.png: $(results)/%-disjunction-prc.csv $(results)/%-confidence-big-prc.csv $(results)/%-confidence-small-prc.csv $(results)/%-confidence-scaled-prc.csv scripts/plot_prc.py
-	@python3 scripts/plot_prc.py\
-		--prc-csv $(results)/$*-disjunction-prc.csv\
-			$(results)/$*-confidence-big-prc.csv\
-			$(results)/$*-confidence-small-prc.csv\
-			$(results)/$*-confidence-scaled-prc.csv\
+# Experiment 2 - what does active learning do to ranking ensembles?
+
+# prc for active learning for count
+.PRECIOUS: $(results)/%-count-active-prc.csv
+$(results)/%-count-active-prc.csv: $(gt)/%.json $(image)/%.json $(eval)/evaluate_active_prc.py
+	@python3 $(eval)/evaluate_active_prc.py\
+		--image $(image)/$*.json\
+		--ground-truth $(gt)/$*.json\
+		--output $@\
+		--learning-steps 7\
+		--ensemble count
+
+# plotting prc for active learning over disjunction
+$(graphs)/%-count-active-prc.png: $(results)/%-count-active-prc.csv $(plt)/plot_active_prc.py
+	@python3 $(plt)/plot_active_prc.py\
+		--prc-csv $(results)/$*-count-active-prc.csv\
 		--output $@
 
-.PRECIOUS: $(graphs)/%-active.png
-$(graphs)/%-active.png: $(results)/%-active.csv scripts/plot_active_performance.py
-	@python3 scripts/plot_active_performance.py\
-		--active-csv $(results)/$*-active.csv\
+# Experiment 3 - what if we only count the frontier in a ranking ensemble?
+.PRECIOUS: $(results)/%-frontier.csv
+$(results)/%-frontier.csv: $(gt)/%.json $(image)/%.json $(eval)/evaluate_frontier.py
+	@python3 $(eval)/evaluate_frontier.py\
+		--image $(image)/$*.json\
+		--ground-truth $(gt)/$*.json\
+		--output $@\
+		--ensemble count
+
+$(graphs)/%-frontier.png: $(results)/%-frontier.csv $(plt)/plot_frontier.py
+	@python3 $(plt)/plot_frontier.py\
+		--prc-csv $(results)/$*-frontier.csv\
 		--output $@
+
+# .PRECIOUS: $(graphs)/%-prc.png
+# $(graphs)/%-prc.png: $(results)/%-disjunction-prc.csv $(results)/%-confidence-big-prc.csv $(results)/%-confidence-small-prc.csv $(results)/%-confidence-scaled-prc.csv scripts/plot_prc.py
+# 	@python3 scripts/plot_prc.py\
+# 		--prc-csv $(results)/$*-disjunction-prc.csv\
+# 			$(results)/$*-confidence-big-prc.csv\
+# 			$(results)/$*-confidence-small-prc.csv\
+# 			$(results)/$*-confidence-scaled-prc.csv\
+# 		--output $@
+
+# .PRECIOUS: $(graphs)/%-active.png
+# $(graphs)/%-active.png: $(results)/%-active.csv scripts/plot_active_performance.py
+# 	@python3 scripts/plot_active_performance.py\
+# 		--active-csv $(results)/$*-active.csv\
+# 		--output $@
 
 # various forms of cleaning for experiments
 .phony: clean-results

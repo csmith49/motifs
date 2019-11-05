@@ -10,8 +10,21 @@ class Ensemble:
         return self.classify(value)
 
     def filter(self, pred):
-        motifs = filter(pred, self.motifs)
-        return self.__class__.__init__(list(motifs))
+        motifs = filter(pred, self.filter_candidates())
+        return self.__class__(list(motifs))
+
+    def domain(self):
+        result = set()
+        for motif in self.motifs:
+            result.update(motif.domain())
+        return result
+    
+    def filter_candidates(self):
+        return self.motifs
+
+    @property
+    def size(self):
+        return len(self.motifs)
 
 # ranking ensemble provides a ranking function and a threshold
 class RankingEnsemble(Ensemble):
@@ -19,8 +32,15 @@ class RankingEnsemble(Ensemble):
         self._default_threshold = default_threshold
         super().__init__(motifs)
 
-    def rank(self, value):
+    def confidence(self, motif):
         raise NotImplementedError
+
+    def rank(self, value):
+        result = 0.0
+        for motif in self.motifs:
+            if value in motif:
+                result += self.confidence(motif)
+        return result
 
     def classify(self, value, threshold=None):
         if threshold is None:
