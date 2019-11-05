@@ -63,7 +63,7 @@ $(image)/%.json: $(data)/problem/%.json synthesize
 # EXPERIMENTS ===================
 
 # EXPERIMENT VARIABLES ==================
-tasks=pob-cell
+tasks=pob-cell wiki-table
 experiments=$(foreach task,$(tasks),$(graphs)/$(task)-disjunction-active.png $(graphs)/$(task)-count-active-prc.png $(graphs)/$(task)-frontier.png $(graphs)/$(task)-active-frontier-prc.png)
 
 .PHONY: experiments

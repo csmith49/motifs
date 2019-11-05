@@ -1,6 +1,9 @@
-FROM ocaml/opam2:alpine
+FROM ocaml/opam2:latest
 
-RUN sudo apk add sqlite-dev
+RUN sudo apt-get update && sudo apt-get install -y \
+    pkg-config \
+    python3-dev \
+    libsqlite3-dev
 
 WORKDIR /hera
 
@@ -11,6 +14,5 @@ WORKDIR /hera/motifs
 RUN eval $(opam env) && opam depext && opam pin .
 ADD https://api.github.com/repos/csmith49/motifs/git/refs/heads/master version.json
 RUN git pull && eval $(opam env) && make
-RUN sudo chmod +x ./synthesis_entrypoint.sh
 
-ENTRYPOINT ["sudo", "./synthesis_entrypoint.sh"]
+CMD ["make", "experiments"]

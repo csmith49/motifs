@@ -145,7 +145,7 @@ let _ = CCList.iter process (Domain.Problem.examples problem)
 let _ = print_endline "Examples processed."
 
 (* now write out the rules *)
-let _ = print_string "Writing output..."
+let _ = print_string "Writing output...\n"
 let sparse_image = ref (Domain.SparseImage.of_motifs !output_motifs)
 let _ = if !quiet then () else begin
     CCList.iter (fun filename ->
