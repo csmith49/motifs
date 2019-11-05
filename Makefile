@@ -9,6 +9,7 @@ build=_build/default/bin
 # data locations
 data=data
 gt=$(data)/gt
+dgt=$(data)/default-gt
 image=$(data)/image
 results=$(data)/results
 graphs=$(data)/graphs
@@ -43,6 +44,8 @@ $(gt)/%.json: $(mk)/make_ground_truth.py $(data)/sql/%.sql
 		--input-directory $(data)/db\
 		--output $@\
 		--sql-path $(data)/sql/$*.sql
+$(gt)/%.json: $(dgt)/%.json
+	cp $(dgt)/$*.json $@
 
 # making a problem file from the metadata and ground truth
 .PRECIOUS: $(problem)/%.json
