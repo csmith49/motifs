@@ -27,17 +27,16 @@ def maximal_entropy(values, groups):
     # return the maximal element and the associated entropy
     return m, m_e
 
-
 class Active:
     def __init__(self, ensemble):
         self.ensemble = ensemble
         self.motifs = self.ensemble.motifs
     
-    def classify(self, other):
-        return self.ensemble.classify(other)
-
-    def candidate_split(self):
-        relevant_motifs = self.ensemble.filter_candidates()
+    def candidate_split(self, frontier=False):
+        if frontier:
+            relevant_motifs = self.ensemble._frontier
+        else:
+            relevant_motifs = self.ensemble.motifs
         possibilities = self.ensemble.domain()
         split, _ = maximal_entropy(possibilities, relevant_motifs)
         return split

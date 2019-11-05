@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from argparse import ArgumentParser
 
 parser = ArgumentParser()
-parser.add_argument('--active-csv', required=True)
+parser.add_argument('--csv', required=True)
 parser.add_argument('--output', default=None)
 
 args = parser.parse_args()
@@ -11,7 +11,7 @@ args = parser.parse_args()
 # main
 if __name__ == '__main__':
     # load the input data
-    data = pandas.read_csv(args.active_csv)
+    data = pandas.read_csv(args.csv)
     # convert data pivot style
     data = pandas.melt(
         data,

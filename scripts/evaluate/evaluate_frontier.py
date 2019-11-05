@@ -1,6 +1,6 @@
 import json, csv
 from argparse import ArgumentParser
-from analysis import Motif, ensemble_from_string, load_ground_truth, prc, Frontier
+from analysis import Motif, ensemble_from_string, load_ground_truth, prc
 
 parser = ArgumentParser()
 parser.add_argument("--ground-truth", required=True)
@@ -38,6 +38,6 @@ if __name__ == "__main__":
             writer.writerow(row)
         
         # and for frontier
-        for row in prc(Frontier(ensemble), gt):
+        for row in prc(ensemble, gt, frontier=True):
             row['frontier'] = True
             writer.writerow(row)

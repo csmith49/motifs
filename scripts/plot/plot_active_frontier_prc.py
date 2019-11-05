@@ -18,11 +18,12 @@ if __name__ == '__main__':
 
     # set some stylistic stuff up
     seaborn.set_style("white")
-    palette = seaborn.color_palette('husl', n_colors=2)
+    n_colors = max(data['learning-step']) + 1
+    palette = seaborn.color_palette('husl', n_colors=n_colors)
 
     # plot the darn thing
     seaborn.lineplot(x='recall', y='precision', data=data,
-        hue='frontier', estimator=None, sort=False,
+        hue='learning-step', estimator=None, sort=False,
         palette=palette
     )
     seaborn.despine()
@@ -32,7 +33,7 @@ if __name__ == '__main__':
     plt.xlim(0, 1.1)
     plt.ylabel("Precision")
     plt.ylim(0, 1.1)
-    plt.title("Precision-Recall Curve")
+    plt.title("Precision-Recall Curve for Active Learning (Frontier)")
     
     # if theres an output, save it, otherwise just show it
     if args.output != None:

@@ -62,6 +62,13 @@ $(image)/%.json: $(data)/problem/%.json synthesize
 
 # EXPERIMENTS ===================
 
+# EXPERIMENT VARIABLES ==================
+tasks=pob-cell
+experiments=$(foreach task,$(tasks),$(graphs)/$(task)-disjunction-active.png $(graphs)/$(task)-count-active-prc.png $(graphs)/$(task)-frontier.png $(graphs)/$(task)-active-frontier-prc.png)
+
+.PHONY: experiments
+experiments: $(experiments)
+
 # Experiment 1 - how does active learning improve disjunction?
 
 # active-learning data for disjunction
@@ -77,7 +84,7 @@ $(results)/%-disjunction-active.csv: $(gt)/%.json $(image)/%.json $(eval)/evalua
 # learning graph for disjunction
 $(graphs)/%-disjunction-active.png: $(results)/%-disjunction-active.csv $(plt)/plot_active_performance.py
 	@python3 $(plt)/plot_active_performance.py\
-		--active-csv $(results)/$*-disjunction-active.csv\
+		--csv $(results)/$*-disjunction-active.csv\
 		--output $@
 
 # Experiment 2 - what does active learning do to ranking ensembles?
@@ -95,7 +102,7 @@ $(results)/%-count-active-prc.csv: $(gt)/%.json $(image)/%.json $(eval)/evaluate
 # plotting prc for active learning over disjunction
 $(graphs)/%-count-active-prc.png: $(results)/%-count-active-prc.csv $(plt)/plot_active_prc.py
 	@python3 $(plt)/plot_active_prc.py\
-		--prc-csv $(results)/$*-count-active-prc.csv\
+		--csv $(results)/$*-count-active-prc.csv\
 		--output $@
 
 # Experiment 3 - what if we only count the frontier in a ranking ensemble?
@@ -109,23 +116,23 @@ $(results)/%-frontier.csv: $(gt)/%.json $(image)/%.json $(eval)/evaluate_frontie
 
 $(graphs)/%-frontier.png: $(results)/%-frontier.csv $(plt)/plot_frontier.py
 	@python3 $(plt)/plot_frontier.py\
-		--prc-csv $(results)/$*-frontier.csv\
+		--csv $(results)/$*-frontier.csv\
 		--output $@
 
-# .PRECIOUS: $(graphs)/%-prc.png
-# $(graphs)/%-prc.png: $(results)/%-disjunction-prc.csv $(results)/%-confidence-big-prc.csv $(results)/%-confidence-small-prc.csv $(results)/%-confidence-scaled-prc.csv scripts/plot_prc.py
-# 	@python3 scripts/plot_prc.py\
-# 		--prc-csv $(results)/$*-disjunction-prc.csv\
-# 			$(results)/$*-confidence-big-prc.csv\
-# 			$(results)/$*-confidence-small-prc.csv\
-# 			$(results)/$*-confidence-scaled-prc.csv\
-# 		--output $@
+# Experiment 4 - does the frontier help us with active learning?
+.PRECIOUS: $(results)/%-active-frontier-prc.csv
+$(results)/%-active-frontier-prc.csv: $(gt)/%.json $(image)/%.json $(eval)/evaluate_active_frontier_prc.py
+	@python3 $(eval)/evaluate_active_frontier_prc.py\
+		--image $(image)/$*.json\
+		--ground-truth $(gt)/$*.json\
+		--output $@\
+		--learning-steps 7\
+		--ensemble count
 
-# .PRECIOUS: $(graphs)/%-active.png
-# $(graphs)/%-active.png: $(results)/%-active.csv scripts/plot_active_performance.py
-# 	@python3 scripts/plot_active_performance.py\
-# 		--active-csv $(results)/$*-active.csv\
-# 		--output $@
+$(graphs)/%-active-frontier-prc.png: $(results)/%-active-frontier-prc.csv $(plt)/plot_active_frontier_prc.py
+	@python3 $(plt)/plot_active_frontier_prc.py\
+		--csv $(results)/$*-active-frontier-prc.csv\
+		--output $@
 
 # various forms of cleaning for experiments
 .phony: clean-results

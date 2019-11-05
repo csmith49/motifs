@@ -41,13 +41,13 @@ if __name__ == "__main__":
 
         # for each step of the learning...
         for step in range(args.learning_steps):
-            results = prc(active.ensemble, gt)
+            results = prc(active.ensemble, gt, frontier=True)
             for row in results:
                 row['learning-step'] = step
                 row['ensemble-ratio'] = active.ensemble.size / number_of_motifs
                 writer.writerow(row)
 
             # update the motifs by faking a learning loop
-            split = active.candidate_split()
+            split = active.candidate_split(frontier=True)
             if split is None: break
             active = active.split_on(split, split in gt)

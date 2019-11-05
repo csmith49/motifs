@@ -5,7 +5,7 @@ from pandas import concat
 from analysis import load_prc
 
 parser = ArgumentParser()
-parser.add_argument('--prc-csv', nargs="+")
+parser.add_argument('--csv', nargs="+")
 parser.add_argument('--output', default=None)
 
 args = parser.parse_args()
@@ -14,7 +14,7 @@ args = parser.parse_args()
 if __name__ == '__main__':
     # load the input data
     frames = []
-    for csv_filepath in args.prc_csv:
+    for csv_filepath in args.csv:
         with open(csv_filepath, 'r') as f:
             frames.append(load_prc(csv_filepath))
 
@@ -23,7 +23,7 @@ if __name__ == '__main__':
 
     # set some stylistic stuff up
     seaborn.set_style("white")
-    palette = seaborn.color_palette('husl', n_colors=len(args.prc_csv))
+    palette = seaborn.color_palette('husl', n_colors=len(args.csv))
 
     # plot the darn thing
     seaborn.lineplot(x='recall', y='precision', data=data,

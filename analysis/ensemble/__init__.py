@@ -1,6 +1,5 @@
 from .disjunction import Disjunction, Count
 from .voting import MajorityVote, MostSpecific
-from .frontier import Frontier
 
 ENSEMBLES = {
     'disjunction' : Disjunction,

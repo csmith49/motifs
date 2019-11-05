@@ -5,7 +5,7 @@ from pandas import read_csv
 from analysis import load_prc
 
 parser = ArgumentParser()
-parser.add_argument('--prc-csv', required=True)
+parser.add_argument('--csv', required=True)
 parser.add_argument('--output', default=None)
 
 args = parser.parse_args()
@@ -13,8 +13,8 @@ args = parser.parse_args()
 # main
 if __name__ == '__main__':
     # load the input data
-    with open(args.prc_csv, 'r') as f:
-        data = read_csv(args.prc_csv)
+    with open(args.csv, 'r') as f:
+        data = read_csv(args.csv)
 
     # set some stylistic stuff up
     seaborn.set_style("white")
@@ -33,7 +33,7 @@ if __name__ == '__main__':
     plt.xlim(0, 1.1)
     plt.ylabel("Precision")
     plt.ylim(0, 1.1)
-    plt.title("Precision-Recall Curve")
+    plt.title("Precision-Recall Curve for Active Learning")
     
     # if theres an output, save it, otherwise just show it
     if args.output != None:

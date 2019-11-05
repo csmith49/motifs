@@ -34,7 +34,7 @@ class Motif:
 def load_motifs(filename, unique=False):
     motifs = []
     with open(filename, 'r') as f:
-        for motif in json.read(f):
+        for motif in json.load(f):
             motifs.append(Motif.of_json(motif))
     if unique:
         results, images = [], []
