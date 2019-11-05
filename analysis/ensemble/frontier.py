@@ -10,12 +10,24 @@ def lt(left, right):
 class Frontier(RankingEnsemble):
     def __init__(self, ensemble):
         self.ensemble = ensemble
-        self.motifs = self.ensemble.motifs
+        self.motifs = sorted(self.ensemble.motifs, key=lambda m: len(m.domain()), reverse=True)
         self._default_threshold = self.ensemble._default_threshold
         self._frontier = []
         # update frontier
+
+        # check each candidate
         for motif in self.motifs:
-            if not any([lt(motif, other) for other in self.motifs]):
+            # check all others
+            ok = True
+            for other in self.motifs:
+                # make sure the domain isn't the same
+                if motif.domain() != other.domain():
+                    # then check for lt
+                    if lt(motif, other):
+                        ok = False
+                        break
+            # if we've made it here, go ahead and add
+            if ok: 
                 self._frontier.append(motif)
 
     def confidence(self, motif):

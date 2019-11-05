@@ -7,8 +7,5 @@ class Disjunction(Ensemble):
         return False
 
 class Count(RankingEnsemble):
-    def rank(self, value):
-        count = 0
-        for motif in self.motifs:
-            if value in motif: count += 1
-        return count
+    def confidence(self, motif):
+        return 1

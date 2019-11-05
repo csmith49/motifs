@@ -1,3 +1,5 @@
+import json
+
 # row
 class Row:
     def __init__(self, file, image):
@@ -26,4 +28,20 @@ class Motif:
     @classmethod
     def of_json(cls, json_rep):
         rows = [Row.of_json(row) for row in json_rep['images']]
-        return cls(json_rep['motif'], rows)    
+        return cls(json_rep['motif'], rows)
+
+# loading from file
+def load_motifs(filename, unique=False):
+    motifs = []
+    with open(filename, 'r') as f:
+        for motif in json.read(f):
+            motifs.append(Motif.of_json(motif))
+    if unique:
+        results, images = [], []
+        for motif in motifs:
+            if motif.domain() not in images:
+                results.append(motif)
+                images.append(motif)
+        return results
+    else:
+        return motifs

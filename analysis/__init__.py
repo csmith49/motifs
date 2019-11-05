@@ -1,4 +1,4 @@
-from .motif import Motif
+from .motif import Motif, load_motifs
 from .ensemble import Disjunction, Count, MostSpecific, MajorityVote, ensemble_from_string, Frontier
 from .utility import load_prc, load_ground_truth
 from .active import Active
