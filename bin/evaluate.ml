@@ -38,6 +38,7 @@ let _ = CCList.iteri (fun i -> fun filename ->
     let _ = Printf.printf "Evaluating %s (%d/%d)\n%!" filename i num_files in
     let db = Domain.SQL.of_string filename in
     let images = CCList.map (Domain.SQL.evaluate db) motifs in
+    let _ = Domain.SQL.close db in
     sparse_image := Domain.SparseImage.add_results filename images !sparse_image
 ) files
 let _ = Printf.printf "...done. Output written to %s\n" !output_file
