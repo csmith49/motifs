@@ -1,4 +1,4 @@
 (executables
-    (names synthesize)
+    (names synthesize evaluate)
     (libraries hera)
 )

@@ -119,12 +119,12 @@ let process (ex : Domain.Problem.example) = begin
 
     (* synthesize rules *)
     let cone = Synthesis.Cone.simple_from_document doc positive_examples in
-    let _ = print_endline "Cone constructed." in
+    let _ = print_endline "Cone constructed. Starting synthesis..." in
     let motifs = match !strategy with
         | s when s = "enumerate" -> Synthesis.Cone.enumerate ~verbose:(!yell) cone
         | s when s = "sample" -> Synthesis.Cone.sample ~count:(!sample_goal) ~verbose:(!yell) cone
         | _ -> [] in
-    let _ = print_endline (Printf.sprintf "\nFound %i total motifs." (CCList.length motifs)) in
+    let _ = print_endline (Printf.sprintf "Found %i total motifs." (CCList.length motifs)) in
     
     (* check for consistency *)
     let consistent_motifs = motifs
@@ -146,6 +146,12 @@ let _ = print_endline "Examples processed."
 
 (* now write out the rules *)
 let _ = print_string "Writing output...\n"
+let output = `List (CCList.map Matcher.Motif.to_json !output_motifs)
+let _ = Yojson.Basic.to_file !output_file output
+let _ = Printf.printf "done. Output written to %s.\n" !output_file
+(* 
+(* now write out the rules *)
+let _ = print_string "Writing output...\n"
 let sparse_image = ref (Domain.SparseImage.of_motifs !output_motifs)
 let _ = if !quiet then () else begin
     CCList.iter (fun filename ->
@@ -161,4 +167,4 @@ let _ = if !output_amount > 0 then
     let outputs = CCList.take !output_amount !output_motifs in
     outputs |> CCList.iteri (fun i -> fun m ->
         Printf.printf "Solution %d:\n%s\n" i (Matcher.Motif.to_string m)
-    )
+    ) *)

@@ -5,6 +5,7 @@ exception SQLException of string
 val view : string -> string -> View.t
 
 val of_string : string -> db
+val close : db -> bool
 
 val neighborhood : db -> View.t -> Core.Identifier.t list -> int -> Doc.t
 

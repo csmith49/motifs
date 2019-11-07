@@ -10,6 +10,7 @@ let run db cb q =
         handle_rc rc
 
 let of_string filename = Sqlite3.db_open filename
+let close db = Sqlite3.db_close db
 
 let id_to_column id = Printf.sprintf "_%s" (Core.Identifier.to_string id)
 

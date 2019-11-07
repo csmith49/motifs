@@ -1,7 +1,6 @@
 # BUILD VARIABLES =======================
 
 # build locations
-src=bin
 build=_build/default/bin
 
 # DATA LOCATIONS ========================
@@ -24,10 +23,13 @@ plt=scripts/plot
 
 # entrypoint just uses dune to build the synthesis tool
 .phony: all
-all: synthesize
-synthesize: lib
-	dune build $(src)/synthesize.exe
+all: synthesize evaluate
+synthesize: lib bin/synthesize.ml
+	dune build bin/synthesize.exe
 	mv $(build)/synthesize.exe synthesize
+evaluate: lib bin/evaluate.ml
+	dune build bin/evaluate.exe
+	mv $(build)/evaluate.exe evaluate
 
 # takes us into an interactive prompt with
 .phony: live
