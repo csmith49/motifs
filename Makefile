@@ -8,13 +8,12 @@ build=_build/default/bin
 # data locations
 data=data
 gt=$(data)/gt
-dgt=$(data)/default-gt
 image=$(data)/image
 results=$(data)/results
 graphs=$(data)/graphs
 problem=$(data)/problem
 motifs=$(data)/motifs
-sql=$(data)/sql
+experiment=$(data)/experiment
 
 # script locations
 eval=scripts/evaluate
@@ -49,24 +48,21 @@ $(gt) $(dgt) $(image) $(results) $(graph) $(problem) $(motifs): $(data)
 
 # constructing ground truth of a particular kind
 .PRECIOUS: $(gt)/%.json
-$(gt)/%.json: $(mk)/make_ground_truth.py $(sql)/%.json $(gt)
+$(gt)/%.json: $(mk)/make_ground_truth.py $(experiment)/%.json $(gt)
 	@echo "Constructing ground truth for $*..."
 	@python3 $(mk)/make_ground_truth.py\
 		--db-directory $(data)/db\
 		--output $@\
-		--sql $(sql)/$*.json
-$(gt)/%.json: $(dgt)/%.json
-	cp $(dgt)/$*.json $@
+		--experiment $(experiment)/$*.json
 
 # making a problem file from the metadata and ground truth
 .PRECIOUS: $(problem)/%.json
-$(problem)/%.json: $(mk)/make_problem_file.py $(data)/metadata/%.json $(gt)/%.json $(problem)
+$(problem)/%.json: $(mk)/make_problem_file.py $(experiment)/%.json $(gt)/%.json $(problem)
 	@echo "Constructing a problem file for $*..."
 	@python3 $(mk)/make_problem_file.py\
 		--ground-truth $(gt)/$*.json\
 		--output $@\
-		--metadata $(data)/metadata/$*.json\
-		--number-of-examples 1
+		--experiment $(experiment)/$*.json
 
 # synthesizing a set of motifs
 .PRECIOUS: $(motifs)/%.json
