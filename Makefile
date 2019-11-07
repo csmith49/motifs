@@ -72,7 +72,7 @@ $(problem)/%.json: $(mk)/make_problem_file.py $(data)/metadata/%.json $(gt)/%.js
 .PRECIOUS: $(motifs)/%.json
 $(motifs)/%.json: $(data)/problem/%.json synthesize $(motifs)
 	@echo "Synthesizing motifs for $*..."
-	@./synthesize -p $(problem)/$*.json -o $@
+	@./synthesize --problem $(problem)/$*.json --output $@
 
 # evaluating a set of motifs to produce an image
 .PRECIOUS: $(image)/%.json

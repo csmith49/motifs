@@ -23,8 +23,8 @@ let view_filename = ref ""
 let output_amount = ref (-1)
 
 let spec_list = [
-    ("-p", Arg.Set_string problem_filename, "Input problem declaration file");
-    ("-o", Arg.Set_string output_file, "Output file");
+    ("--problem", Arg.Set_string problem_filename, "Input problem declaration file");
+    ("--output", Arg.Set_string output_file, "Output file");
     ("-q", Arg.Set quiet, "Sets quiet mode");
     ("-n", Arg.Set_int negative_width, "Sets window for negative examples");
     ("-s", Arg.Set_int size, "Sets max size of synthesized rules");
