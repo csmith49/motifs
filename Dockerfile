@@ -10,7 +10,10 @@ WORKDIR /hera
 RUN git clone https://github.com/csmith49/motifs.git
 WORKDIR /hera/motifs
 RUN python3 -m venv env && source env/bin/activate && python3 -m pip install -r analysis-requirements.txt
-RUN opam init --disable-sandboxing && eval $(opam env) && opam pin . -y
+RUN opam init --bare --disable-sandboxing && \
+    opam switch create 4.07.0 && \
+    eval $(opam env) && \
+    opam pin . -y
 ADD https://api.github.com/repos/csmith49/motifs/git/refs/heads/master version.json
 RUN git pull && eval $(opam env) && make
 
