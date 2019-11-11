@@ -69,6 +69,14 @@ I'll fill out the rest in a bit.
 
 Note, an example data directory (and the one used for our experiments) can be found in [this repository](https://github.com/csmith49/motif-data).
 
+Here's the relevant Docker command (assuming you've made the image as `hera:latest`):
+
+```(bash)
+docker run -it /path/to/motif-data/repo:/hera/motifs/data hera:latest /bin/bash
+```
+
+Then, simply run `make <experiment>` to build what you want. `make experiments` should build them all, but this is probably not useful right now.
+
 ## Out of Date Information
 
 ### Docker usage
