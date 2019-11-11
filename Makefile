@@ -40,7 +40,7 @@ live: lib
 # MAKING NECESSARY EXPERIMENT DATA ======
 
 # setting up data folder structure
-.PRECIOUS: $(data) $(gt) $(dgt) $(image) $(results) $(graph) $(problem) $(motifs)
+.PRECIOUS: $(data) $(gt) $(dgt) $(image) $(results) $(graphs) $(problem) $(motifs)
 $(data):
 	mkdir -p $@
 $(gt) $(dgt) $(image) $(results) $(graph) $(problem) $(motifs): $(data)
