@@ -150,6 +150,11 @@ $(graphs)/%-active-frontier-prc.png: $(results)/%-active-frontier-prc.csv $(plt)
 		--csv $(results)/$*-active-frontier-prc.csv\
 		--output $@
 
+%.performance: $(eval)/evaluate_ensemble.py $(image)/%.json
+	@python3 $(eval)/evaluate_ensemble.py\
+		--ground-truth $(gt)/$*.json\
+		--image $(image)/$*.json
+
 # various forms of cleaning for experiments
 .phony: clean-results
 clean-results:
