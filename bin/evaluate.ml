@@ -41,4 +41,5 @@ let _ = CCList.iteri (fun i -> fun filename ->
     let _ = Domain.SQL.close db in
     sparse_image := Domain.SparseImage.add_results filename images !sparse_image
 ) files
+let _ = Yojson.Basic.to_file !output_file (Domain.SparseImage.to_json !sparse_image)
 let _ = Printf.printf "...done. Output written to %s\n" !output_file
