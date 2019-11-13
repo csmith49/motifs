@@ -7,6 +7,7 @@ parser.add_argument("--ground-truth", required=True)
 parser.add_argument("--image", required=True)
 # parser.add_argument("--output", required=True)
 parser.add_argument("--ensemble", default="count")
+parser.add_argument("--threshold", default=None, type=float)
 
 args = parser.parse_args()
 
@@ -18,9 +19,13 @@ if __name__ == "__main__":
 
     motifs = load_motifs(args.image)
 
-    ensemble = ensemble_from_string(args.ensemble)(motifs)
-
-    precision, recall, f1 = performance_statistics(ensemble.domain(), gt, beta=1)
+    if not args.threshold:
+        ensemble = ensemble_from_string(args.ensemble)(motifs)
+    else:
+        # print("here")
+        ensemble = ensemble_from_string(args.ensemble)(motifs, default_threshold=args.threshold)
+    
+    precision, recall, f1 = performance_statistics(set(filter(ensemble.classify, ensemble.domain())), gt, beta=1)
 
 
     pprint.pprint({

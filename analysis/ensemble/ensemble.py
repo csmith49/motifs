@@ -32,14 +32,15 @@ class Ensemble:
 class RankingEnsemble(Ensemble):
     def __init__(self, motifs, default_threshold=0.0):
         self._default_threshold = default_threshold
-        self._frontier = frontier(motifs)
+        # self._frontier = frontier(motifs)
         super().__init__(motifs)
 
-    def domain(self):
-        result = set()
-        for motif in self._frontier:
-            result.update(motif.domain())
-        return result
+    # def domain(self):
+    #     result = set()
+    #     print("hello")
+    #     for motif in self.motifs:
+    #         result.update(motif.domain())
+    #     return result
 
     def confidence(self, motif):
         raise NotImplementedError
@@ -58,4 +59,5 @@ class RankingEnsemble(Ensemble):
     def classify(self, value, threshold=None, frontier=False):
         if threshold is None:
             threshold = self._default_threshold
+        # print(self.rank(value, frontier=frontier))
         return self.rank(value, frontier=frontier) > threshold

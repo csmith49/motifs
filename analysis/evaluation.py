@@ -45,4 +45,4 @@ def prc(ensemble, ground_truth, output=None, frontier=False):
             ])
             writer.writeheader()
             for row in result:
-                writer.writerow(result)
+                writer.writerow(row)

@@ -15,6 +15,8 @@ problem=$(data)/problem
 motifs=$(data)/motifs
 experiment=$(data)/experiment
 
+exp_result=cell_experiment_result_1113
+
 # script locations
 eval=scripts/evaluate
 mk=scripts/make
@@ -153,7 +155,14 @@ $(graphs)/%-active-frontier-prc.png: $(results)/%-active-frontier-prc.csv $(plt)
 %.performance: $(eval)/evaluate_ensemble.py $(image)/%.json
 	@python3 $(eval)/evaluate_ensemble.py\
 		--ground-truth $(gt)/$*.json\
-		--image $(image)/$*.json
+		--image $(image)/$*.json\
+		>> $(exp_result)/$@
+
+%.performance.drop: $(image)/%.json
+	@python3 $(eval)/evaluate_ensemble.py\
+		--ground-truth $(gt)/$*.json\
+		--image $(image)/$*.json\
+		--threshold $(drop-threshold)
 
 # various forms of cleaning for experiments
 .phony: clean-results
