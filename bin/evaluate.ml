@@ -2,7 +2,7 @@ let output_file = ref ""
 let problem_file = ref ""
 let motif_file = ref ""
 
-let num_cores = ref 4
+let num_cores = ref 1
 
 let spec_list = [
     ("--problem", Arg.Set_string problem_file, "Problem declaration file");
