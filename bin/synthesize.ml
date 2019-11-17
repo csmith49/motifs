@@ -4,10 +4,10 @@ let output_file = ref "output.json"
 let shortcut_filename = ref ""
 let strategy = ref "enumerate"
 let sample_goal = ref 10
-let quiet = ref false
 let negative_width = ref 2
 let size = ref 2
 let yell = ref false
+let num_cores = ref 1
 
 (* arguments for subsampling *)
 let max_labels = ref 10
@@ -19,25 +19,19 @@ let fixed_attributes = ref []
 (* for the REST argument *)
 let view_filename = ref ""
 
-(* for outputting stuff *)
-let output_amount = ref (-1)
-
 let spec_list = [
     ("--problem", Arg.Set_string problem_filename, "Input problem declaration file");
     ("--output", Arg.Set_string output_file, "Output file");
-    ("-q", Arg.Set quiet, "Sets quiet mode");
-    ("-n", Arg.Set_int negative_width, "Sets window for negative examples");
-    ("-s", Arg.Set_int size, "Sets max size of synthesized rules");
-    ("-v", Arg.Set_string view_filename, "Sets view to be used");
-    ("-y", Arg.Set yell, "Sets yelling on");
-
+    ("--neg-window", Arg.Set_int negative_width, "Sets window for negative examples");
+    ("--max-size", Arg.Set_int size, "Sets max size of synthesized rules");
+    ("--view", Arg.Set_string view_filename, "Sets view to be used");
+    ("--yell", Arg.Set yell, "Sets yelling on");
     ("--max-labels", Arg.Set_int max_labels, "Sets maximum number of labels to be used (default 10)");
     ("--max-attributes", Arg.Set_int max_attributes, "Sets maximum number of attributes to be used (default 10)");
-
     ("--shortcut", Arg.Set_string shortcut_filename, "Shortcut file");
     ("--strategy", Arg.Set_string strategy, "Set search strategy");
     ("--sample-goal", Arg.Set_int sample_goal, "Set number of samples desired per example [STRAT: sample]");
-    ("--head", Arg.Set_int output_amount, "Set number of motifs to display at the end of the search");
+    ("--num-cores", Arg.Set_int num_cores, "Set number of cores to be used")
 ]
 
 let usage_msg = "Rule Synthesis for Hera"
@@ -95,8 +89,6 @@ let shortcuts = if CCString.is_empty !shortcut_filename then
     else Domain.Shortcut.from_file !shortcut_filename
 let _ = Printf.printf "done. Found %d shortcuts.\n" (CCList.length shortcuts)
 
-(* the common variables accessed across all examples *)
-let output_motifs = ref []
 
 (* what we should do per-example *)
 let process (ex : Domain.Problem.example) = begin
@@ -132,39 +124,24 @@ let process (ex : Domain.Problem.example) = begin
     in
     let _ = print_endline (Printf.sprintf "%i consistent motifs." (CCList.length consistent_motifs)) in
 
-    (* write output *)
-    output_motifs := consistent_motifs @ !output_motifs
+    (* return output *)
+    consistent_motifs
 end
 
-(* do the thing per-example *)
-let _ = Printf.printf "Found examples:\n\t%s\n"
-    (problem |> Domain.Problem.examples |> CCList.map Domain.Problem.example_to_string |> CCString.concat "\n\t")
+(* print out the examples found *)
+let _ = Printf.printf "Found examples:\n\t%s\n" (problem
+    |> Domain.Problem.examples
+    |> CCList.map Domain.Problem.example_to_string
+    |> CCString.concat "\n\t"
+)
 
+(* parallel mapping *)
 let _ = print_endline "Processing examples:"
-let _ = CCList.iter process (Domain.Problem.examples problem)
-let _ = print_endline "Examples processed."
+let raw_output = Parmap.parmap ~ncores:!num_cores process (Parmap.L (Domain.Problem.examples problem))
+let output = `List (raw_output |> CCList.flatten |> CCList.map Matcher.Motif.to_json)
+let _ = print_endline "All examples processed."
 
 (* now write out the rules *)
 let _ = print_string "Writing output...\n"
-let output = `List (CCList.map Matcher.Motif.to_json !output_motifs)
 let _ = Yojson.Basic.to_file !output_file output
 let _ = Printf.printf "done. Output written to %s.\n" !output_file
-(* 
-(* now write out the rules *)
-let _ = print_string "Writing output...\n"
-let sparse_image = ref (Domain.SparseImage.of_motifs !output_motifs)
-let _ = if !quiet then () else begin
-    CCList.iter (fun filename ->
-        let db = Domain.SQL.of_string filename in
-        let images = CCList.map (Domain.SQL.evaluate db) !output_motifs in
-        sparse_image := Domain.SparseImage.add_results filename images !sparse_image
-    ) (Domain.Problem.files problem);
-    !sparse_image |> Domain.SparseImage.to_json |> Yojson.Basic.to_file !output_file
-end
-let _ = print_endline "done."
-
-let _ = if !output_amount > 0 then
-    let outputs = CCList.take !output_amount !output_motifs in
-    outputs |> CCList.iteri (fun i -> fun m ->
-        Printf.printf "Solution %d:\n%s\n" i (Matcher.Motif.to_string m)
-    ) *)

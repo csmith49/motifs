@@ -10,4 +10,6 @@ depends: [
     "containers"
     "sqlite3"
     "dune"
+    "parmap"
+    "chalk"
 ]

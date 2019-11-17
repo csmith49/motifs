@@ -5,3 +5,4 @@ PKG containers
 PKG containers.data
 PKG yojson
 PKG sqlite3
+PKG parmap
