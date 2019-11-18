@@ -2,6 +2,7 @@ import sqlite3, os, random, subprocess, time
 from json import load, dump
 from argparse import ArgumentParser
 from csv import DictWriter
+from colorama import init, Fore
 from analysis import *
 
 parser = ArgumentParser("Run Script")
@@ -9,13 +10,14 @@ parser.add_argument("--data", required=True)
 parser.add_argument("--benchmark", required=True)
 parser.add_argument("--tmp", default="/tmp")
 parser.add_argument("--examples", default=1)
-parser.add_argument("--ensemble", default="count")
+parser.add_argument("--ensemble", default="disjunction")
 parser.add_argument("--max-al-steps", default=10, type=int)
 parser.add_argument("--num-cores", default=8)
 parser.add_argument("--output", default=None)
 parser.add_argument("--use-cache", action="store_true")
 
 args = parser.parse_args()
+init()
 
 # GOALS - produce performance statistics for given ensemble / num examples across al steps
 
@@ -36,21 +38,25 @@ experiment_name = f"{benchmark_name}-{args.ensemble}-{args.examples}"
 start_time = time.time()
 
 # SIDE EFFECT 0 - load ground truth from benchmark file (kept in memory only)
-print("Constructing ground truth...")
+print(Fore.BLUE + "GROUND TRUTH" + Fore.WHITE)
 gt_json = benchmark['ground-truth']
 
 # if the gt is provided, use it
 if gt_json['kind'] == 'provided':
+    print(f"Ground truth is provided in {benchmark_name}.")
     ground_truth = gt_json['labels']
 
 # if a sql command is given, build it
 elif benchmark['ground-truth']['kind'] == 'sql':
+    print("Ground truth is being constructed from SQL queries.")
     # get all db filepaths
     db_filepaths = []
     db_root = os.path.join(args.data, gt_json['dataset'])
     for filepath in os.listdir(db_root):
         if filepath.endswith('.db'):
             db_filepaths.append(os.path.join(db_root, filepath))
+    
+    print(f"Evaluating {len(db_filepaths)} databases...")
 
     # construct json output
     ground_truth = []
@@ -69,19 +75,21 @@ elif benchmark['ground-truth']['kind'] == 'sql':
         )
 
 gt_time = time.time()
-print("Ground truth done")
+print(Fore.GREEN + "GROUND TRUTH DONE\n" + Fore.WHITE)
 
 # SIDE EFFECT 1 - generate problem file
-print("Generating problem file...")
+print(Fore.BLUE + "PROBLEM FILE" + Fore.WHITE)
 
 problem_filepath = os.path.join(args.tmp, f"{experiment_name}-problem.json")
 
 if os.path.isfile(problem_filepath) and args.use_cache:
-    print("Problem file detected, skipping generation")
+    print("Problem file detected, skipping generation...")
 else: 
     # construct by pulling relevant info from benchmark file
     metadata = benchmark['metadata']
     files = [ex['file'] for ex in ground_truth]
+
+    print(f"Sampling {args.examples} instances for ground truth...")
 
     # and from sampling examples as required
     examples = random.sample(
@@ -89,16 +97,18 @@ else:
         k=args.examples
     )
 
+    print("Writing to file...")
     # write the file out
     problem_json = {'metadata' : metadata, 'files' : files, 'examples' : examples}
     with open(problem_filepath, 'w') as f:
         dump(problem_json, f)
 
 problem_time = time.time()
-print("Problem file done")
+print(Fore.GREEN + "PROBLEM FILE DONE\n" + Fore.WHITE)
 
 # SIDE EFFECT 2 - synthesize motifs
-print("Starting synthesis...")
+print(Fore.BLUE + "SYNTHESIS" + Fore.WHITE)
+
 motifs_filepath = os.path.join(args.tmp, f"{experiment_name}-motifs.json")
 synthesis_args = [
     "./synthesize",
@@ -108,18 +118,19 @@ synthesis_args = [
 ]
 
 if os.path.isfile(motifs_filepath) and args.use_cache:
-    print("Motifs file detected, skipping synthesis.")
+    print("Motifs file detected, skipping synthesis...")
 else:
+    print("Spinning up Hera for synthesis...")
     subprocess.run(synthesis_args,
         universal_newlines=True,
         stdout=subprocess.PIPE
     )
 
 synth_time = time.time()
-print("Synthesis done ")
+print(Fore.GREEN + "SYNTHESIS DONE\n" + Fore.WHITE)
 
 # SIDE EFFECT 3 - generate image
-print("Starting evaluation...")
+print(Fore.BLUE + "EVALUATION" + Fore.WHITE)
 
 image_filepath = os.path.join(args.tmp, f"{experiment_name}-image.json")
 eval_args = [
@@ -131,24 +142,27 @@ eval_args = [
 ]
 
 if os.path.isfile(image_filepath) and args.use_cache:
-    print("Image file detected, skipping evaluation.")
+    print("Image file detected, skipping evaluation...")
 else:
+    print("Spinning up Hera for evaluation...")
     subprocess.run(eval_args,
         universal_newlines=True,
         stdout=subprocess.PIPE
     )
 
 eval_time = time.time()
-print("Evaluation done")
+print(Fore.GREEN + "EVALUATION DONE\n" + Fore.WHITE)
 
 # PRIMARY GOAL
-print("Starting analysis...")
+print(Fore.BLUE + "ANALYSIS" + Fore.WHITE)
 
+print(f"Constructing {args.ensemble} ensemble...")
 # construct the ensemble
 motifs = load_motifs(image_filepath) # the analysis motifs are stored with their evaluation
 al = Active(ensemble_from_string(args.ensemble)(motifs))
 
 # we have to extract just the ground truth values - the targets for the motifs
+print("Extracting target vertices...")
 target = set()
 for ex in ground_truth:
     target.update(ex['example'])
@@ -156,9 +170,13 @@ for ex in ground_truth:
 # we're outputting csv rows, but if there's no output we'll just print as we go
 stat_time = time.time()
 rows = []
+print("Starting evaluation...")
 for step in range(args.max_al_steps + 1):
     # compute stats
-    precision, recall, f1 = performance_statistics(al.ensemble.classified(), target)
+    print("Computing current image...")
+    image = al.ensemble.classified()
+    print(f"Computing statistics for step {step}...")
+    precision, recall, f1 = performance_statistics(image, target)
     row = {
         "benchmark" : benchmark_name,
         "ensemble" : args.ensemble,
@@ -172,18 +190,26 @@ for step in range(args.max_al_steps + 1):
         "al-time" : time.time() - stat_time,
         "ensemble-size" : len(al.ensemble.motifs)
     }
+
     # record them
     rows.append(row)
-    print(row)
+    print("P/R: {precision:.4f}/{recall:.4f}, SIZE: {ensemble-size}".format(**row))
     
     # try to split if we can
+    print("Checking for a candidate split...")
     split = al.candidate_split()
-    if split is None: break
+    if split is None:
+        print("No valid split found...")
+        break
+    print("Splitting...")
     al = al.split_on(split, split in target)
     stat_time = time.time()
 
+print(Fore.GREEN + "EVALUATION DONE" + Fore.WHITE)
+
 # if we should write somewhere, do it - if the file exists, don't write the header
 if args.output is not None:
+    print(f"Writing output to {args.output}...")
     already_exists = os.path.isfile(args.output)
     with open(args.output, 'a') as f:
         writer = DictWriter(fieldnames=[
@@ -205,3 +231,4 @@ if args.output is not None:
         
         for row in rows:
             writer.writerow(row)
+    print("Done.")

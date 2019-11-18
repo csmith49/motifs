@@ -1,18 +1,22 @@
-from .frontier import frontier
-
-# ensemble base class
 class Ensemble:
-    def __init__(self, motifs):
+    def __init__(self, motifs, default_threshold=0.0):
+        self.default_threshold = default_threshold
         self.motifs = motifs
     
-    def classify(self, value):
+    def classify(self, value, threshold=None):
+        if threshold is None:
+            threshold = self.default_threshold
+        return self.score(value) > threshold
+    
+    def score(self, value):
+        scores = [self.weight(motif) for motif in self.motifs if value in motif]
+        return sum(scores)
+
+    def weight(self, motif):
         raise NotImplementedError
 
-    def __contains__(self, value):
-        return self.classify(value)
-
     def filter(self, pred):
-        motifs = filter(pred, self.filter_candidates())
+        motifs = filter(pred, self.motifs)
         return self.__class__(list(motifs))
 
     def domain(self):
@@ -21,44 +25,13 @@ class Ensemble:
             result.update(motif.domain())
         return result
     
-    def filter_candidates(self):
-        return self.motifs
-
-    def classified(self):
-        result = set()
-        for elt in self.domain():
-            if self.classify(elt):
-                result.add(elt)
-        return result
-
-    @property
-    def size(self):
-        return len(self.motifs)
-
-# ranking ensemble provides a ranking function and a threshold
-class RankingEnsemble(Ensemble):
-    def __init__(self, motifs, default_threshold=0.0):
-        self._default_threshold = default_threshold
-        super().__init__(motifs)
-
-    def confidence(self, motif):
-        raise NotImplementedError
-
-    def rank(self, value):
-        result = 0.0
-        for motif in self.motifs:
-            if value in motif:
-                result += self.confidence(motif)
-        return result
-
-    def classify(self, value, threshold=None):
-        if threshold is None:
-            threshold = self._default_threshold
-        return self.rank(value) > threshold
-
     def classified(self, threshold=None):
         result = set()
         for elt in self.domain():
             if self.classify(elt, threshold=threshold):
                 result.add(elt)
         return result
+
+    @property
+    def size(self):
+        return len(self.motifs)
