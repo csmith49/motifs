@@ -212,7 +212,7 @@ if args.output is not None:
     print(f"Writing output to {args.output}...")
     already_exists = os.path.isfile(args.output)
     with open(args.output, 'a') as f:
-        writer = DictWriter(fieldnames=[
+        writer = DictWriter(f, fieldnames=[
             "benchmark",
             "ensemble",
             "al-step",
