@@ -1,39 +1,50 @@
 from math import ceil, exp
 from .ensemble import Ensemble
 
+# normalization utility
+def normalize(*args):
+    total = sum(args)
+    return [arg / total for arg in args]
+
+# DISJUNCTION
 class Disjunction(Ensemble):
-    def __init__(self, motifs):
-        super().__init__(motifs, default_threshold=0)
-    
-    def weight(self, motif):
-        return 1
+    def probabilities(self, value):
+        for motif in self.motifs:
+            if value in motif:
+                return 1, 0
+        return 0, 1
 
 class MajorityVote(Ensemble):
-    def __init__(self, motifs):
-        majority = ciel(len(motifs) / 2)
-        super().__init__(motifs, default_threshold=majority)
-    
-    def weight(self, motif):
-        return 1
+    def probabilities(self, value):
+        inc, exc = 0, 0
+        for motif in self.motifs:
+            if value in motif:
+                inc += 1
+            else:
+                exc += 1
+        return normalize(inc, exc)
 
 class MostSpecific(Ensemble):
-    def __init__(self, motifs):
+    def __init__(self, motifs, default_threshold=0.5):
         image = set()
         for motif in motifs:
-            image.udpate(motif.domain())
+            image.update(motif.domain())
         self.total_size = len(image)
-        super().__init__(motifs, default_threshold=0.5)
+        super().__init__(motifs, default_threshold=default_threshold)
 
     def weight(self, motif):
-        return 2 * (1 - (len(motif.domain()) / self.total_size)) - 1
+        return (1 - (len(motif.domain()) / self.total_size))
 
-    def score(self, value):
-        a = super().score(value)
-        try:
-            result = exp(a) / (exp(a) - exp(-a))
-        except:
-            result = 0.0
-        return result
+    def probabilities(self, value):
+        p_true, p_false = 0.0, 0.0
+        for motif in self.motifs:
+            if value in motif:
+                p_true += exp(self.weight(motif))
+                p_false += exp(-self.weight(motif))
+            else:
+                p_true += exp(-self.weight(motif))
+                p_false += exp(self.weight(motif))
+        return normalize(p_true, p_false)
 
 ENSEMBLES = {
     'disjunction' : Disjunction,

@@ -1,18 +1,15 @@
 class Ensemble:
-    def __init__(self, motifs, default_threshold=0.0):
+    def __init__(self, motifs, default_threshold=0.5):
         self.default_threshold = default_threshold
         self.motifs = motifs
     
     def classify(self, value, threshold=None):
         if threshold is None:
             threshold = self.default_threshold
-        return self.score(value) > threshold
-    
-    def score(self, value):
-        scores = [self.weight(motif) for motif in self.motifs if value in motif]
-        return sum(scores)
+        prob_true, _ = self.probabilities(value)
+        return prob_true > threshold
 
-    def weight(self, motif):
+    def probabilities(self, value):
         raise NotImplementedError
 
     def filter(self, pred):

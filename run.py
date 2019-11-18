@@ -1,5 +1,7 @@
+#!/usr/local/bin/python3
+
 import sqlite3, os, random, subprocess, time
-from json import load, dump
+from json import load, dump, dumps
 from argparse import ArgumentParser
 from csv import DictWriter
 from colorama import init, Fore
@@ -9,12 +11,13 @@ parser = ArgumentParser("Run Script")
 parser.add_argument("--data", required=True)
 parser.add_argument("--benchmark", required=True)
 parser.add_argument("--tmp", default="/tmp")
-parser.add_argument("--examples", default=1)
+parser.add_argument("--examples", default=1, type=int)
 parser.add_argument("--ensemble", default="disjunction")
 parser.add_argument("--max-al-steps", default=10, type=int)
 parser.add_argument("--num-cores", default=8)
 parser.add_argument("--output", default=None)
 parser.add_argument("--use-cache", action="store_true")
+parser.add_argument("--tron", action="store_true")
 
 args = parser.parse_args()
 init()
@@ -194,7 +197,14 @@ for step in range(args.max_al_steps + 1):
     # record them
     rows.append(row)
     print("P/R: {precision:.4f}/{recall:.4f}, SIZE: {ensemble-size}".format(**row))
+    if args.tron:
+        print(dumps(row))
     
+    # check if we've achieved maximum performance
+    if f1 == 1.0:
+        print("Optimal performance achieved, stopping...")
+        break
+
     # try to split if we can
     print("Checking for a candidate split...")
     split = al.candidate_split()

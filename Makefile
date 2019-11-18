@@ -38,79 +38,12 @@ live: lib
 	dune utop lib
 
 # MAKING NECESSARY EXPERIMENT DATA ======
-
-pob-cell-performance.csv: run.py synthesize evaluate
-	@python3 run.py \
-		--data data/db \
-		--benchmark $(experiment)/pob-cell.json \
-		--max-al-steps 10 \
-		--use-cache \
-		--output $@ \
-		--ensemble disjunction
-	@python3 run.py \
-		--data data/db \
-		--benchmark $(experiment)/pob-cell.json \
-		--max-al-steps 10 \
-		--use-cache \
-		--output $@ \
-		--ensemble most-specific
-	@python3 run.py \
-		--data data/db \
-		--benchmark $(experiment)/pob-cell.json \
-		--max-al-steps 10 \
-		--use-cache \
-		--output $@ \
-		--ensemble majority-vote
-
-	@python3 run.py \
-		--data data/db \
-		--benchmark $(experiment)/pob-cell.json \
-		--max-al-steps 10 \
-		--use-cache \
-		--examples 2 \
-		--output $@ \
-		--ensemble disjunction
-	@python3 run.py \
-		--data data/db \
-		--benchmark $(experiment)/pob-cell.json \
-		--max-al-steps 10 \
-		--use-cache \
-		--examples 2 \
-		--output $@ \
-		--ensemble most-specific
-	@python3 run.py \
-		--data data/db \
-		--benchmark $(experiment)/pob-cell.json \
-		--max-al-steps 10 \
-		--use-cache \
-		--examples 2 \
-		--output $@ \
-		--ensemble majority-vote
-
-	@python3 run.py \
-		--data data/db \
-		--benchmark $(experiment)/pob-cell.json \
-		--max-al-steps 10 \
-		--use-cache \
-		--examples 3 \
-		--output $@ \
-		--ensemble disjunction
-	@python3 run.py \
-		--data data/db \
-		--benchmark $(experiment)/pob-cell.json \
-		--max-al-steps 10 \
-		--use-cache \
-		--examples 3 \
-		--output $@ \
-		--ensemble most-specific
-	@python3 run.py \
-		--data data/db \
-		--benchmark $(experiment)/pob-cell.json \
-		--max-al-steps 10 \
-		--use-cache \
-		--examples 3 \
-		--output $@ \
-		--ensemble majority-vote
+pob-cell-performance.jsonl: scripts/tron/run_grid.py run.py synthesize evaluate
+	python3 scripts/tron/run_grid.py experiments/politician.json >&1 | tee $@
+pob-cell-performance.csv: scripts/tron/jsonl_to_csv.py pob-cell-performance.jsonl
+	python3 scripts/tron/jsonl_to_csv.py \
+		--input pob-cell-performance.jsonl \
+		--output $@
 
 # setting up data folder structure
 .PRECIOUS: $(data) $(gt) $(dgt) $(image) $(results) $(graphs) $(problem) $(motifs)

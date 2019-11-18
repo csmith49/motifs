@@ -13,9 +13,9 @@ def performance_statistics(selected, relevant, beta=1):
     return (precision, recall, f_beta)
 
 # precision-recall evaluation
-def prc(ensemble, ground_truth, output=None, frontier=False):
+def prc(ensemble, ground_truth, output=None):
     # sort the values by the ranking
-    ranking = [(v, ensemble.rank(v, frontier=frontier)) for v in ensemble.domain()]
+    ranking = [(v, ensemble.probabilities(v)[0]) for v in ensemble.domain()]
     ranking.sort(key=lambda p: p[-1], reverse=True)
 
     # list to hold the already-selectd iamges
