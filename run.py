@@ -33,7 +33,7 @@ with open(args.benchmark, 'r') as f:
     benchmark = load(f)
 
 benchmark_name = os.path.splitext(os.path.basename(args.benchmark))[0]
-experiment_name = f"{benchmark_name}-{args.ensemble}-{args.examples}"
+experiment_name = f"{benchmark_name}-{args.examples}"
 
 start_time = time.time()
 

@@ -39,6 +39,79 @@ live: lib
 
 # MAKING NECESSARY EXPERIMENT DATA ======
 
+pob-cell-performance.csv: run.py synthesize evaluate
+	@python3 run.py \
+		--data data/db \
+		--benchmark $(experiment)/pob-cell.json \
+		--max-al-steps 10 \
+		--use-cache \
+		--output $@ \
+		--ensemble disjunction
+	@python3 run.py \
+		--data data/db \
+		--benchmark $(experiment)/pob-cell.json \
+		--max-al-steps 10 \
+		--use-cache \
+		--output $@ \
+		--ensemble most-specific
+	@python3 run.py \
+		--data data/db \
+		--benchmark $(experiment)/pob-cell.json \
+		--max-al-steps 10 \
+		--use-cache \
+		--output $@ \
+		--ensemble majority-vote
+
+	@python3 run.py \
+		--data data/db \
+		--benchmark $(experiment)/pob-cell.json \
+		--max-al-steps 10 \
+		--use-cache \
+		--examples 2 \
+		--output $@ \
+		--ensemble disjunction
+	@python3 run.py \
+		--data data/db \
+		--benchmark $(experiment)/pob-cell.json \
+		--max-al-steps 10 \
+		--use-cache \
+		--examples 2 \
+		--output $@ \
+		--ensemble most-specific
+	@python3 run.py \
+		--data data/db \
+		--benchmark $(experiment)/pob-cell.json \
+		--max-al-steps 10 \
+		--use-cache \
+		--examples 2 \
+		--output $@ \
+		--ensemble majority-vote
+
+	@python3 run.py \
+		--data data/db \
+		--benchmark $(experiment)/pob-cell.json \
+		--max-al-steps 10 \
+		--use-cache \
+		--examples 3 \
+		--output $@ \
+		--ensemble disjunction
+	@python3 run.py \
+		--data data/db \
+		--benchmark $(experiment)/pob-cell.json \
+		--max-al-steps 10 \
+		--use-cache \
+		--examples 3 \
+		--output $@ \
+		--ensemble most-specific
+	@python3 run.py \
+		--data data/db \
+		--benchmark $(experiment)/pob-cell.json \
+		--max-al-steps 10 \
+		--use-cache \
+		--examples 3 \
+		--output $@ \
+		--ensemble majority-vote
+
 # setting up data folder structure
 .PRECIOUS: $(data) $(gt) $(dgt) $(image) $(results) $(graphs) $(problem) $(motifs)
 $(data):
