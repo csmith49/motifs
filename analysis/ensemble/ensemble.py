@@ -24,6 +24,13 @@ class Ensemble:
     def filter_candidates(self):
         return self.motifs
 
+    def classified(self):
+        result = set()
+        for elt in self.domain():
+            if self.classify(elt):
+                result.add(elt)
+        return result
+
     @property
     def size(self):
         return len(self.motifs)
@@ -32,30 +39,26 @@ class Ensemble:
 class RankingEnsemble(Ensemble):
     def __init__(self, motifs, default_threshold=0.0):
         self._default_threshold = default_threshold
-        self._frontier = frontier(motifs)
         super().__init__(motifs)
-
-    def domain(self):
-        result = set()
-        for motif in self._frontier:
-            result.update(motif.domain())
-        return result
 
     def confidence(self, motif):
         raise NotImplementedError
 
-    def rank(self, value, frontier=False):
+    def rank(self, value):
         result = 0.0
-        if frontier:
-            relevant = self._frontier
-        else:
-            relevant = self.motifs
-        for motif in relevant:
+        for motif in self.motifs:
             if value in motif:
                 result += self.confidence(motif)
         return result
 
-    def classify(self, value, threshold=None, frontier=False):
+    def classify(self, value, threshold=None):
         if threshold is None:
             threshold = self._default_threshold
-        return self.rank(value, frontier=frontier) > threshold
+        return self.rank(value) > threshold
+
+    def classified(self, threshold=None):
+        result = set()
+        for elt in self.domain():
+            if self.classify(elt, threshold=threshold):
+                result.add(elt)
+        return result

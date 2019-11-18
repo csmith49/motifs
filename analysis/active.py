@@ -30,8 +30,7 @@ def maximal_entropy(values, groups):
 class Active:
     def __init__(self, ensemble):
         self.ensemble = ensemble
-        self.motifs = self.ensemble.motifs
-    
+
     def candidate_split(self, frontier=False):
         if frontier:
             relevant_motifs = self.ensemble._frontier
