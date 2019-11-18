@@ -2,7 +2,7 @@
 
 ensembles='disjunction majority-vote most-specific'
 benchmarks='pob-cell'
-examples={1..10}
+examples={1..1}
 
 touch performance.log
 
@@ -14,9 +14,9 @@ do
         do
             python3 run.py --use-cache --max-al-steps 10 --data data/db --jsonl \
                 --benchmark data/experiment/$benchmark.json --ensemble $ensemble \
-            >&1 | tee /tmp/performance.log
+            >> /tmp/performance.log
         done
     done
 done
 
-python3 scripts/tron/jsonl_to_csv.py --input /tmp/performance.log --output data/performance.csv
+python3 scripts/jsonl_to_csv.py --input /tmp/performance.log --output data/performance.csv

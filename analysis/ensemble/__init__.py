@@ -9,42 +9,47 @@ def normalize(*args):
 # DISJUNCTION
 class Disjunction(Ensemble):
     def probabilities(self, value):
-        for motif in self.motifs:
+        for motif in self.relevant_motifs():
             if value in motif:
                 return 1, 0
         return 0, 1
 
+    def entropy_probabilities(self, value):
+        inc, exc = 0, 0
+        for motif in self.relevant_motifs():
+            if value in motif: inc += 1
+            else: exc += 1
+        return normalize(inc, exc)
+
+    def update(self, value, result):
+        self._accuracy_update(value, result)
+
+# MAJORITY VOTE
 class MajorityVote(Ensemble):
     def probabilities(self, value):
         inc, exc = 0, 0
-        for motif in self.motifs:
-            if value in motif:
-                inc += 1
-            else:
-                exc += 1
+        for motif in self.relevant_motifs():
+            if value in motif: inc += 1
+            else: exc += 1
         return normalize(inc, exc)
+    
+    def update(self, value, result):
+        self._accuracy_update(value, result)
 
 class MostSpecific(Ensemble):
-    def __init__(self, motifs, default_threshold=0.5):
-        image = set()
-        for motif in motifs:
-            image.update(motif.domain())
-        self.total_size = len(image)
-        super().__init__(motifs, default_threshold=default_threshold)
-
-    def weight(self, motif):
-        return (1 - (len(motif.domain()) / self.total_size))
-
     def probabilities(self, value):
         p_true, p_false = 0.0, 0.0
         for motif in self.motifs:
             if value in motif:
-                p_true += exp(self.weight(motif))
-                p_false += exp(-self.weight(motif))
+                p_true += exp(motif.accuracy)
+                p_false += exp(-motif.accuracy)
             else:
-                p_true += exp(-self.weight(motif))
-                p_false += exp(self.weight(motif))
+                p_true += exp(-motif.accuracy)
+                p_false += exp(motif.accuracy)
         return normalize(p_true, p_false)
+
+    def update(self, value, result):
+        self._multiplicative_update(value, result)
 
 ENSEMBLES = {
     'disjunction' : Disjunction,

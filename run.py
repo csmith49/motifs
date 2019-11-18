@@ -181,7 +181,7 @@ print(Fore.BLUE + "ANALYSIS" + Fore.WHITE)
 print(f"Constructing {args.ensemble} ensemble...")
 # construct the ensemble
 motifs = load_motifs(image_filepath) # the analysis motifs are stored with their evaluation
-al = Active(ensemble_from_string(args.ensemble)(motifs))
+ensemble = ensemble_from_string(args.ensemble)(motifs, weight_smoothing=args.examples)
 
 # we have to extract just the ground truth values - the targets for the motifs
 print("Extracting target vertices...")
@@ -198,7 +198,7 @@ print("Starting evaluation...")
 for step in range(args.max_al_steps + 1):
     # compute stats
     print("Computing current image...")
-    image = al.ensemble.classified()
+    image = ensemble.classified()
     print(f"Computing statistics for step {step}...")
     precision, recall, f1 = performance_statistics(image, target)
     row = {
@@ -212,14 +212,13 @@ for step in range(args.max_al_steps + 1):
         "synth-time" : synth_time - problem_time,
         "eval-time" : eval_time - synth_time,
         "al-time" : time.time() - stat_time,
-        "ensemble-size" : len(al.ensemble.motifs)
+        "ensemble-size" : ensemble.size
     }
 
     # record them
     rows.append(row)
     print("P/R: {precision:.4f}/{recall:.4f}, SIZE: {ensemble-size}".format(**row))
-    if args.jsonl:
-        print(dumps(row))
+    if args.jsonl: print(dumps(row))
     
     # check if we've achieved maximum performance
     if f1 == 1.0:
@@ -228,12 +227,12 @@ for step in range(args.max_al_steps + 1):
 
     # try to split if we can
     print("Checking for a candidate split...")
-    split = al.candidate_split(possibilities=learnable)
+    split = candidate_split(learnable, ensemble)
     if split is None:
         print("No valid split found...")
         break
     print("Splitting...")
-    al = al.split_on(split, split in target)
+    ensemble.update(split, split in target)
     stat_time = time.time()
 
 print(Fore.GREEN + "EVALUATION DONE" + Fore.WHITE)

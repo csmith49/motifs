@@ -3,36 +3,22 @@ from math import log2, inf
 # summand term to keep entropy well-defined
 def entropy_summand(p):
     if p == 0.0: return p
-    else:
-        return (-1 * p * log2(p))
+    else: return (-1 * p * log2(p))
 
 def ensemble_entropy(value, ensemble):
-    p_i, p_e = ensemble.probabilities(value)
-    # convert to entropy
+    p_i, p_e = ensemble.entropy_probabilities(value)
     return entropy_summand(p_i) + entropy_summand(p_e)
 
 def maximal_ensemble_entropy(values, ensemble):
     m, m_e = None, -inf
     # check each val
-    possibilities = [(value, ensemble_entropy(value, ensemble)) for value in values]
-    entropies = set([p[1] for p in possibilities])
-    if len(entropies) <= 1:
-        return None, -inf
-    else:
-        return max(possibilities, key=lambda p: p[1])
+    for v in values:
+        v_e = ensemble_entropy(v, ensemble)
+        if v_e > m_e:
+            m, m_e = v, v_e
+    # return the maximal elt, and assoc entropy
+    return m, m_e
 
-class Active:
-    def __init__(self, ensemble):
-        self.ensemble = ensemble
-
-    def candidate_split(self, possibilities=None):
-        if possibilities is None:
-            possibilities = self.ensemble.domain()
-        split, entropy = maximal_ensemble_entropy(possibilities, self.ensemble)
-        return split
-
-    def split_on(self, value, ground_truth_value):
-        def pred(motif): 
-            return (value in motif) == ground_truth_value
-        ensemble = self.ensemble.filter(pred)
-        return self.__class__(ensemble)
+def candidate_split(possibilities, ensemble):
+    split, _ = maximal_ensemble_entropy(possibilities, ensemble)
+    return split
