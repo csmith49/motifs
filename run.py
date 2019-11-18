@@ -16,8 +16,9 @@ parser.add_argument("--ensemble", default="disjunction")
 parser.add_argument("--max-al-steps", default=10, type=int)
 parser.add_argument("--num-cores", default=8)
 parser.add_argument("--output", default=None)
+parser.add_argument("--split", default=None)
 parser.add_argument("--use-cache", action="store_true")
-parser.add_argument("--tron", action="store_true")
+parser.add_argument("--jsonl", action="store_true")
 
 args = parser.parse_args()
 init()
@@ -77,6 +78,24 @@ elif benchmark['ground-truth']['kind'] == 'sql':
             {'file': db_filepath, 'example': image}
         )
 
+    # once we have ground truth, have to split into train and test
+    if args.split is not None and os.path.isfile(args.split):
+        print("Data split file detected, splitting into train/test...")
+        with open(args.split, "r") as f:
+            splits = load(f)
+
+        # checking is a bit weird - for each example, see if the basename agrees with something in splits
+        train, test = [], []
+        for ex in ground_truth:
+            if os.path.basename(ex['file']) in splits['train']:
+                train.append(ex)
+            elif os.path.basename(ex['file']) in splits['test']:
+                test.append(ex)
+
+    # just use everything if no split provided
+    else:
+        train, test = ground_truth, ground_truth
+
 gt_time = time.time()
 print(Fore.GREEN + "GROUND TRUTH DONE\n" + Fore.WHITE)
 
@@ -90,13 +109,13 @@ if os.path.isfile(problem_filepath) and args.use_cache:
 else: 
     # construct by pulling relevant info from benchmark file
     metadata = benchmark['metadata']
-    files = [ex['file'] for ex in ground_truth]
+    files = [ex['file'] for ex in test]
 
     print(f"Sampling {args.examples} instances for ground truth...")
 
     # and from sampling examples as required
     examples = random.sample(
-        population=list(filter(lambda ex: ex['example'] != [], ground_truth)),
+        population=list(filter(lambda ex: ex['example'] != [], train)),
         k=args.examples
     )
 
@@ -166,8 +185,10 @@ al = Active(ensemble_from_string(args.ensemble)(motifs))
 
 # we have to extract just the ground truth values - the targets for the motifs
 print("Extracting target vertices...")
-target = set()
-for ex in ground_truth:
+learnable, target = set(), set()
+for ex in train:
+    learnable.update(ex['example'])
+for ex in test:
     target.update(ex['example'])
 
 # we're outputting csv rows, but if there's no output we'll just print as we go
@@ -197,7 +218,7 @@ for step in range(args.max_al_steps + 1):
     # record them
     rows.append(row)
     print("P/R: {precision:.4f}/{recall:.4f}, SIZE: {ensemble-size}".format(**row))
-    if args.tron:
+    if args.jsonl:
         print(dumps(row))
     
     # check if we've achieved maximum performance
@@ -207,7 +228,7 @@ for step in range(args.max_al_steps + 1):
 
     # try to split if we can
     print("Checking for a candidate split...")
-    split = al.candidate_split()
+    split = al.candidate_split(possibilities=learnable)
     if split is None:
         print("No valid split found...")
         break
