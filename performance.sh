@@ -19,4 +19,4 @@ do
     done
 done
 
-python3 scripts/tron/jsonl_to_csv.py --input /tmp/performance.log --output performance.csv
+python3 scripts/tron/jsonl_to_csv.py --input /tmp/performance.log --output data/performance.csv
