@@ -1,23 +1,16 @@
 #!/bin/bash
 
-ensembles='majority-vote most-specific'
-benchmarks='politician wiki-cell hardware-cell'
-examples={1..1}
+ensembles='disjunction majority-vote most-specific'
+examples={1..5}
 
-touch performance.log
+benchmark=$1
 
-for benchmark in $benchmarks
+for ensemble in $ensembles
 do
-    for ensemble in $ensembles
+    for examples in $examples
     do
-        for examples in $examples
-        do
-            python3 run.py --use-cache --max-al-steps 10 --data data/db --jsonl \
-                --benchmark data/benchmark/$benchmark.json --ensemble $ensemble \
-                --split data/split/$benchmark.json \
-            >> performance.log
-        done
+        python3 run.py --use-cache --max-al-steps 10 --data data/db --jsonl \
+            --benchmark data/benchmark/$benchmark.json --ensemble $ensemble \
+            --split data/split/$benchmark.json >> $1-performance.log
     done
 done
-
-python3 scripts/jsonl_to_csv.py --input performance.log --output performance.csv
