@@ -1,10 +1,14 @@
-from math import ceil, exp
+from math import ceil, exp, log
 from .ensemble import Ensemble
 
 # normalization utility
 def normalize(*args):
     total = sum(args)
     return [arg / total for arg in args]
+
+# convert to prob
+def to_prob(pos_value):
+    return exp(pos_value) / (exp(pos_value) + exp(-pos_value))
 
 # DISJUNCTION
 class Disjunction(Ensemble):
@@ -37,19 +41,40 @@ class MajorityVote(Ensemble):
         self._accuracy_update(value, result)
 
 class MostSpecific(Ensemble):
+    def __init__(self, motifs, class_ratio=0.01, **kwargs):
+        super().__init__(motifs, **kwargs)
+        self.total_size = len(self.domain())
+        self.class_ratio = class_ratio
+
+    def accuracy(self, motif):
+        # term 1 - p[m(x) = 1]
+        image = motif.total_size / self.total_size
+
+        # term 2 - p[y = 1]
+        class_ratio = self.class_ratio
+
+        # term 3 - FNR
+        fnr = 1 - to_prob(motif.accuracy)
+
+        # compute accuracy from p[m(x) != y]
+        return 1 - (image - class_ratio + 2 * fnr)
+
+    def score(self, motif):
+        acc = self.accuracy(motif)
+        return log(acc / (1 - acc))
+
     def probabilities(self, value):
         p_true, p_false = 0.0, 0.0
         for motif in self.motifs:
             if value in motif:
-                p_true += exp(motif.accuracy)
-                p_false += exp(-motif.accuracy)
+                p_true += self.score(motif)
             else:
-                p_true += exp(-motif.accuracy)
-                p_false += exp(motif.accuracy)
+                p_false += self.score(motif)
         return normalize(p_true, p_false)
 
     def update(self, value, result):
-        self._multiplicative_update(value, result)
+        if result is True:
+            self._multiplicative_update(value, result)
 
 ENSEMBLES = {
     'disjunction' : Disjunction,

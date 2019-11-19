@@ -26,6 +26,8 @@ class Ensemble:
         for motif in self.motifs:
             if (value in motif) != result:
                 motif.accuracy *= (1 - self.learning_rate)
+            else:
+                motif.accuracy *= (1 + self.learning_rate)
 
     def classify(self, value):
         prob_true, _ = self.probabilities(value)
