@@ -46,6 +46,10 @@ class MostSpecific(Ensemble):
         self.total_size = len(self.domain())
         self.class_ratio = class_ratio
 
+        # for memoizing some computations
+        self.__been_updated = True
+        self.__scores = []
+
     def accuracy(self, motif):
         # term 1 - p[m(x) = 1]
         image = motif.total_size / self.total_size
@@ -61,20 +65,21 @@ class MostSpecific(Ensemble):
 
     def score(self, motif):
         acc = self.accuracy(motif)
-        print(f"ACCURACY: {acc}")
         return log(acc / (1 - acc))
 
     def probabilities(self, value):
-        p_true, p_false = 0.0, 0.0
-        for motif in self.motifs:
-            if value in motif:
-                p_true += self.score(motif)
-            else:
-                p_false += self.score(motif)
+        if self.__been_updated:
+            self.__scores = [(motif, self.score(motif)) for motif in self.motifs]
+            self.__been_updated = False
+
+        p_true = sum([score for (motif, score) in self.__scores if value in motif])
+        p_false = sum([score for (motif, score) in self.__scores if value not in motif])
+
         return normalize(p_true, p_false)
 
     def update(self, value, result):
         if result is True:
+            self.__been_updated = True
             self._multiplicative_update(value, result)
 
 ENSEMBLES = {
