@@ -196,7 +196,7 @@ for ex in test:
 stat_time = time.time()
 rows = []
 print("Starting evaluation...")
-al_steps = args.max_al_steps if args.ensemble == "weighted-vote" else 0
+al_steps = args.max_al_steps if isinstance(ensemble, WeightedVote) else 0
 for step in range(al_steps + 1):
     # compute stats
     print("Computing current image...")
@@ -229,15 +229,15 @@ for step in range(al_steps + 1):
 
     # try to split if we can
     print("Checking for a candidate split...")
-    if args.ensemble == "weighted-vote":
-        split = ensemble.max_entropy(learnable, learning_rate=args.learning_rate)
-    else:
-        split = ensemble.max_entropy(learnable)
+    split = ensemble.max_entropy(learnable)
     if split is None:
         print("No valid split found...")
         break
     print("Splitting...")
-    ensemble.update(split, split in target)
+    if isinstance(ensemble, WeightedVote):
+        ensemble.update(split, split in target, learning_rate=args.learning_rate)
+    else:
+        ensemble.update(split, split in target)
     stat_time = time.time()
 
 print("EVALUATION DONE")
