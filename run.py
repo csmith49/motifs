@@ -179,7 +179,7 @@ print("ANALYSIS")
 print(f"Constructing {args.ensemble} ensemble...")
 # construct the ensemble
 motifs = load_motifs(image_filepath) # the analysis motifs are stored with their evaluation
-ensemble = ensemble_from_string(args.ensemble)(motifs, weight_smoothing=args.examples)
+ensemble = ensemble_from_string(args.ensemble)(motifs)
 
 # we have to extract just the ground truth values - the targets for the motifs
 print("Extracting target vertices...")
@@ -225,7 +225,7 @@ for step in range(args.max_al_steps + 1):
 
     # try to split if we can
     print("Checking for a candidate split...")
-    split = candidate_split(learnable, ensemble)
+    split = ensemble.max_entropy(learnable)
     if split is None:
         print("No valid split found...")
         break

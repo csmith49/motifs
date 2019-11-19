@@ -52,7 +52,7 @@ class Disjunction(Ensemble):
         counts = self._inclusion @ np.transpose(self._relevant_motifs())
         return self.to_values(counts)
 
-    def max_entropy(self):
+    def max_entropy(self, domain):
         relevant = self._relevant_motifs()
         pos_counts = self._inclusion @ np.transpose(relevant)
         neg_counts = (1 - self._inclusion) @ np.transpose(relevant)
@@ -60,8 +60,13 @@ class Disjunction(Ensemble):
         size = self.size
         pos_ent = -1 * (pos_counts / size) * np.log2(pos_counts + 0.01)
         neg_ent = -1 * (neg_counts / size) * np.log2(neg_counts + 0.01)
+        entropy = np.where(
+            self.to_row(domain) == 1,
+            pos_ent + neg_ent,
+            np.zeros_like(pos_ent)
+        )
 
-        return self._value_map(np.argmax(pos_ent + neg_ent)[0])
+        return self._value_map(np.argmax(entropy)[0])
 
 # MAJORITY VOTE
 class MajorityVote(Disjunction):
@@ -72,6 +77,7 @@ class MajorityVote(Disjunction):
         return self.to_values(counts_for > counts_against)
 
 class MostSpecific(Ensemble):
+    pass
     # def __init__(self, motifs, class_ratio=0.01, **kwargs):
     #     super().__init__(motifs, **kwargs)
     #     self.total_size = len(self.domain())

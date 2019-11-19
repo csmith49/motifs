@@ -31,6 +31,10 @@ class Ensemble:
                 result.add(v)
         return result
 
+    def to_row(self, values):
+        row = [1 if value in values else 0 for value in self._value_map]
+        return np.array(row)
+
     # some accessors
     @property
     def domain(self):
