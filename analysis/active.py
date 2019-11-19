@@ -2,7 +2,9 @@ from math import log2, inf
 
 # summand term to keep entropy well-defined
 def entropy_summand(p):
-    if p <= 0.0: return 0.0
+    if p <= 0.0: 
+        print(f"WARNING: Non-positive probability of {p}")
+        return 0.0
     else: return (-1 * p * log2(p))
 
 def ensemble_entropy(value, ensemble):
