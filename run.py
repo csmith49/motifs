@@ -19,7 +19,6 @@ parser.add_argument("--split", default=None)
 parser.add_argument("--use-cache", action="store_true")
 parser.add_argument("--jsonl", action="store_true")
 parser.add_argument("--learning-rate", type=float, default=0.1)
-parser.add_argument("--class-ratio", type=float, default=0.1)
 
 args = parser.parse_args()
 
@@ -38,10 +37,6 @@ with open(args.benchmark, 'r') as f:
 
 benchmark_name = os.path.splitext(os.path.basename(args.benchmark))[0]
 experiment_name = f"{benchmark_name}-{args.examples}"
-
-# initialize some hyperparameters
-LEARNING_RATE=args.learning_rate
-CLASS_RATIO=args.class_ratio
 
 start_time = time.time()
 
@@ -234,7 +229,10 @@ for step in range(al_steps + 1):
 
     # try to split if we can
     print("Checking for a candidate split...")
-    split = ensemble.max_entropy(learnable)
+    if args.ensemble == "weighted-vote":
+        split = ensemble.max_entropy(learnable, learning_rate=args.learning_rate)
+    else:
+        split = ensemble.max_entropy(learnable)
     if split is None:
         print("No valid split found...")
         break

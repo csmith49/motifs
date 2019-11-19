@@ -85,18 +85,21 @@ class WeightedVote(Ensemble):
         # and motif accuracies
         self._accuracies = np.array([motif.size for motif in self._motif_map]) / self.size
 
-    def update(self, value, truth):
+    def update(self, value, truth, learning_rate=None):
         # only do updates if the truth is good
         if truth != True:
             return None
         
+        if learning_rate is None:
+            learning_rate = LEARNING_RATE
+
         # otherwise, we're doing multiplicative updates to the weights based on who agrees
         value_index = self._value_map.index(value)
         agreement = self._inclusion[value_index,]
         updates = np.where(
             agreement > 1,
-            np.ones_like(agreement) * LEARNING_RATE,
-            np.ones_like(agreement) * LEARNING_RATE
+            np.ones_like(agreement) * (1 + learning_rate),
+            np.ones_like(agreement) * (1 - learning_rate)
         )
 
         # do the update
