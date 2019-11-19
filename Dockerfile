@@ -7,9 +7,8 @@ RUN apt-get update && apt-get install -y \
     pkg-config python3-dev python3-venv libsqlite3-dev
 
 WORKDIR /hera
-RUN git clone https://github.com/csmith49/motifs.git
+RUN git clone https://github.com/csmith49/motifs.git --single-branch pldi2020
 WORKDIR /hera/motifs
-RUN git checkout pldi2020
 RUN python3 -m venv env && source env/bin/activate && python3 -m pip install -r analysis-requirements.txt
 RUN opam init --bare --disable-sandboxing && \
     opam switch create 4.07.0 && \
