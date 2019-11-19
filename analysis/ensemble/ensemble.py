@@ -18,11 +18,10 @@ class Ensemble:
         self._motif_map = motifs
         # construct rows
         rows = []
-        for value in self._value_map:
-            row = [1 if value in motif else 0 for motif in self._motif_map]
-            rows.append(row)
+        for motif in self._motif_map:
+            rows.append(self.to_row(motif.domain()))
         # build inclusion matrix
-        self._inclusion = np.array(rows)
+        self._inclusion = np.transpose(np.array(rows))
 
     # for converting a row to a set of values
     def to_values(self, row):
