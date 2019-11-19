@@ -113,18 +113,35 @@ class WeightedVote(Ensemble):
         score_against = (1 - self._inclusion) @ np.transpose(score)
         return score_for, score_against
 
+    def probabilities(self):
+        fnr = 1 - np.exp(self._weights) / (np.exp(self._weights) + np.exp(-1 * self._weights))
+        accuracies = 1 - (self._accuracies - self._class_ratio + 2 * fnr)
+        p_true = np.exp(self._inclusion @ np.transpose(np.log(accuracies)))
+        p_false = np.exp(self._inclusion @ np.transpose(np.log(1 - accuracies)))
+        Z = p_true + p_false
+        return p_true / Z, p_false / Z
+
     def classified(self):
-        score_for, score_against = self.scores()
+        score_for, score_against = self.probabilities()
         return self.to_values(score_for > score_against)
 
     def max_entropy(self, domain):
-        score_for, score_against = self.scores()
+        p_true, p_false = self.probabilities()
         entropy = np.where(
             self.to_row(domain) == 1,
-            np.abs(score_for - score_against),
-            np.ones_like(score_for) * np.infty
+            -1 * p_true * np.log(p_true) - p_false * np.log(p_false),
+            np.zeros_like(p_true)
         )
-        return self._value_map[np.argmin(entropy)]
+        return self._value_map[np.argmax(entropy)]
+
+    # def max_entropy(self, domain):
+    #     score_for, score_against = self.scores()
+    #     entropy = np.where(
+    #         self.to_row(domain) == 1,
+    #         np.abs(score_for - score_against),
+    #         np.ones_like(score_for) * np.infty
+    #     )
+    #     return self._value_map[np.argmin(entropy)]
 
 ENSEMBLES = {
     'disjunction' : Disjunction,
