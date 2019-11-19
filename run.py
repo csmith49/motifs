@@ -195,7 +195,8 @@ for ex in test:
 stat_time = time.time()
 rows = []
 print("Starting evaluation...")
-for step in range(args.max_al_steps + 1):
+al_steps = args.max_al_steps if args.ensemble == "weighted-vote" else 0
+for step in range(al_steps + 1):
     # compute stats
     print("Computing current image...")
     image = ensemble.classified()

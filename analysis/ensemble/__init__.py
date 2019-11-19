@@ -76,7 +76,7 @@ class MajorityVote(Disjunction):
         counts_against = (1 - self._inclusion) @ np.transpose(relevant)
         return self.to_values(counts_for > counts_against)
 
-class MostSpecific(Ensemble):
+class WeightedVote(Ensemble):
     def __init__(self, motifs):
         super().__init__(motifs)
         # set up weights and class ratio
@@ -126,7 +126,7 @@ class MostSpecific(Ensemble):
 ENSEMBLES = {
     'disjunction' : Disjunction,
     'majority-vote' : MajorityVote,
-    'most-specific' : MostSpecific
+    'weighted-vote' : WeightedVote
 }
 
 from difflib import get_close_matches

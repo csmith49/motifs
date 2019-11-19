@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ensembles='disjunction majority-vote most-specific'
+ensembles='disjunction majority-vote weighted-vote'
 examples={1..5}
 
 benchmark=$1
