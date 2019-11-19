@@ -115,10 +115,10 @@ class WeightedVote(Ensemble):
 
     def probabilities(self):
         fnr = 1 - np.exp(self._weights) / (np.exp(self._weights) + np.exp(-1 * self._weights))
-        accuracies = 1 - (self._accuracies - self._class_ratio + 2 * fnr)
+        accuracies = np.clip(1 - (self._accuracies - self._class_ratio + 2 * fnr), 0.001, 0.999)
         p_true = np.exp(self._inclusion @ np.transpose(np.log(accuracies)))
         p_false = np.exp(self._inclusion @ np.transpose(np.log(1 - accuracies)))
-        Z = p_true + p_false
+        Z = p_true + p_false + 0.001
         return p_true / Z, p_false / Z
 
     def classified(self):
@@ -129,7 +129,7 @@ class WeightedVote(Ensemble):
         p_true, p_false = self.probabilities()
         entropy = np.where(
             self.to_row(domain) == 1,
-            -1 * p_true * np.log(p_true) - p_false * np.log(p_false),
+            -1 * p_true * np.log(p_true + 0.001) - p_false * np.log(p_false + 0.001),
             np.zeros_like(p_true)
         )
         return self._value_map[np.argmax(entropy)]

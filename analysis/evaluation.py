@@ -8,11 +8,14 @@ def performance_statistics(selected, relevant, beta=1):
 
     # compte all the relevant stats, return as tuple
     if len(selected) == 0:
-        precision = 1.0
+        precision = 0.0
     else:
         precision = len(true_positives) / (len(true_positives) + len(false_positives))
     recall = len(true_positives) / len(relevant)
-    f_beta = (1 + beta ** 2) * (precision * recall) / ((beta ** 2 * precision) + recall)
+    if precision == 0.0 and recall == 0.0:
+        f_beta = 0.0
+    else:
+        f_beta = (1 + beta ** 2) * (precision * recall) / ((beta ** 2 * precision) + recall)
     return (precision, recall, f_beta)
 
 # precision-recall evaluation
