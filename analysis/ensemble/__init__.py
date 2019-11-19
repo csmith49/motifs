@@ -102,29 +102,26 @@ class MostSpecific(Ensemble):
         # do the update
         self._weights *= updates
 
-    def classified(self):
-        fnr = np.exp(self._weights) / (np.exp(self._weights) + np.exp(-1 * self._weights))
+    def scores(self):
+        fnr = 1 - np.exp(self._weights) / (np.exp(self._weights) + np.exp(-1 * self._weights))
         accuracies = 1 - (self._accuracies - self._class_ratio + 2 * fnr)
         score = np.log(accuracies / (1 - accuracies))
         score_for = self._inclusion @ np.transpose(score)
         score_against = (1 - self._inclusion) @ np.transpose(score)
+        return score_for, score_against
+
+    def classified(self):
+        score_for, score_against = self.scores()
         return self.to_values(score_for > score_against)
 
     def max_entropy(self, domain):
-        fnr = np.exp(self._weights) / (np.exp(self._weights) + np.exp(-1 * self._weights))
-        accuracies = 1 - (self._accuracies - self._class_ratio + 2 * fnr)
-        score = np.log(accuracies / (1 - accuracies))
-        total_score = np.sum(score)
-        prob_for = (self._inclusion @ np.transpose(score)) / total_score
-        prob_against = ((1 - self._inclusion) @ np.transpose(score)) / total_score
-        for_ent = -1 * prob_for * np.log2(prob_for + 0.0001)
-        against_ent = -1 * prob_against * np.log2(prob_against + 0.0001)
+        score_for, score_against = self.scores()
         entropy = np.where(
             self.to_row(domain) == 1,
-            for_ent + against_ent,
-            np.zeros_like(for_ent)
+            np.abs(score_for - score_against),
+            np.ones_like(score_for) * np.infty
         )
-        return self._value_map[np.argmax(entropy)]
+        return self._value_map[np.argmin(entropy)]
 
 ENSEMBLES = {
     'disjunction' : Disjunction,
