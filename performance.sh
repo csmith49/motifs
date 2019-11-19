@@ -11,6 +11,6 @@ do
     do
         python3 run.py --use-cache --max-al-steps 10 --data data/db --jsonl \
             --benchmark data/benchmark/$benchmark.json --ensemble $ensemble \
-            --split data/split/$benchmark.json >> $1-performance.log
+            --split data/split/$benchmark.json >> data/results/$1-performance.log
     done
 done
