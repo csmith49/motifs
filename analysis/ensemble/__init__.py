@@ -1,6 +1,6 @@
 import numpy as np
 from math import ceil, exp, log
-from .ensemble import Ensemble, HYPERPARAMETERS
+from .ensemble import Ensemble, CLASSIFICATION_THRESHOLD, LEARNING_RATE, ACCURACY_THRESHOLD, CLASS_RATIO
 
 # normalization utility
 def normalize(*args):
@@ -43,7 +43,7 @@ class Disjunction(Ensemble):
     # get the indicator array for all motifs with accuracies above the threshold
     def _relevant_motifs(self):
         return np.where(
-            self._accuracies >= HYPERPARAMETERS['accuracy-threshold'],
+            self._accuracies >= ACCURACY_THRESHOLD,
             np.ones_like(self._accuracies),
             np.zeros_like(self._accuracies)
         )
@@ -80,7 +80,7 @@ class WeightedVote(Ensemble):
     def __init__(self, motifs):
         super().__init__(motifs)
         # set up weights and class ratio
-        self._class_ratio = HYPERPARAMETERS["class-ratio"]
+        self._class_ratio = CLASS_RATIO
         self._weights = np.ones(len(self._motif_map))
         # and motif accuracies
         self._accuracies = np.array([motif.size for motif in self._motif_map]) / self.size
@@ -95,8 +95,8 @@ class WeightedVote(Ensemble):
         agreement = self._inclusion[value_index,]
         updates = np.where(
             agreement > 1,
-            np.ones_like(agreement) * (1 + HYPERPARAMETERS['learning-rate']),
-            np.ones_like(agreement) * (1 - HYPERPARAMETERS['learning-rate'])
+            np.ones_like(agreement) * LEARNING_RATE,
+            np.ones_like(agreement) * LEARNING_RATE
         )
 
         # do the update
