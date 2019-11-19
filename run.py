@@ -4,7 +4,6 @@ import sqlite3, os, random, subprocess, time
 from json import load, dump, dumps
 from argparse import ArgumentParser
 from csv import DictWriter
-from colorama import init, Fore
 from analysis import *
 
 parser = ArgumentParser("Run Script")
@@ -21,7 +20,6 @@ parser.add_argument("--use-cache", action="store_true")
 parser.add_argument("--jsonl", action="store_true")
 
 args = parser.parse_args()
-init()
 
 # GOALS - produce performance statistics for given ensemble / num examples across al steps
 
@@ -42,7 +40,7 @@ experiment_name = f"{benchmark_name}-{args.examples}"
 start_time = time.time()
 
 # SIDE EFFECT 0 - load ground truth from benchmark file (kept in memory only)
-print(Fore.BLUE + "GROUND TRUTH" + Fore.WHITE)
+print("GROUND TRUTH")
 gt_json = benchmark['ground-truth']
 
 # if the gt is provided, use it
@@ -97,10 +95,10 @@ else:
     train, test = ground_truth, ground_truth
 
 gt_time = time.time()
-print(Fore.GREEN + "GROUND TRUTH DONE\n" + Fore.WHITE)
+print("GROUND TRUTH DONE\n")
 
 # SIDE EFFECT 1 - generate problem file
-print(Fore.BLUE + "PROBLEM FILE" + Fore.WHITE)
+print("PROBLEM FILE")
 
 problem_filepath = os.path.join(args.tmp, f"{experiment_name}-problem.json")
 
@@ -126,10 +124,10 @@ else:
         dump(problem_json, f)
 
 problem_time = time.time()
-print(Fore.GREEN + "PROBLEM FILE DONE\n" + Fore.WHITE)
+print("PROBLEM FILE DONE\n")
 
 # SIDE EFFECT 2 - synthesize motifs
-print(Fore.BLUE + "SYNTHESIS" + Fore.WHITE)
+print("SYNTHESIS")
 
 motifs_filepath = os.path.join(args.tmp, f"{experiment_name}-motifs.json")
 synthesis_args = [
@@ -149,10 +147,10 @@ else:
     )
 
 synth_time = time.time()
-print(Fore.GREEN + "SYNTHESIS DONE\n" + Fore.WHITE)
+print("SYNTHESIS DONE\n")
 
 # SIDE EFFECT 3 - generate image
-print(Fore.BLUE + "EVALUATION" + Fore.WHITE)
+print("EVALUATION")
 
 image_filepath = os.path.join(args.tmp, f"{experiment_name}-image.json")
 eval_args = [
@@ -173,10 +171,10 @@ else:
     )
 
 eval_time = time.time()
-print(Fore.GREEN + "EVALUATION DONE\n" + Fore.WHITE)
+print("EVALUATION DONE\n")
 
 # PRIMARY GOAL
-print(Fore.BLUE + "ANALYSIS" + Fore.WHITE)
+print("ANALYSIS")
 
 print(f"Constructing {args.ensemble} ensemble...")
 # construct the ensemble
@@ -235,7 +233,7 @@ for step in range(args.max_al_steps + 1):
     ensemble.update(split, split in target)
     stat_time = time.time()
 
-print(Fore.GREEN + "EVALUATION DONE" + Fore.WHITE)
+print("EVALUATION DONE")
 
 # if we should write somewhere, do it - if the file exists, don't write the header
 if args.output is not None:
