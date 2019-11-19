@@ -66,7 +66,7 @@ class Disjunction(Ensemble):
             np.zeros_like(pos_ent)
         )
 
-        return self._value_map(np.argmax(entropy)[0])
+        return self._value_map(np.argmax(entropy))
 
 # MAJORITY VOTE
 class MajorityVote(Disjunction):
