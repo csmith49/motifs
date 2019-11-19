@@ -14,7 +14,7 @@ RUN opam init --bare --disable-sandboxing && \
     opam switch create 4.07.0 && \
     eval $(opam env) && \
     opam pin . -y
-ADD https://api.github.com/repos/csmith49/motifs/git/refs/heads/pldi2020 version.json
-RUN git pull && eval $(opam env) && make
+COPY . /hera/motifs
+RUN eval $(opam env) && make
 
 CMD ["performance.sh"]
