@@ -78,23 +78,23 @@ elif benchmark['ground-truth']['kind'] == 'sql':
             {'file': db_filepath, 'example': image}
         )
 
-    # once we have ground truth, have to split into train and test
-    if args.split is not None and os.path.isfile(args.split):
-        print("Data split file detected, splitting into train/test...")
-        with open(args.split, "r") as f:
-            splits = load(f)
+# once we have ground truth, have to split into train and test
+if args.split is not None:
+    print("Data split file detected, splitting into train/test...")
+    with open(args.split, "r") as f:
+        splits = load(f)
 
-        # checking is a bit weird - for each example, see if the basename agrees with something in splits
-        train, test = [], []
-        for ex in ground_truth:
-            if os.path.basename(ex['file']) in splits['train']:
-                train.append(ex)
-            elif os.path.basename(ex['file']) in splits['test']:
-                test.append(ex)
+    # checking is a bit weird - for each example, see if the basename agrees with something in splits
+    train, test = [], []
+    for ex in ground_truth:
+        if os.path.basename(ex['file']) in splits['train']:
+            train.append(ex)
+        elif os.path.basename(ex['file']) in splits['test']:
+            test.append(ex)
 
-    # just use everything if no split provided
-    else:
-        train, test = ground_truth, ground_truth
+# just use everything if no split provided
+else:
+    train, test = ground_truth, ground_truth
 
 gt_time = time.time()
 print(Fore.GREEN + "GROUND TRUTH DONE\n" + Fore.WHITE)
