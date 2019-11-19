@@ -16,7 +16,7 @@ class Motif:
     def __init__(self, motif, rows):
         self.motif = motif
         self.rows = rows
-        self.total_size = len(self.domain())
+        self.size = len(self.domain())
     def __contains__(self, other):
         return any([other in row for row in self.rows])
     # what are the values captured by this motif
