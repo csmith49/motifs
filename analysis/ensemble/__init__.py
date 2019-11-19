@@ -61,6 +61,7 @@ class MostSpecific(Ensemble):
 
     def score(self, motif):
         acc = self.accuracy(motif)
+        print(f"ACCURACY: {acc}")
         return log(acc / (1 - acc))
 
     def probabilities(self, value):
