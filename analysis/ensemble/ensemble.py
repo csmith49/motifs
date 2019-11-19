@@ -3,7 +3,8 @@ import numpy as np
 HYPERPARAMETERS = {
     "classification-threshold" : 0.7,
     "accuracy-threshold" : 0.7,
-    "learning-rate" : 0.8
+    "learning-rate" : 0.8,
+    "class-ratio" : 0.01
 }
 
 class Ensemble:

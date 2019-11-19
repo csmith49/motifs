@@ -181,6 +181,8 @@ print(f"Constructing {args.ensemble} ensemble...")
 motifs = load_motifs(image_filepath) # the analysis motifs are stored with their evaluation
 ensemble = ensemble_from_string(args.ensemble)(motifs)
 
+ensemble_time = time.time()
+
 # we have to extract just the ground truth values - the targets for the motifs
 print("Extracting target vertices...")
 learnable, target = set(), set()
@@ -210,12 +212,12 @@ for step in range(args.max_al_steps + 1):
         "synth-time" : synth_time - problem_time,
         "eval-time" : eval_time - synth_time,
         "al-time" : time.time() - stat_time,
-        "ensemble-size" : ensemble.size
+        "ensemble-time" : ensemble_time - eval_time
     }
 
     # record them
     rows.append(row)
-    print("P/R: {precision:.4f}/{recall:.4f}, SIZE: {ensemble-size}".format(**row))
+    print("P/R: {precision:.4f}/{recall:.4f}".format(**row))
     if args.jsonl: print(dumps(row))
     
     # check if we've achieved maximum performance
@@ -251,7 +253,7 @@ if args.output is not None:
             "synth-time",
             "eval-time",
             "al-time",
-            "ensemble-size"
+            "ensemble-time"
         ])
 
         if not already_exists:

@@ -77,47 +77,54 @@ class MajorityVote(Disjunction):
         return self.to_values(counts_for > counts_against)
 
 class MostSpecific(Ensemble):
-    pass
-    # def __init__(self, motifs, class_ratio=0.01, **kwargs):
-    #     super().__init__(motifs, **kwargs)
-    #     self.total_size = len(self.domain())
-    #     self.class_ratio = class_ratio
+    def __init__(self, motifs):
+        super().__init__(motifs)
+        # set up weights and class ratio
+        self._class_ratio = HYPERPARAMETERS["class-ratio"]
+        self._weights = np.ones(len(self._motif_map))
+        # and motif accuracies
+        self._accuracies = np.array([motif.size for motif in self._motif_map]) / self.size
 
-    #     # for memoizing some computations
-    #     self.__been_updated = True
-    #     self.__scores = []
+    def update(self, value, truth):
+        # only do updates if the truth is good
+        if truth != True:
+            return None
+        
+        # otherwise, we're doing multiplicative updates to the weights based on who agrees
+        value_index = self._value_map.index(value)
+        agreement = self._inclusion[value_index,]
+        updates = np.where(
+            agreement > 1,
+            np.ones_like(agreement) * (1 + HYPERPARAMETERS['learning-rate']),
+            np.ones_like(agreement) * (1 - HYPERPARAMETERS['learning-rate'])
+        )
 
-    # def accuracy(self, motif):
-    #     # term 1 - p[m(x) = 1]
-    #     image = motif.total_size / self.total_size
+        # do the update
+        self._weights *= updates
 
-    #     # term 2 - p[y = 1]
-    #     class_ratio = self.class_ratio
+    def classified(self):
+        fnr = np.exp(self._weights) / (np.exp(self._weights) + np.exp(-1 * self._weights))
+        accuracies = 1 - (self._accuracies - self._class_ratio + 2 * fnr)
+        score = np.log(accuracies / (1 - accuracies))
+        score_for = self._inclusion @ np.transpose(score)
+        score_against = (1 - self._inclusion) @ np.transpose(score)
+        return self.to_values(score_for > score_against)
 
-    #     # term 3 - FNR
-    #     fnr = 1 - to_prob(motif.accuracy)
-
-    #     # compute accuracy from p[m(x) != y]
-    #     return 1 - (image - class_ratio + 2 * fnr)
-
-    # def score(self, motif):
-    #     acc = self.accuracy(motif)
-    #     return log(acc / (1 - acc))
-
-    # def probabilities(self, value):
-    #     if self.__been_updated:
-    #         self.__scores = [(motif, self.score(motif)) for motif in self.motifs]
-    #         self.__been_updated = False
-
-    #     p_true = sum([score for (motif, score) in self.__scores if value in motif])
-    #     p_false = sum([score for (motif, score) in self.__scores if value not in motif])
-
-    #     return normalize(p_true, p_false)
-
-    # def update(self, value, result):
-    #     if result is True:
-    #         self.__been_updated = True
-    #         self._multiplicative_update(value, result)
+    def max_entropy(self, domain):
+        fnr = np.exp(self._weights) / (np.exp(self._weights) + np.exp(-1 * self._weights))
+        accuracies = 1 - (self._accuracies - self._class_ratio + 2 * fnr)
+        score = np.log(accuracies / (1 - accuracies))
+        total_score = np.sum(score)
+        prob_for = (self._inclusion @ np.transpose(score)) / total_score
+        prob_against = ((1 - self._inclusion) @ np.transpose(score)) / total_score
+        for_ent = -1 * prob_for * np.log2(prob_for + 0.0001)
+        against_ent = -1 * prob_against * np.log2(prob_against + 0.0001)
+        entropy = np.where(
+            self.to_row(domain) == 1,
+            for_ent + against_ent,
+            np.zeros_like(for_ent)
+        )
+        return self._value_map[np.argmax(entropy)]
 
 ENSEMBLES = {
     'disjunction' : Disjunction,
