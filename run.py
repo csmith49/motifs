@@ -11,7 +11,6 @@ parser.add_argument("--databases", required=True)
 parser.add_argument("--benchmark", required=True)
 parser.add_argument("--cache", default="/tmp")
 parser.add_argument("--examples", default=1, type=int)
-parser.add_argument("--ensemble", default="disjunction")
 parser.add_argument("--max-al-steps", default=1, type=int)
 parser.add_argument("--num-cores", default=8)
 parser.add_argument("--output", default=None)
@@ -21,7 +20,6 @@ parser.add_argument("--jsonl", action="store_true")
 parser.add_argument("--learning-rate", type=float, default=1.8)
 parser.add_argument("--run", type=int, default=1)
 parser.add_argument("--vote-threshold", type=float, default=0.01)
-parser.add_argument("--synth-examples", type=int, default=1)
 
 args = parser.parse_args()
 
@@ -189,10 +187,12 @@ print("EVALUATION DONE\n")
 # PRIMARY GOAL
 print("ANALYSIS")
 
-print(f"Constructing {args.ensemble} ensemble...")
-# construct the ensemble
+print(f"Constructing ensembles...")
+# construct the ensembles
 motifs = load_motifs(image_filepath) # the analysis motifs are stored with their evaluation
-ensemble = ensemble_from_string(args.ensemble)(motifs)
+disj = ensemble_from_string('disjunction')(motifs)
+maj_vote = ensemble_from_string('majority-vote')(motifs)
+w_vote = ensemble_from_string('weighted-vote')(motifs)
 
 ensemble_time = time.time()
 
@@ -205,19 +205,69 @@ for ex in test:
     target.update(ex['example'])
 
 # we're outputting csv rows, but if there's no output we'll just print as we go
-stat_time = time.time()
 rows = []
 print("Starting evaluation...")
-al_steps = args.max_al_steps if isinstance(ensemble, WeightedVote) else 0
-for step in range(al_steps + 1):
-    # compute stats
-    print("Computing current image...")
-    image = ensemble.classified()
-    print(f"Computing statistics for step {step}...")
+
+# evaluate disjunction
+stat_time = time.time()
+print("Computing disjunction image...")
+image = disj.classified()
+print("Computing disjunction stats...")
+precision, recall, f1 = performance_statistics(image, target)
+row = {
+    "benchmark" : benchmark_name,
+    "ensemble" : "disjunction",
+    "al-step" : 0,
+    "examples" : args.examples,
+    "precision" : precision,
+    "recall" : recall,
+    "f1" : f1,
+    "synth-time" : synth_time - problem_time,
+    "eval-time" : eval_time - synth_time,
+    "al-time" : time.time() - stat_time,
+    "ensemble-time" : ensemble_time - eval_time,
+    "run" : args.run,
+    "threshold" : 0
+}
+if args.jsonl: print(dumps(row))
+rows.append(row)
+
+# evaluate majority vote
+for threshold_numerator in range(10):
+    stat_time = time.time()
+    threshold = threshold_numerator / 10
+    print(f"Computing majority vote image for threshold {threshold}...")
+    image = maj_vote.classified(threshold=threshold)
+    print(f"Computing performance statistics for majority vote at threshold {threshold}...")
     precision, recall, f1 = performance_statistics(image, target)
     row = {
         "benchmark" : benchmark_name,
-        "ensemble" : args.ensemble,
+        "ensemble" : "majority-vote",
+        "al-step" : 0,
+        "examples" : args.examples,
+        "precision" : precision,
+        "recall" : recall,
+        "f1" : f1,
+        "synth-time" : synth_time - problem_time,
+        "eval-time" : eval_time - synth_time,
+        "al-time" : time.time() - stat_time,
+        "ensemble-time" : ensemble_time - eval_time,
+        "run" : args.run,
+        "threshold" : threshold
+    }
+    if args.jsonl: print(dumps(row))
+    rows.append(row)
+
+# evaluate weighted fote
+for step in range(al_steps + 1):
+    stat_time = time.time()
+    print(f"Computing image for weighted majority at step {step}...")
+    image = w_vote.classified()
+    print(f"Computing performance statistics for weighted vote at step {step}...")
+    precision, recall, f1 = performance_statistics(image, target)
+    row = {
+        "benchmark" : benchmark_name,
+        "ensemble" : "weighted-vote",
         "al-step" : step,
         "examples" : args.examples,
         "precision" : precision,
@@ -227,18 +277,11 @@ for step in range(al_steps + 1):
         "eval-time" : eval_time - synth_time,
         "al-time" : time.time() - stat_time,
         "ensemble-time" : ensemble_time - eval_time,
-        "run" : args.run
+        "run" : args.run,
+        "threshold" : 0
     }
-
-    # record them
-    rows.append(row)
-    print("P/R: {precision:.4f}/{recall:.4f}".format(**row))
     if args.jsonl: print(dumps(row))
-    
-    # check if we've achieved maximum performance
-    # if f1 == 1.0:
-    #     print("Optimal performance achieved, stopping...")
-    #     break
+    rows.append(row)
 
     # try to split if we can
     print("Checking for a candidate split...")
@@ -247,11 +290,7 @@ for step in range(al_steps + 1):
         print("No valid split found...")
         break
     print(f"Splitting on node {split}...")
-    if isinstance(ensemble, WeightedVote):
-        ensemble.update(split, split in target, learning_rate=args.learning_rate)
-    else:
-        ensemble.update(split, split in target)
-    stat_time = time.time()
+    ensemble.update(split, split in target, learning_rate=args.learning_rate)
 
 print("EVALUATION DONE")
 
@@ -272,7 +311,8 @@ if args.output is not None:
             "eval-time",
             "al-time",
             "ensemble-time",
-            "run"
+            "run",
+            "threshold"
         ])
 
         if not already_exists:

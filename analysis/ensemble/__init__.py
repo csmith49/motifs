@@ -55,10 +55,10 @@ class Disjunction(Ensemble):
 
 # MAJORITY VOTE
 class MajorityVote(Disjunction):
-    def classified(self):
+    def classified(self, threshold=CLASSIFICATION_THRESHOLD):
         relevant = self._relevant_motifs()
         counts_for = self._inclusion @ np.transpose(relevant)
-        return self.to_values(counts_for > (self.size * CLASSIFICATION_THRESHOLD))
+        return self.to_values(counts_for > (self.size * threshold))
 
 class WeightedVote(Ensemble):
     def __init__(self, motifs):
