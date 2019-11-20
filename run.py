@@ -18,8 +18,10 @@ parser.add_argument("--output", default=None)
 parser.add_argument("--split", default=None)
 parser.add_argument("--use-cache", action="store_true")
 parser.add_argument("--jsonl", action="store_true")
-parser.add_argument("--learning-rate", type=float, default=4)
+parser.add_argument("--learning-rate", type=float, default=1.8)
 parser.add_argument("--run", type=int, default=1)
+parser.add_argument("--vote-threshold", type=float, default=0.01)
+parser.add_argument("--synth-examples", type=int, default=1)
 
 args = parser.parse_args()
 
@@ -234,9 +236,9 @@ for step in range(al_steps + 1):
     if args.jsonl: print(dumps(row))
     
     # check if we've achieved maximum performance
-    if f1 == 1.0:
-        print("Optimal performance achieved, stopping...")
-        break
+    # if f1 == 1.0:
+    #     print("Optimal performance achieved, stopping...")
+    #     break
 
     # try to split if we can
     print("Checking for a candidate split...")

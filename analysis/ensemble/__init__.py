@@ -63,51 +63,50 @@ class MajorityVote(Disjunction):
 class WeightedVote(Ensemble):
     def __init__(self, motifs):
         super().__init__(motifs)
-        # set up weights and class ratio
-        self._class_ratio = CLASS_RATIO
-        self._alpha = np.ones(len(self._motif_map))
         # and motif accuracies
         acc = np.array([motif.size for motif in self._motif_map]) / self.size
-        self._w_c = np.log((1 - acc - self._class_ratio) / (acc + self._class_ratio))
+        self._fpr = (acc - 1) / 2
+        # self._fpr = np.ones(len(self._motif_map)) * 0.1
+        self._w_c = acc
 
     def update(self, value, truth, learning_rate=None):
-        # only do updates if the truth is good
-        if truth != True:
-            return None
-        
         # set the learning rate if it's passed in
         if learning_rate is None:
             learning_rate = LEARNING_RATE
 
         # multiplicative updates to alpha
         v_i = self._value_map.index(value)
-        m_i = (self._inclusion[v_i,] * 2) - 1
+        if truth:
+            m_i = self._inclusion[v_i,] * -1
+        else:
+            m_i = self._inclusion[v_i,]
 
-        self._alpha *= np.exp(learning_rate * m_i)
+        self._fpr *= np.exp(-1 * learning_rate * m_i)
 
     def probabilities(self):
-        w_i = self._w_c + 2 * self._alpha * self._class_ratio
+        w_i = self._w_c - 2 * self._fpr
 
-        s_plus = self._inclusion @ np.transpose(np.exp(w_i))
-        s_minus = (1 - self._inclusion) @ np.transpose(np.exp(-1 * w_i))
-        Z = np.sum(np.exp(w_i))
+        # s_plus = self._inclusion @ np.transpose(np.exp(w_i))
+        # s_minus = (1 - self._inclusion) @ np.transpose(np.exp(-1 * w_i))
+        # Z = np.sum(np.exp(w_i))
+        # ans = (s_plus + s_minus) / Z
+        # return ans, 1 - ans
 
-        ans = (s_plus + s_minus) / Z
-
-        return ans, 1 - ans
+        s_plus = (self._inclusion @ np.transpose(w_i))
+        s_minus =((1 - self._inclusion) @ np.transpose(w_i))
+        return s_plus, s_minus
 
     def classified(self):
         p_true, p_false = self.probabilities()
         return self.to_values(p_true >= p_false)
 
     def max_entropy(self, domain):
+        # this is actually the min abs logit, but yknow
         p_true, p_false = self.probabilities()
-        entropy = np.where(
-            self.to_row(domain) == 1,
-            -1 * p_true * np.log(p_true + 0.001) - p_false * np.log(p_false + 0.001),
-            np.zeros_like(p_true)
-        )
-        return self._value_map[np.argmax(entropy)]
+        predicted_true = 1 * (p_true >= p_false)
+        abs_logit = np.argmin(np.abs(p_true - p_false))
+        # if we don't predict anything true, just minimize the abs logit
+        return self._value_map[abs_logit]
 
 ENSEMBLES = {
     'disjunction' : Disjunction,
