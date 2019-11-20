@@ -285,12 +285,12 @@ for step in range(args.max_al_steps + 1):
 
     # try to split if we can
     print("Checking for a candidate split...")
-    split = ensemble.max_entropy(learnable)
+    split = w_vote.max_entropy(learnable)
     if split is None:
         print("No valid split found...")
         break
     print(f"Splitting on node {split}...")
-    ensemble.update(split, split in target, learning_rate=args.learning_rate)
+    w_vote.update(split, split in target, learning_rate=args.learning_rate)
 
 print("EVALUATION DONE")
 
