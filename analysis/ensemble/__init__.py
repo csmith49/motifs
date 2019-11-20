@@ -70,6 +70,8 @@ class WeightedVote(Ensemble):
         acc = np.array([motif.size for motif in self._motif_map]) / self.size
         self._w_c = np.log((1 - acc - self._class_ratio) / (acc + self._class_ratio))
 
+        print(np.min(self._w_c), np.max(self._w_c))
+
     def update(self, value, truth, learning_rate=None):
         # only do updates if the truth is good
         if truth != True:
@@ -92,7 +94,10 @@ class WeightedVote(Ensemble):
         s_minus = (1 - self._inclusion) @ np.transpose(np.exp(-1 * w_i))
         Z = np.sum(np.exp(w_i))
 
-        return (s_plus + s_minus) / Z, 1 - ((s_plus + s_minus) / Z)
+        ans = (s_plus + s_minus) / Z
+        print(np.min(ans), np.max(ans))
+
+        return ans, 1 - ans
 
     def classified(self):
         score_for, score_against = self.probabilities()

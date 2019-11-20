@@ -3,6 +3,8 @@
 ensembles='disjunction majority-vote weighted-vote'
 benchmark=$1
 
+touch data/results/$1-performance.log
+
 for ensemble in $ensembles
 do
     for examples in {1..5}
