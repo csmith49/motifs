@@ -119,7 +119,7 @@ else:
 
     # and from sampling examples as required
     sampled_docs = random.sample(
-        population=set([ex['file'] for ex in train]),
+        population=set([ex['file'] for ex in train if len(ex['example']) > 0]),
         k=args.examples
     )
     examples = []
