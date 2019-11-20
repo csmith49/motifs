@@ -3,6 +3,7 @@ build=_build/default/bin
 
 # DATA LOCATIONS ========================
 data=data
+results=results
 
 # BENCHMARKS
 benchmarks=cdr-chemical cdr-disease hardware-cell hardware-text politician wiki-cell wiki-text
@@ -32,13 +33,13 @@ performance.csv: $(data) scripts/jsonl_to_csv.py run.py performance.sh synthesiz
 # directories
 $(data):
 	mkdir -p $@
-$(data)/results: $(data)
+$(results):
 	mkdir -p $@
 
-$(data)/results/%-performance.log: $(data)/results $(data)/benchmark/%.json $(data)/split/%.json
+$(results)/%-performance.log: $(results) $(data)/benchmark/%.json $(data)/split/%.json
 	@performance.sh $*
 
-$(dat)/results/performance.csv: $(foreach bm, $(bencmharks), $(data)/results/$(bm)-performance.log)
+$(results)/performance.csv: $(foreach bm, $(benchmarks), $(results)/$(bm)-performance.log)
 	@python3 scripts/jsonl_to_csv.py --output $@ --inputs $^
 
 # for cleaning the bulid

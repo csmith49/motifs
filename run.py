@@ -7,18 +7,19 @@ from csv import DictWriter
 from analysis import *
 
 parser = ArgumentParser("Run Script")
-parser.add_argument("--data", required=True)
+parser.add_argument("--databases", required=True)
 parser.add_argument("--benchmark", required=True)
-parser.add_argument("--tmp", default="/tmp")
+parser.add_argument("--cache", default="/tmp")
 parser.add_argument("--examples", default=1, type=int)
 parser.add_argument("--ensemble", default="disjunction")
-parser.add_argument("--max-al-steps", default=10, type=int)
+parser.add_argument("--max-al-steps", default=1, type=int)
 parser.add_argument("--num-cores", default=8)
 parser.add_argument("--output", default=None)
 parser.add_argument("--split", default=None)
 parser.add_argument("--use-cache", action="store_true")
 parser.add_argument("--jsonl", action="store_true")
 parser.add_argument("--learning-rate", type=float, default=4)
+parser.add_argument("--run", type=int, default=1)
 
 args = parser.parse_args()
 
@@ -36,7 +37,7 @@ with open(args.benchmark, 'r') as f:
     benchmark = load(f)
 
 benchmark_name = os.path.splitext(os.path.basename(args.benchmark))[0]
-experiment_name = f"{benchmark_name}-{args.examples}"
+experiment_name = f"{benchmark_name}-{args.examples}-{args.run}"
 
 start_time = time.time()
 
@@ -54,7 +55,7 @@ elif benchmark['ground-truth']['kind'] == 'sql':
     print("Ground truth is being constructed from SQL queries.")
     # get all db filepaths
     db_filepaths = []
-    db_root = os.path.join(args.data, gt_json['dataset'])
+    db_root = os.path.join(args.databases, gt_json['dataset'])
     for filepath in os.listdir(db_root):
         if filepath.endswith('.db'):
             db_filepaths.append(os.path.join(db_root, filepath))
@@ -103,7 +104,7 @@ print("GROUND TRUTH DONE\n")
 # SIDE EFFECT 1 - generate problem file
 print("PROBLEM FILE")
 
-problem_filepath = os.path.join(args.tmp, f"{experiment_name}-problem.json")
+problem_filepath = os.path.join(args.cache, f"{experiment_name}-problem.json")
 
 if os.path.isfile(problem_filepath) and args.use_cache:
     print("Problem file detected, skipping generation...")
@@ -136,7 +137,7 @@ print("PROBLEM FILE DONE\n")
 # SIDE EFFECT 2 - synthesize motifs
 print("SYNTHESIS")
 
-motifs_filepath = os.path.join(args.tmp, f"{experiment_name}-motifs.json")
+motifs_filepath = os.path.join(args.cache, f"{experiment_name}-motifs.json")
 synthesis_args = [
     "./synthesize",
     "--problem", problem_filepath,
@@ -152,6 +153,9 @@ else:
         universal_newlines=True,
         stdout=subprocess.PIPE
     )
+with open(motifs_filepath, 'r') as f:
+    motifs = load(f)
+    print(f"Synthesized {len(motifs)} motifs...")
 
 synth_time = time.time()
 print("SYNTHESIS DONE\n")
@@ -159,7 +163,7 @@ print("SYNTHESIS DONE\n")
 # SIDE EFFECT 3 - generate image
 print("EVALUATION")
 
-image_filepath = os.path.join(args.tmp, f"{experiment_name}-image.json")
+image_filepath = os.path.join(args.cache, f"{experiment_name}-image.json")
 eval_args = [
     "./evaluate",
     "--problem", problem_filepath,
@@ -220,7 +224,8 @@ for step in range(al_steps + 1):
         "synth-time" : synth_time - problem_time,
         "eval-time" : eval_time - synth_time,
         "al-time" : time.time() - stat_time,
-        "ensemble-time" : ensemble_time - eval_time
+        "ensemble-time" : ensemble_time - eval_time,
+        "run" : args.run
     }
 
     # record them
@@ -264,7 +269,8 @@ if args.output is not None:
             "synth-time",
             "eval-time",
             "al-time",
-            "ensemble-time"
+            "ensemble-time",
+            "run"
         ])
 
         if not already_exists:

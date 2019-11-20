@@ -58,8 +58,7 @@ class MajorityVote(Disjunction):
     def classified(self):
         relevant = self._relevant_motifs()
         counts_for = self._inclusion @ np.transpose(relevant)
-        counts_against = (1 - self._inclusion) @ np.transpose(relevant)
-        return self.to_values(counts_for > counts_against)
+        return self.to_values(counts_for > (self.size * CLASSIFICATION_THRESHOLD))
 
 class WeightedVote(Ensemble):
     def __init__(self, motifs):
