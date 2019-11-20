@@ -259,7 +259,7 @@ for threshold_numerator in range(10):
     rows.append(row)
 
 # evaluate weighted fote
-for step in range(al_steps + 1):
+for step in range(args.max_al_steps + 1):
     stat_time = time.time()
     print(f"Computing image for weighted majority at step {step}...")
     image = w_vote.classified()
