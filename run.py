@@ -4,6 +4,7 @@ import sqlite3, os, random, subprocess, time
 from json import load, dump, dumps
 from argparse import ArgumentParser
 from csv import DictWriter
+from numpy import linspace
 from analysis import *
 
 parser = ArgumentParser("Run Script")
@@ -233,7 +234,7 @@ if args.jsonl: print(dumps(row))
 rows.append(row)
 
 # evaluate majority vote
-for threshold_numerator in range(10):
+for threshold_numerator in linspace(0, 0.3, 10):
     stat_time = time.time()
     threshold = threshold_numerator / 10
     print(f"Computing majority vote image for threshold {threshold}...")
