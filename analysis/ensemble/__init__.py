@@ -1,6 +1,7 @@
 import numpy as np
 from math import ceil, exp, log
 from .ensemble import Ensemble, CLASSIFICATION_THRESHOLD, LEARNING_RATE, ACCURACY_THRESHOLD, CLASS_RATIO
+import random
 
 # DISJUNCTION
 class Disjunction(Ensemble):
@@ -70,8 +71,6 @@ class WeightedVote(Ensemble):
         acc = np.array([motif.size for motif in self._motif_map]) / self.size
         self._w_c = np.log((1 - acc - self._class_ratio) / (acc + self._class_ratio))
 
-        print(np.min(self._w_c), np.max(self._w_c))
-
     def update(self, value, truth, learning_rate=None):
         # only do updates if the truth is good
         if truth != True:
@@ -85,7 +84,7 @@ class WeightedVote(Ensemble):
         v_i = self._value_map.index(value)
         m_i = (self._inclusion[v_i,] * 2) - 1
 
-        self._alpha = self._alpha * np.exp(learning_rate * m_i)
+        self._alpha *= np.exp(learning_rate * m_i)
 
     def probabilities(self):
         w_i = self._w_c + 2 * self._alpha * self._class_ratio
@@ -95,13 +94,12 @@ class WeightedVote(Ensemble):
         Z = np.sum(np.exp(w_i))
 
         ans = (s_plus + s_minus) / Z
-        print(np.min(ans), np.max(ans))
 
         return ans, 1 - ans
 
     def classified(self):
-        score_for, score_against = self.probabilities()
-        return self.to_values(score_for > score_against)
+        p_true, p_false = self.probabilities()
+        return self.to_values(p_true >= p_false)
 
     def max_entropy(self, domain):
         p_true, p_false = self.probabilities()

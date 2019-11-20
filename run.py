@@ -122,7 +122,7 @@ else:
     examples = []
     for ex in train:
         if ex['file'] in sampled_docs:
-            examples = examples + ex['example']
+            examples.append(ex)
 
     print("Writing to file...")
     # write the file out
