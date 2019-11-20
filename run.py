@@ -18,7 +18,7 @@ parser.add_argument("--output", default=None)
 parser.add_argument("--split", default=None)
 parser.add_argument("--use-cache", action="store_true")
 parser.add_argument("--jsonl", action="store_true")
-parser.add_argument("--learning-rate", type=float, default=0.1)
+parser.add_argument("--learning-rate", type=float, default=4)
 
 args = parser.parse_args()
 
