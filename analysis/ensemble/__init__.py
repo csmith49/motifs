@@ -110,8 +110,12 @@ class WeightedVote(Ensemble):
         accuracies = np.clip(1 - (self._accuracies - self._class_ratio + 2 * fnr), 0.001, 0.999)
         p_true = np.exp(self._inclusion @ np.transpose(np.log(accuracies)))
         p_false = np.exp(self._inclusion @ np.transpose(np.log(1 - accuracies)))
-        Z = p_true + p_false + 0.001
-        return p_true / Z, p_false / Z
+
+        yes = self._inclusion @ np.transpose(np.exp(self._weights))
+        no = (1 - self._inclusion) @ np.transpose(np.exp(-1 * self._weights))
+        trial = (yes + no) / np.sum(np.exp(self._weights))
+
+        return trial, 1 - trial
 
     def classified(self):
         score_for, score_against = self.probabilities()
