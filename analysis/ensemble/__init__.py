@@ -97,7 +97,7 @@ class WeightedVote(Ensemble):
         value_index = self._value_map.index(value)
         agreement = self._inclusion[value_index,]
         updates = np.where(
-            agreement > 1,
+            agreement >= 0.5,
             np.ones_like(agreement) * (1 + learning_rate),
             np.ones_like(agreement) * (1 - learning_rate)
         )
