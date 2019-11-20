@@ -1,13 +1,11 @@
 #!/bin/bash
 
 ensembles='disjunction majority-vote weighted-vote'
-examples={1..5}
-
 benchmark=$1
 
 for ensemble in $ensembles
 do
-    for examples in $examples
+    for examples in {1..5}
     do
         python3 run.py --use-cache --max-al-steps 10 --data data/db --jsonl \
             --benchmark data/benchmark/$benchmark.json --ensemble $ensemble \

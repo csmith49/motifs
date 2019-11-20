@@ -35,7 +35,7 @@ $(data):
 $(data)/results: $(data)
 	mkdir -p $@
 
-$(data)/results/%-performance.log: $(data)/results $(data)/bechmark/%.json $(data)/split/%.json
+$(data)/results/%-performance.log: $(data)/results $(data)/benchmark/%.json $(data)/split/%.json
 	@performance.sh $*
 
 $(dat)/results/performance.csv: $(foreach bm, $(bencmharks), $(data)/results/$(bm)-performance.log)

@@ -105,14 +105,6 @@ class WeightedVote(Ensemble):
         # do the update
         self._weights *= updates
 
-    def scores(self):
-        fnr = 1 - np.exp(self._weights) / (np.exp(self._weights) + np.exp(-1 * self._weights))
-        accuracies = 1 - (self._accuracies - self._class_ratio + 2 * fnr)
-        score = np.log(accuracies / (1 - accuracies))
-        score_for = self._inclusion @ np.transpose(score)
-        score_against = (1 - self._inclusion) @ np.transpose(score)
-        return score_for, score_against
-
     def probabilities(self):
         fnr = 1 - np.exp(self._weights) / (np.exp(self._weights) + np.exp(-1 * self._weights))
         accuracies = np.clip(1 - (self._accuracies - self._class_ratio + 2 * fnr), 0.001, 0.999)
