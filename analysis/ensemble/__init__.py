@@ -83,7 +83,7 @@ class WeightedVote(Ensemble):
         v_i = self._value_map.index(value)
         m_i = (self._inclusion[v_i,] * 2) - 1
 
-        self._alpha = self._alpha * np.exp(-1 * learning_rate * m_i)
+        self._alpha = self._alpha * np.exp(learning_rate * m_i)
 
     def probabilities(self):
         w_i = self._w_c + 2 * self._alpha * self._class_ratio

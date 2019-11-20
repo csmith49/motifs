@@ -95,6 +95,8 @@ if args.split is not None:
 else:
     train, test = ground_truth, ground_truth
 
+print(f"Train/test split of {len(train)}/{len(test)}...")
+
 gt_time = time.time()
 print("GROUND TRUTH DONE\n")
 
@@ -113,10 +115,14 @@ else:
     print(f"Sampling {args.examples} instances for ground truth...")
 
     # and from sampling examples as required
-    examples = random.sample(
-        population=list(filter(lambda ex: ex['example'] != [], train)),
+    sampled_docs = random.sample(
+        population=set([ex['file'] for ex in train]),
         k=args.examples
     )
+    examples = []
+    for ex in train:
+        if ex['file'] in sampled_docs:
+            examples = examples + ex['example']
 
     print("Writing to file...")
     # write the file out
@@ -233,7 +239,7 @@ for step in range(al_steps + 1):
     if split is None:
         print("No valid split found...")
         break
-    print("Splitting...")
+    print(f"Splitting on node {split}...")
     if isinstance(ensemble, WeightedVote):
         ensemble.update(split, split in target, learning_rate=args.learning_rate)
     else:
