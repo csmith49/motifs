@@ -237,7 +237,7 @@ if args.jsonl: print(dumps(row))
 rows.append(row)
 
 # evaluate majority vote
-for threshold in linspace(0, 0.3, 10):
+for threshold in linspace(0, 0.6, 10):
     stat_time = time.time()
     print(f"Computing majority vote image for threshold {threshold}...")
     image = maj_vote.classified(threshold=threshold, statistics=args.statistics)

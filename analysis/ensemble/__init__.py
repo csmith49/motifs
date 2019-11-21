@@ -60,7 +60,12 @@ class MajorityVote(Disjunction):
         counts_for = self._inclusion @ np.transpose(relevant)
 
         selected = counts_for > (self.size * threshold)
+        
         # do we want more stats?
+        if statistics:
+            motif_agreement = (1 * selected) @ np.transpose(self._inclusion) >= 1
+            acc = np.array([motif.size for motif in self._motif_map]) / self.size
+            print(np.min(acc * motif_agreement), np.max(acc * motif_agreement))
 
         return self.to_values(selected)
 
