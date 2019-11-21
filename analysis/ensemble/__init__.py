@@ -69,19 +69,15 @@ class WeightedVote(Ensemble):
         # self._fpr = np.ones(len(self._motif_map)) * 0.1
         self._w_c = acc
 
-    def update(self, value, truth, learning_rate=None):
-        # set the learning rate if it's passed in
-        if learning_rate is None:
-            learning_rate = LEARNING_RATE
-
+    def update(self, value, truth, learning_rate=LEARNING_RATE, decay=1, step=0, scale=1):
         # multiplicative updates to alpha
         v_i = self._value_map.index(value)
         if truth:
-            m_i = self._inclusion[v_i,] * -1
+            m_i = self._inclusion[v_i,] * -1 * scale
         else:
             m_i = self._inclusion[v_i,]
 
-        self._fpr *= np.exp(-1 * learning_rate * m_i)
+        self._fpr *= np.exp(-1 * learning_rate * m_i * (decay ** step))
 
     def probabilities(self):
         w_i = self._w_c - 2 * self._fpr
@@ -100,13 +96,22 @@ class WeightedVote(Ensemble):
         p_true, p_false = self.probabilities()
         return self.to_values(p_true >= p_false)
 
-    def max_entropy(self, domain):
+    def min_logit(self, domain):
         # this is actually the min abs logit, but yknow
         p_true, p_false = self.probabilities()
         predicted_true = 1 * (p_true >= p_false)
-        abs_logit = np.argmin(np.abs(p_true - p_false))
+        abs_logit = np.abs(p_true - p_false)
+        # rescale
+        if np.sum(abs_logit) == 0:
+            scaled_abs_logit = abs_logit
+        else:
+            scaled_abs_logit = abs_logit / np.sum(abs_logit)
+        # restrict where we check
+        to_avoid = (1 - self.to_row(domain))
         # if we don't predict anything true, just minimize the abs logit
-        return self._value_map[abs_logit]
+        return self._value_map[
+            np.argmin(scaled_abs_logit + to_avoid)
+        ]
 
 ENSEMBLES = {
     'disjunction' : Disjunction,

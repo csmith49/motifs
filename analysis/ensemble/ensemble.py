@@ -35,8 +35,15 @@ class Ensemble:
 
     # some accessors
     @property
-    def domain(self):
-        return self._value_map
+    def domain(self, files=None):
+        if files is None:
+            return self._value_map
+        else:
+            results = set()
+            for motif in self._motif_map:
+                results.update(motif.domain(files=files))
+            return results()
+
     
     @property
     def size(self):

@@ -19,6 +19,8 @@ parser.add_argument("--split", default=None)
 parser.add_argument("--use-cache", action="store_true")
 parser.add_argument("--jsonl", action="store_true")
 parser.add_argument("--learning-rate", type=float, default=1.8)
+parser.add_argument("--learning-rate-decay", type=float, default=0.9)
+parser.add_argument("--learning-rate-positive-scaling", type=float, default=1)
 parser.add_argument("--run", type=int, default=1)
 parser.add_argument("--vote-threshold", type=float, default=0.01)
 
@@ -199,9 +201,9 @@ ensemble_time = time.time()
 
 # we have to extract just the ground truth values - the targets for the motifs
 print("Extracting target vertices...")
-learnable, target = set(), set()
+train_files, target = set(), set()
 for ex in train:
-    learnable.update(ex['example'])
+    train_files.add(ex['file'])
 for ex in test:
     target.update(ex['example'])
 
@@ -259,7 +261,8 @@ for threshold_numerator in linspace(0, 0.3, 10):
     if args.jsonl: print(dumps(row))
     rows.append(row)
 
-# evaluate weighted fote
+# evaluate weighted vote
+splits_used = set()
 for step in range(args.max_al_steps + 1):
     stat_time = time.time()
     print(f"Computing image for weighted majority at step {step}...")
@@ -286,12 +289,19 @@ for step in range(args.max_al_steps + 1):
 
     # try to split if we can
     print("Checking for a candidate split...")
-    split = w_vote.max_entropy(learnable)
+    learnable = w_vote.domain(train_files) - splits_used
+    split = w_vote.min_logit(learnable)
     if split is None:
         print("No valid split found...")
         break
     print(f"Splitting on node {split}...")
-    w_vote.update(split, split in target, learning_rate=args.learning_rate)
+    w_vote.update(split, split in target,
+        learning_rate=args.learning_rate,
+        decay=args.learning_rate_decay,
+        step=step,
+        scale=args.learning_rate_positive_scaling
+    )
+    splits_used.add(split)
 
 print("EVALUATION DONE")
 

@@ -20,10 +20,11 @@ class Motif:
     def __contains__(self, other):
         return any([other in row for row in self.rows])
     # what are the values captured by this motif
-    def domain(self):
+    def domain(self, files=None):
         result = set()
         for row in self.rows:
-            result.update(row.image)
+            if files is None or os.path.basename(row['file']) in files:
+                result.update(row.image)
         return result
     # for ease of construction
     @classmethod

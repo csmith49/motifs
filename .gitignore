@@ -2,6 +2,7 @@ _build
 synthesize
 evaluate
 pldi-results/graphs/*
+pldi-results/csvs/*
 **/__pycache__
 
 **/.merlin
