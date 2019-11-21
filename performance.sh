@@ -13,6 +13,7 @@ do
             --examples $example \
             --benchmark data/benchmark/$benchmark.json \
             --run $run \
+            --learning-rate 4 --learning-rate-decay 0.8 \
             --split data/split/$benchmark.json >> results/$benchmark-performance.log &
     done
 done
