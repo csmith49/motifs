@@ -1,12 +1,7 @@
 _build
 synthesize
 evaluate
-data/db/*
-data/image/*
-data/gt/*
-data/problem/*
-data/graphs/*
-data/results/*
+pldi-results/graphs/*
 **/__pycache__
 
 **/.merlin
