@@ -23,6 +23,7 @@ parser.add_argument("--learning-rate-decay", type=float, default=0.9)
 parser.add_argument("--learning-rate-positive-scaling", type=float, default=1)
 parser.add_argument("--run", type=int, default=1)
 parser.add_argument("--vote-threshold", type=float, default=0.01)
+parser.add_argument("--statistics", action="store_true")
 
 args = parser.parse_args()
 
@@ -236,11 +237,10 @@ if args.jsonl: print(dumps(row))
 rows.append(row)
 
 # evaluate majority vote
-for threshold_numerator in linspace(0, 0.3, 10):
+for threshold in linspace(0, 0.3, 10):
     stat_time = time.time()
-    threshold = threshold_numerator / 10
     print(f"Computing majority vote image for threshold {threshold}...")
-    image = maj_vote.classified(threshold=threshold)
+    image = maj_vote.classified(threshold=threshold, statistics=args.statistics)
     print(f"Computing performance statistics for majority vote at threshold {threshold}...")
     precision, recall, f1 = performance_statistics(image, target)
     row = {

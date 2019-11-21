@@ -44,11 +44,10 @@ $(results)/%.csv: $(results) $(results)/%.log
 # noise performance
 .PRECIOUS: $(results)/noise-%-performance.log
 $(results)/noise-%-performance.log: $(results)/noise-%-2-performance.log $(results)/noise-%-4-performance.log $(results)/noise-%-10-performance.log $(results)/noise-%-20-performance.log
-	@touch $@
-	@$(results)/noise-$*-2-performance.log >> $@
-	@$(results)/noise-$*-4-performance.log >> $@
-	@$(results)/noise-$*-10-performance.log >> $@
-	@$(results)/noise-$*-20-performance.log >> $@
+	@cat $(results)/noise-$*-2-performance.log >> $@
+	@cat $(results)/noise-$*-4-performance.log >> $@
+	@cat $(results)/noise-$*-10-performance.log >> $@
+	@cat $(results)/noise-$*-20-performance.log >> $@
 
 # for cleaning the bulid
 .phony: clean
