@@ -27,9 +27,6 @@ live: lib
 
 # experiments
 
-performance.csv: $(data) scripts/jsonl_to_csv.py run.py performance.sh synthesize evaluate
-	@performance.sh
-
 # directories
 $(data):
 	mkdir -p $@
@@ -37,7 +34,7 @@ $(results):
 	mkdir -p $@
 
 $(results)/%-performance.log: $(results) $(data)/benchmark/%.json $(data)/split/%.json
-	@performance.sh $*
+	@./performance.sh $*
 
 $(results)/%-performance.csv: $(results) $(results)/%-performance.log
 	@python3 scripts/jsonl_to_csv.py --output $@ --inputs $(results)/$*-performance.log
