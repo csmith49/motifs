@@ -1,4 +1,5 @@
 import json
+import os
 
 # row
 class Row:
@@ -23,7 +24,7 @@ class Motif:
     def domain(self, files=None):
         result = set()
         for row in self.rows:
-            if files is None or os.path.basename(row['file']) in files:
+            if files is None or os.path.basename(row.file) in files:
                 result.update(row.image)
         return result
     # for ease of construction

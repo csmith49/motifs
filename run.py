@@ -289,7 +289,7 @@ for step in range(args.max_al_steps + 1):
 
     # try to split if we can
     print("Checking for a candidate split...")
-    learnable = w_vote.domain(train_files) - splits_used
+    learnable = w_vote.domain(files=train_files) - splits_used
     split = w_vote.min_logit(learnable)
     if split is None:
         print("No valid split found...")

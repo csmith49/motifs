@@ -34,7 +34,6 @@ class Ensemble:
         return np.array(row)
 
     # some accessors
-    @property
     def domain(self, files=None):
         if files is None:
             return self._value_map
@@ -42,7 +41,7 @@ class Ensemble:
             results = set()
             for motif in self._motif_map:
                 results.update(motif.domain(files=files))
-            return results()
+            return results
 
     
     @property
