@@ -41,14 +41,14 @@ $(results)/%-performance.log: $(results) $(data)/benchmark/%.json $(data)/split/
 $(results)/%.csv: $(results) $(results)/%.log
 	@python3 scripts/jsonl_to_csv.py --output $@ --inputs $(results)/$*.log
 
-# noisy performance
-.PRECIOUS: $(results)/noisy-%-performance.log
-$(results)/noisy-%-performance.log: $(results)/noisy-%-2-performance.log $(results)/noisy-%-4-performance.log $(results)/noisy-%-10-performance.log $(results)/noisy-%-20-performance.log
+# noise performance
+.PRECIOUS: $(results)/noise-%-performance.log
+$(results)/noise-%-performance.log: $(results)/noise-%-2-performance.log $(results)/noise-%-4-performance.log $(results)/noise-%-10-performance.log $(results)/noise-%-20-performance.log
 	@touch $@
-	@$(results)/noisy-$*-2-performance.log >> $@
-	@$(results)/noisy-$*-4-performance.log >> $@
-	@$(results)/noisy-$*-10-performance.log >> $@
-	@$(results)/noisy-$*-20-performance.log >> $@
+	@$(results)/noise-$*-2-performance.log >> $@
+	@$(results)/noise-$*-4-performance.log >> $@
+	@$(results)/noise-$*-10-performance.log >> $@
+	@$(results)/noise-$*-20-performance.log >> $@
 
 # for cleaning the bulid
 .phony: clean
