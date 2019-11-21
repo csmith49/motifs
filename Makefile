@@ -33,6 +33,7 @@ $(data):
 $(results):
 	mkdir -p $@
 
+.PRECIOUS: $(results)/%-performance.log
 $(results)/%-performance.log: $(results) $(data)/benchmark/%.json $(data)/split/%.json
 	@./performance.sh $*
 
