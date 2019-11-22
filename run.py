@@ -100,6 +100,10 @@ if args.split is not None:
 else:
     train, test = ground_truth, ground_truth
 
+train_files = [ex['file'] for ex in train]
+test_files = [ex['file'] for ex in test]
+all_files = train_files + test_files
+
 print(f"Train/test split of {len(train)}/{len(test)}...")
 
 gt_time = time.time()
@@ -115,7 +119,6 @@ if os.path.isfile(problem_filepath) and args.use_cache:
 else: 
     # construct by pulling relevant info from benchmark file
     metadata = benchmark['metadata']
-    files = [ex['file'] for ex in test]
 
     print(f"Sampling {args.examples} instances for ground truth...")
 
@@ -131,7 +134,7 @@ else:
 
     print("Writing to file...")
     # write the file out
-    problem_json = {'metadata' : metadata, 'files' : files, 'examples' : examples}
+    problem_json = {'metadata' : metadata, 'files' : all_files, 'examples' : examples}
     with open(problem_filepath, 'w') as f:
         dump(problem_json, f)
 
@@ -202,11 +205,8 @@ ensemble_time = time.time()
 
 # we have to extract just the ground truth values - the targets for the motifs
 print("Extracting target vertices...")
-train_files, target = set(), set()
-for ex in train:
-    train_files.add(ex['file'])
-for ex in test:
-    target.update(ex['example'])
+test_ground_truth = set()
+for ex in test: test_ground_truth.update(ex['example'])
 
 # we're outputting csv rows, but if there's no output we'll just print as we go
 rows = []
@@ -215,9 +215,9 @@ print("Starting evaluation...")
 # evaluate disjunction
 stat_time = time.time()
 print("Computing disjunction image...")
-image = disj.classified()
+image = disj.classified() - disj.domain(files=train_files)
 print("Computing disjunction stats...")
-precision, recall, f1 = performance_statistics(image, target)
+precision, recall, f1 = performance_statistics(image, test_ground_truth)
 row = {
     "benchmark" : benchmark_name,
     "ensemble" : "disjunction",
@@ -240,9 +240,9 @@ rows.append(row)
 for threshold in linspace(0, 0.6, 10):
     stat_time = time.time()
     print(f"Computing majority vote image for threshold {threshold}...")
-    image = maj_vote.classified(threshold=threshold, statistics=args.statistics)
+    image = maj_vote.classified(threshold=threshold, statistics=args.statistics) - maj_vote.domain(files=train_files)
     print(f"Computing performance statistics for majority vote at threshold {threshold}...")
-    precision, recall, f1 = performance_statistics(image, target)
+    precision, recall, f1 = performance_statistics(image, test_ground_truth)
     row = {
         "benchmark" : benchmark_name,
         "ensemble" : "majority-vote",
@@ -266,9 +266,10 @@ splits_used = set()
 for step in range(args.max_al_steps + 1):
     stat_time = time.time()
     print(f"Computing image for weighted majority at step {step}...")
-    image = w_vote.classified()
+    train_domain = w_vote.domain(files=train_files)
+    image = w_vote.classified() - train_domain
     print(f"Computing performance statistics for weighted vote at step {step}...")
-    precision, recall, f1 = performance_statistics(image, target)
+    precision, recall, f1 = performance_statistics(image, test_ground_truth)
     row = {
         "benchmark" : benchmark_name,
         "ensemble" : "weighted-vote",
@@ -289,7 +290,7 @@ for step in range(args.max_al_steps + 1):
 
     # try to split if we can
     print("Checking for a candidate split...")
-    learnable = w_vote.domain(files=train_files) - splits_used
+    learnable = train_domain - splits_used
     split = w_vote.min_logit(learnable)
     if split is None:
         print("No valid split found...")
