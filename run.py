@@ -104,6 +104,12 @@ train_files = [ex['file'] for ex in train]
 test_files = [ex['file'] for ex in test]
 all_files = train_files + test_files
 
+print("Extracting target vertices...")
+train_ground_truth, test_ground_truth = set(), set()
+for ex in train: train_ground_truth.update(ex['example'])
+for ex in test: test_ground_truth.update(ex['example'])
+
+
 print(f"Train/test split of {len(train)}/{len(test)}...")
 
 gt_time = time.time()
@@ -203,11 +209,6 @@ w_vote = ensemble_from_string('weighted-vote')(motifs)
 
 ensemble_time = time.time()
 
-# we have to extract just the ground truth values - the targets for the motifs
-print("Extracting target vertices...")
-test_ground_truth = set()
-for ex in test: test_ground_truth.update(ex['example'])
-
 # we're outputting csv rows, but if there's no output we'll just print as we go
 rows = []
 print("Starting evaluation...")
@@ -296,7 +297,7 @@ for step in range(args.max_al_steps + 1):
         print("No valid split found...")
         break
     print(f"Splitting on node {split}...")
-    w_vote.update(split, split in target,
+    w_vote.update(split, split in train_ground_truth,
         learning_rate=args.learning_rate,
         decay=args.learning_rate_decay,
         step=step,
