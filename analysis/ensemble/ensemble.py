@@ -40,7 +40,7 @@ class Ensemble:
     def domain_from_files(self, files):
         results = set()
         for motif in self._motif_map:
-            rseults.update(motif.domain_from_files(files))
+            results.update(motif.domain_from_files(files))
         return results
 
     @property
