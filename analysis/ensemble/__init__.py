@@ -110,19 +110,19 @@ class WeightedVote(Ensemble):
         p_true, p_false = self.probabilities()
         predicted_true = 1 * (p_true >= p_false)
         abs_logit = np.abs(p_true - p_false)
-        # rescale
-        if np.sum(abs_logit) == 0:
-            scaled_abs_logit = abs_logit
+
+        v_min, l_min = None, np.infty
+        for value in domain:
+            v_i = self._value_map.index(value)
+            if abs_logit[v_i] <= l_min:
+                v_min, l_min = value, abs_logit[v_i]
+        
+        if v_min is not None:
+            return v_min
         else:
-            scaled_abs_logit = abs_logit / np.sum(abs_logit)
-        # restrict where we check
-        to_avoid = (1 - self.to_row(domain))
-        # if we don't predict anything true, just minimize the abs logit
-        result = self._value_map[
-            np.argmin(scaled_abs_logit + to_avoid)
-        ]
-        assert result not in domain
-        return result
+            return self._value_map[
+                np.argmin(abs_logit)
+            ]
 
 ENSEMBLES = {
     'disjunction' : Disjunction,
