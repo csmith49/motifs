@@ -1,6 +1,9 @@
 import json
 import os
 
+def file_equal(left, right):
+    return os.path.basename(left) == os.path.basename(right)
+
 # row
 class Row:
     def __init__(self, file, image):
@@ -20,13 +23,21 @@ class Motif:
         self.size = len(self.domain())
     def __contains__(self, other):
         return any([other in row for row in self.rows])
+
     # what are the values captured by this motif
-    def domain(self, files=None):
+    def domain(self):
         result = set()
         for row in self.rows:
-            if files is None or os.path.basename(row.file) in files:
+            result.update(row.image)
+        return result
+
+    def domain_from_files(self, files):
+        result = set()
+        for row in self.rows:
+            if any([file_equal(row.file, file) for file in files]):
                 result.update(row.image)
         return result
+
     # for ease of construction
     @classmethod
     def of_json(cls, json_rep):

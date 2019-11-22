@@ -216,7 +216,8 @@ print("Starting evaluation...")
 # evaluate disjunction
 stat_time = time.time()
 print("Computing disjunction image...")
-image = disj.classified() - disj.domain(files=train_files)
+train_domain = disj.domain_from_files(train_files)
+image = disj.classified() - train_domain
 print("Computing disjunction stats...")
 precision, recall, f1 = performance_statistics(image, test_ground_truth)
 row = {
@@ -241,7 +242,8 @@ rows.append(row)
 for threshold in linspace(0, 0.6, 10):
     stat_time = time.time()
     print(f"Computing majority vote image for threshold {threshold}...")
-    image = maj_vote.classified(threshold=threshold, statistics=args.statistics) - maj_vote.domain(files=train_files)
+    train_domain = maj_vote.domain_from_files(train_files)
+    image = maj_vote.classified(threshold=threshold, statistics=args.statistics) - train_domain
     print(f"Computing performance statistics for majority vote at threshold {threshold}...")
     precision, recall, f1 = performance_statistics(image, test_ground_truth)
     row = {
@@ -267,7 +269,7 @@ splits_used = set()
 for step in range(args.max_al_steps + 1):
     stat_time = time.time()
     print(f"Computing image for weighted majority at step {step}...")
-    train_domain = w_vote.domain(files=train_files)
+    train_domain = w_vote.domain_from_files(train_files)
     image = w_vote.classified() - train_domain
     print(f"Computing performance statistics for weighted vote at step {step}...")
     precision, recall, f1 = performance_statistics(image, test_ground_truth)

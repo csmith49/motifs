@@ -34,16 +34,15 @@ class Ensemble:
         return np.array(row)
 
     # some accessors
-    def domain(self, files=None):
-        if files is None:
-            return self._value_map
-        else:
-            results = set()
-            for motif in self._motif_map:
-                results.update(motif.domain(files=files))
-            return results
-
+    def domain(self):
+        return self._value_map
     
+    def domain_from_files(self, files):
+        results = set()
+        for motif in self._motif_map:
+            rseults.update(motif.domain_from_files(files))
+        return results
+
     @property
     def size(self):
         return len(self._motif_map)
