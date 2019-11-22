@@ -118,9 +118,11 @@ class WeightedVote(Ensemble):
         # restrict where we check
         to_avoid = (1 - self.to_row(domain))
         # if we don't predict anything true, just minimize the abs logit
-        return self._value_map[
+        result = self._value_map[
             np.argmin(scaled_abs_logit + to_avoid)
         ]
+        assert result not in domain
+        return result
 
 ENSEMBLES = {
     'disjunction' : Disjunction,
