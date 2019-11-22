@@ -78,6 +78,17 @@ class WeightedVote(Ensemble):
         # self._fpr = np.ones(len(self._motif_map)) * 0.1
         self._w_c = acc
 
+    def set_accuracies_wrt(self, truth, domain):
+        tp_row = self.to_row(truth)
+        tn_row = self.to_row(domain - truth)
+
+        tp = np.transpose(self._inclusion) @ tp_row
+        tn = np.transpose(1 - self._inclusion) @ tn_row
+
+        acc = (tp + tn) / len(domain)
+
+        self._fpr = (self._w_c - np.log(acc)) / 2
+
     def update(self, value, truth, learning_rate=LEARNING_RATE, decay=1, step=0, scale=1):
         # multiplicative updates to alpha
         v_i = self._value_map.index(value)

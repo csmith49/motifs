@@ -24,6 +24,8 @@ parser.add_argument("--learning-rate-positive-scaling", type=float, default=1)
 parser.add_argument("--run", type=int, default=1)
 parser.add_argument("--vote-threshold", type=float, default=0.01)
 parser.add_argument("--statistics", action="store_true")
+parser.add_argument("--bootstrap", action="store_true")
+parser.add_argument("--condition-on-true", action="store_true")
 
 args = parser.parse_args()
 
@@ -263,6 +265,13 @@ for threshold in linspace(0, 0.6, 10):
     if args.jsonl: print(dumps(row))
     rows.append(row)
 
+train_ground_truth = set()
+for ex in train: train_ground_truth.update(ex['example'])
+
+if args.bootstrap:
+    maj_classified = maj_vote.classified(threshold=0.13) & train_domain
+    w_vote.set_accuracies_wrt(maj_classified, train_domain)
+
 # evaluate weighted vote
 splits_used = set()
 for step in range(args.max_al_steps + 1):
@@ -291,7 +300,10 @@ for step in range(args.max_al_steps + 1):
 
     # try to split if we can
     print("Checking for a candidate split...")
-    learnable = train_domain - splits_used
+    if args.condition_on_true:
+        learnable = (train_ground_truth & train_domain) - splits_used
+    else:
+        learnable = train_domain - splits_used
     split = w_vote.min_logit(learnable)
     if split is None:
         print("No valid split found...")
