@@ -69,6 +69,22 @@ class MajorityVote(Disjunction):
 
         return self.to_values(selected)
 
+class PruningEnsemble(Ensemble):
+    def __init__(self, motifs):
+        super().__init__(motifs)
+        # initial weights from predicted coverage
+        cov = np.array([motif.size for motif in self._motif_map]) / self.size
+        self._w = 1 - cov
+
+    def update(self, value, truth, learning_rate=LEARNING_RATE, decay=1, step=0, scale=1):
+        v_i = self._value_map.index(value)
+        if truth:
+            m_i = self._inclusion[v_i,] * scale - (1 - self._inclusion[v_i,])
+        else:
+            m_i = (1 - self._inclusion[v_i,]) * scale - self._inclusion[v_i,]
+        
+        self._w *= np.exp()
+
 class WeightedVote(Ensemble):
     def __init__(self, motifs):
         super().__init__(motifs)
@@ -102,19 +118,17 @@ class WeightedVote(Ensemble):
     def probabilities(self):
         w_i = self._w_c - 2 * self._fpr
 
-        # s_plus = self._inclusion @ np.transpose(np.exp(w_i))
-        # s_minus = (1 - self._inclusion) @ np.transpose(np.exp(-1 * w_i))
-        # Z = np.sum(np.exp(w_i))
-        # ans = (s_plus + s_minus) / Z
-        # return ans, 1 - ans
+        s_plus = np.exp(self._inclusion @ np.transpose(w_i))
+        s_minus = np.exp((1 - self._inclusion) @ np.transpose(w_i))
 
-        s_plus = (self._inclusion @ np.transpose(w_i))
-        s_minus =((1 - self._inclusion) @ np.transpose(w_i))
-        return s_plus, s_minus
+        p_true = s_plus / s_plus + s_minus
+        p_false = 1 - p_true
 
-    def classified(self):
-        p_true, p_false = self.probabilities()
-        return self.to_values(p_true >= p_false)
+        return p_true, p_false
+
+    def classified(self, threshold=CLASSIFICATION_THRESHOLD):
+        p_true, _ = self.probabilities()
+        return self.to_values(p_true >= threshold)
 
     def min_logit(self, domain):
         # this is actually the min abs logit, but yknow

@@ -7,8 +7,8 @@ graphs/%-majority-vote-threshold.png: graphs interpretation/majority-vote-thresh
 graphs/%-weighted-vote-convergence.png: graphs interpretation/weighted-vote-convergence.py csvs/%-performance.csv
 	@python3 interpretation/weighted-vote-convergence.py --benchmark $*
 
-graphs/noise-%-performance.png: graphs interpretation/noise-performance csvs/noise-%-performance.csv
-	@python3 interpretation/noise-performance.py -type $*
+graphs/noise-%-performance.png: graphs interpretation/noise-performance.py csvs/noise-%-performance.csv
+	@python3 interpretation/noise-performance.py --type $*
 
 .PRECIOUS: csvs/%-performance.csv
 csvs/%-performance.csv: logs/%-performance.log

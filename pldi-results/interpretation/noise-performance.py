@@ -19,6 +19,6 @@ def noise_ratio(exp_name):
 
 dataframe['noise-ratio'] = dataframe['benchmark'].apply(noise_ratio)
 
-sns.lineplot(x="noise-ratio", y="f1", hue="ensemble", data=dataframe)
+sns.lineplot(x="noise-ratio", y="f1", hue="ensemble", estimator=None, data=dataframe)
 plt.title(f"Performance wrt {args.type} noise")
 plt.savefig(os.path.join("graphs", f"noise-{args.type}-performance.png"))
